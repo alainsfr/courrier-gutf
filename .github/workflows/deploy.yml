@@ -64,7 +64,6 @@ jobs:
 
           echo "Remote directories ready"
           EOF
-
       
       - name: Deploy app code to server (/app)
         run: |
