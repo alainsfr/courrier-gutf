@@ -99,7 +99,7 @@ jobs:
           echo "Artifact deployed"
           EOF
 
-      - name: Post-deploy (no composer)
+      - name: Post-deploy (no composer, robust)
         run: |
           ssh -p "${{ secrets.PH_SSH_PORT }}" "${{ secrets.PH_SSH_USER }}@${{ secrets.PH_SSH_HOST }}" << 'EOF'
           set -e
@@ -115,21 +115,34 @@ jobs:
             cp .env.example .env
           fi
 
-          # Persist storage
+          # Persist storage (and ensure required dirs exist)
+          mkdir -p "$DEPLOY_PATH/shared/storage"
           rm -rf storage
           ln -s "$DEPLOY_PATH/shared/storage" storage
 
-          # Generate APP_KEY only if missing
+          # Required Laravel runtime dirs
+          mkdir -p storage/framework/cache
+          mkdir -p storage/framework/sessions
+          mkdir -p storage/framework/views
+          mkdir -p storage/logs
+
+          # APP_KEY only if missing
           if ! grep -q "^APP_KEY=" .env || grep -q "^APP_KEY=$" .env; then
             php artisan key:generate --force
           fi
 
-          php artisan storage:link || true
+          # Public storage link for our layout:
+          # DocumentRoot is $DEPLOY_PATH (not app/public)
+          # We create: /home/ydykrmdy/courrier/storage -> /home/ydykrmdy/courrier/app/storage/app/public
+          mkdir -p "$DEPLOY_PATH/app/storage/app/public"
+          rm -rf "$DEPLOY_PATH/storage"
+          ln -s "$DEPLOY_PATH/app/storage/app/public" "$DEPLOY_PATH/storage" || true
 
-          php artisan config:clear
-          php artisan route:clear
-          php artisan view:clear
+          # Clear caches safely (avoid view:clear if path not ready)
+          php artisan config:clear || true
+          php artisan route:clear || true
 
+          # Cache (these rely on storage/framework existing)
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
