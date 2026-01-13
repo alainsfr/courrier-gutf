@@ -1,21 +1,16 @@
 <?php
-declare(strict_types=1);
 
-use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-$basePath = __DIR__ . '/app';
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
 
-require $basePath . '/vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
-$app = require $basePath . '/bootstrap/app.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
 
-$kernel = $app->make(Kernel::class);
-
-$request = Request::capture();
-$response = $kernel->handle($request);
-$response->send();
-
-$kernel->terminate($request, $response);
+$app->handleRequest(Request::capture());

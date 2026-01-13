@@ -12,9 +12,19 @@ final class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = session('locale', config('app.locale'));
-        if (is_string($locale) && in_array($locale, ['fr', 'en'], true)) {
-            app()->setLocale($locale);
+        // Option B: use user preference if authenticated
+        $userLocale = $request->user()?->locale;
+
+        if (is_string($userLocale) && in_array($userLocale, ['fr', 'en'], true)) {
+            app()->setLocale($userLocale);
+            return $next($request);
+        }
+
+        // Fallback: session choice (login page / guest)
+        $sessionLocale = session('locale', config('app.locale', config('app.fallback_locale', 'fr')));
+
+        if (is_string($sessionLocale) && in_array($sessionLocale, ['fr', 'en'], true)) {
+            app()->setLocale($sessionLocale);
         }
 
         return $next($request);

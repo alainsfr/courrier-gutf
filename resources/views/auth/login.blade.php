@@ -1,32 +1,31 @@
-<x-layouts.auth>
+<x-auth-layout>
     <div class="d-flex align-items-start justify-content-between mb-3">
         <div>
             <div class="auth-title">{{ __('auth_ui.login_title') }}</div>
             <div class="auth-subtitle">{{ __('auth_ui.login_subtitle') }}</div>
         </div>
 
-        {{-- Sélecteur langue minimal (on le reliera à votre route /locale ensuite) --}}
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {{ strtoupper(app()->getLocale()) }}
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                    <form method="POST" action="/locale" class="px-3 py-1">
-                        @csrf
-                        <input type="hidden" name="locale" value="fr">
-                        <button class="btn btn-link p-0 text-decoration-none" type="submit">FR</button>
-                    </form>
-                </li>
-                <li>
-                    <form method="POST" action="/locale" class="px-3 py-1">
-                        @csrf
-                        <input type="hidden" name="locale" value="en">
-                        <button class="btn btn-link p-0 text-decoration-none" type="submit">EN</button>
-                    </form>
-                </li>
-            </ul>
+        <div class="d-flex align-items-center gap-1">
+            <form method="POST" action="{{ route('locale.set') }}">
+                @csrf
+                <input type="hidden" name="locale" value="fr">
+                <button type="submit"
+                    class="btn btn-sm px-2 {{ app()->getLocale() === 'fr' ? 'btn-dark' : 'btn-outline-secondary' }}">
+                    FR
+                </button>
+            </form>
+
+            <form method="POST" action="{{ route('locale.set') }}">
+                @csrf
+                <input type="hidden" name="locale" value="en">
+                <button type="submit"
+                    class="btn btn-sm px-2 {{ app()->getLocale() === 'en' ? 'btn-dark' : 'btn-outline-secondary' }}">
+                    EN
+                </button>
+            </form>
         </div>
+
+
     </div>
 
     @if (session('status'))
@@ -87,4 +86,4 @@
             <a class="link-accent" href="mailto:support@gutf.local">{{ __('auth_ui.support_link') }}</a>
         </div>
     </form>
-</x-layouts.auth>
+</x-auth-layout>

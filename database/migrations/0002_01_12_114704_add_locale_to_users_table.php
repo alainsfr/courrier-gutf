@@ -9,21 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            /**
-             * Preferred user locale (Option B)
-             * - 'fr' or 'en'
-             * - default = 'fr'
-             */
-            $table->string('locale', 2)
-                ->default('fr')
-                ->after('email');
+            if (! Schema::hasColumn('users', 'locale')) {
+                $table->string('locale', 2)->default('fr')->after('email');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('locale');
+            if (Schema::hasColumn('users', 'locale')) {
+                $table->dropColumn('locale');
+            }
         });
     }
 };
