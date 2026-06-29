@@ -23,14 +23,10 @@
     <main class="container py-4">
         {{ $slot }}
     </main>
+
     @can('chat.view')
         @vite(['resources/js/chat.js'])
         <x-chat-widget :initial-unread="0" />
     @endcan
-    
-    // @can('chat.view')
-    //    <x-chat-widget :initial-unread="0" />
-    // @endcan
-
 </body>
 </html>

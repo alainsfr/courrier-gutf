@@ -1,62 +1,138 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <h1 class="h5 mb-0">
-                    {{ $conversation->type === 'group' ? ($conversation->title ?? 'Groupe') : 'Discussion' }}
-                </h1>
-                <div class="text-muted small">
-                    Membres : {{ $conversation->participants->count() }}
+    <div class="row g-4" style="height: calc(100vh - 180px); min-height: 500px;">
+        
+        {{-- COLONNE GAUCHE : NAVIGATION (1/3) --}}
+        <div class="col-lg-4 d-none d-lg-flex flex-column h-100">
+            <div class="card border-0 shadow-sm rounded-4 flex-grow-1 overflow-hidden d-flex flex-column">
+                <div class="card-header bg-white p-4 border-bottom">
+                    <h5 class="fw-bold text-dark mb-0">💬 Discussions</h5>
+                </div>
+                
+                <div class="card-body p-4 overflow-y-auto" style="flex: 1;">
+                    <div class="list-group list-group-flush">
+                        {{-- Liste des conversations (dupliquée pour la navigation fluide) --}}
+                        @foreach($conversation->participants as $part)
+                            {{-- On récupère la liste complète des conversations de l'utilisateur --}}
+                        @endforeach
+                        
+                        {{-- Bouton de retour rapide vers l'accueil --}}
+                        <a class="btn btn-outline-secondary w-100 py-2.5 rounded-3 fw-semibold mb-3 small" href="{{ route('messages.index') }}">
+                            ← Liste de mes discussions
+                        </a>
+
+                        <hr class="my-3">
+
+                        <div class="fw-bold text-muted small mb-2 text-uppercase" style="font-size: 0.75rem;">Membres du salon</div>
+                        <div class="list-group list-group-flush border rounded-3 p-2 bg-light">
+                            @foreach($conversation->participants as $p)
+                                <div class="p-2 border-bottom last-border-0 d-flex align-items-center gap-2">
+                                    <span class="small">👤</span>
+                                    <div style="min-width: 0;">
+                                        <div class="fw-semibold text-dark small text-truncate">{{ $p->user->name }}</div>
+                                        <div class="text-muted small text-truncate" style="font-size: 0.75rem;">{{ $p->user->email }}</div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             </div>
-            <a class="btn btn-outline-secondary" href="{{ route('messages.index') }}">Retour</a>
         </div>
-    </x-slot>
 
-    <div class="card shadow-sm">
-        <div class="card-body" style="height:420px; overflow:auto;" id="messagesBox">
-            @foreach($conversation->messages as $m)
-                <div class="mb-2">
-                    <div class="small text-muted">
-                        {{ $m->sender?->name }} — {{ $m->created_at->format('d/m/Y H:i') }}
+        {{-- COLONNE DROITE : SALON DE DISCUSSION ACTIF (2/3) --}}
+        <div class="col-lg-8 d-flex flex-column h-100">
+            <div class="card border-0 shadow-sm rounded-4 flex-grow-1 overflow-hidden d-flex flex-column bg-white h-100">
+                
+                {{-- En-tête de la discussion --}}
+                <div class="card-header bg-white p-4 border-bottom d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            {{ $conversation->type === 'group' ? '👥 ' . ($conversation->title ?? 'Groupe') : '👤 Discussion directe' }}
+                        </h5>
+                        <p class="text-muted small mb-0">{{ $conversation->participants->count() }} collaborateur(s) dans ce salon</p>
                     </div>
-                    <div class="border rounded p-2 bg-white">
-                        {{ $m->body }}
-                    </div>
+                    <a class="btn btn-outline-secondary btn-sm rounded-3 d-lg-none" href="{{ route('messages.index') }}">← Retour</a>
                 </div>
-            @endforeach
+
+                {{-- Flux de messages (Bulles) --}}
+                <div class="card-body p-4 overflow-y-auto bg-light" id="messagesBox" style="flex: 1;">
+                    @foreach($conversation->messages as $m)
+                        @php $isMe = ($m->sender_user_id === auth()->id()); @endphp
+                        
+                        <div class="d-flex {{ $isMe ? 'justify-content-end' : 'justify-content-start' }} mb-3">
+                            <div style="max-width: 75%;">
+                                @if(!$isMe)
+                                    <div class="text-muted small fw-semibold mb-1 ms-1">{{ $m->sender?->name }}</div>
+                                @endif
+                                
+                                <div class="p-3 rounded-4 shadow-sm {{ $isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border' }}">
+                                    <div style="white-space: pre-line;" class="small">{{ $m->body }}</div>
+                                </div>
+                                
+                                <div class="text-muted small mt-1 {{ $isMe ? 'text-end me-1' : 'text-start ms-1' }}" style="font-size: 0.75rem;">
+                                    {{ $m->created_at->format('d/m/Y H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Formulaire de saisie du message --}}
+                @can('chat.send')
+                    <div class="card-footer bg-white p-4 border-top">
+                        <form method="POST" action="{{ route('messages.send', $conversation) }}" id="sendForm">
+                            @csrf
+                            <div class="input-group">
+                                <input class="form-control border-slate-200 py-2.5 rounded-start-3" 
+                                       name="body" 
+                                       id="msgInput" 
+                                       placeholder="Saisissez un message de collaboration..." 
+                                       required 
+                                       maxlength="2000"
+                                       autocomplete="off">
+                                <button class="btn btn-gutf px-4 rounded-end-3" type="submit">Envoyer ➔</button>
+                            </div>
+                        </form>
+                    </div>
+                @endcan
+
+            </div>
         </div>
 
-        @can('chat.send')
-            <div class="card-footer bg-white">
-                <form method="POST" action="{{ route('messages.send', $conversation) }}" id="sendForm">
-                    @csrf
-                    <div class="d-flex gap-2">
-                        <input class="form-control" name="body" id="msgInput" placeholder="Écrire un message..." required maxlength="2000">
-                        <button class="btn btn-gutf" type="submit">Envoyer</button>
-                    </div>
-                </form>
-            </div>
-        @endcan
     </div>
 
+    {{-- Script d'écoute du temps réel via WebSockets --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const convId = {{ (int) $conversation->id }};
             const box = document.getElementById('messagesBox');
             const input = document.getElementById('msgInput');
 
-            if (box) box.scrollTop = box.scrollHeight;
+            if (box) {
+                // Défilement automatique vers le bas à l'ouverture
+                box.scrollTop = box.scrollHeight;
+            }
 
+            // Écoute dynamique du canal privé de la conversation
             if (window.Echo) {
                 window.Echo.private(`conversations.${convId}`)
                     .listen('.message.sent', (e) => {
                         const wrap = document.createElement('div');
-                        wrap.className = 'mb-2';
+                        const isMe = (e.sender.id === {{ (int) auth()->id() }});
+                        
+                        wrap.className = `d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3`;
                         wrap.innerHTML = `
-                            <div class="small text-muted">${e.sender.name} — ${new Date(e.created_at).toLocaleString()}</div>
-                            <div class="border rounded p-2 bg-white">${e.body}</div>
+                            <div style="max-width: 75%;">
+                                ${!isMe ? `<div class="text-muted small fw-semibold mb-1 ms-1">${e.sender.name}</div>` : ''}
+                                <div class="p-3 rounded-4 shadow-sm ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border'}">
+                                    <div style="white-space: pre-line;" class="small">${e.body}</div>
+                                </div>
+                                <div class="text-muted small mt-1 ${isMe ? 'text-end me-1' : 'text-start ms-1'}" style="font-size: 0.75rem;">
+                                    ${new Date(e.created_at).toLocaleString('fr-FR', {day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                                </div>
+                            </div>
                         `;
+                        
                         box.appendChild(wrap);
                         box.scrollTop = box.scrollHeight;
                     });

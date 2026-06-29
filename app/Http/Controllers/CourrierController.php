@@ -186,6 +186,61 @@ class CourrierController extends Controller
         return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-created');
     }
 
+    public function show(Courrier $courrier): View
+    {
+        $isAdmin = Auth::user()->hasRole('admin');
+
+        // Sécurité : si non-admin, l'utilisateur doit être le créateur ou l'assigné du pli
+        if (!$isAdmin) {
+            abort_unless(
+                $courrier->created_by_user_id === Auth::id() || $courrier->assigned_to_user_id === Auth::id(),
+                403
+            );
+        }
+
+        // Chargement des relations nécessaires pour l'affichage de l'historique et des PJ
+        $courrier->load([
+            'assignedTo:id,name,email',
+            'createdBy:id,name,email',
+            'histories.actor:id,name,email',
+            'attachments.uploadedBy:id,name,email'
+        ]);
+
+        $agents = User::orderBy('name')->get(['id', 'name', 'email']);
+
+        return view('courriers.show', compact('courrier', 'agents'));
+    }
+
+    public function assign(Request $request, Courrier $courrier): RedirectResponse
+    {
+        $validated = $request->validate([
+            'assigned_to_user_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $from = $courrier->status;
+        $courrier->update([
+            'assigned_to_user_id' => $validated['assigned_to_user_id'],
+            'status' => 'affecte',
+        ]);
+
+        $assignee = User::find($validated['assigned_to_user_id']);
+
+        $this->auditService->log($courrier, 'assigned', $from, 'affecte', [
+            'assigned_to' => $assignee?->name,
+        ]);
+
+        if ($assignee) {
+            $this->notifyUsers(
+                [$assignee],
+                __('notifications.courrier_assigned_title'),
+                __('notifications.courrier_assigned_msg', ['ref' => $courrier->reference_interne]),
+                route('courriers.show', $courrier)
+            );
+        }
+
+        return back()->with('status', 'courrier-assigned');
+    }
+
     public function startProcessing(Courrier $courrier): RedirectResponse
     {
         abort_unless($courrier->status === 'affecte', 422);
@@ -263,6 +318,64 @@ class CourrierController extends Controller
     /* =========================================================
      |  ATTACHMENTS (audités)
      ========================================================= */
+
+    public function uploadAttachment(Request $request, Courrier $courrier): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png'],
+        ]);
+
+        if ($file = $request->file('file')) {
+            $this->storeUploadAttachment($courrier, $file);
+        }
+
+        return back()->with('status', 'attachment-uploaded');
+    }
+
+    public function previewAttachment(Courrier $courrier, CourrierAttachment $attachment)
+    {
+        abort_unless($attachment->courrier_id === $courrier->id, 404);
+
+        $path = $attachment->path;
+        if (!Storage::exists($path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::path($path), [
+            'Content-Type' => $attachment->mime,
+            'Content-Disposition' => 'inline; filename="' . $attachment->original_name . '"'
+        ]);
+    }
+
+    public function downloadAttachment(Courrier $courrier, CourrierAttachment $attachment)
+    {
+        abort_unless($attachment->courrier_id === $courrier->id, 404);
+
+        $path = $attachment->path;
+        if (!Storage::exists($path)) {
+            abort(404);
+        }
+
+        return response()->download(Storage::path($path), $attachment->original_name);
+    }
+
+    public function deleteAttachment(Courrier $courrier, CourrierAttachment $attachment): RedirectResponse
+    {
+        abort_unless($attachment->courrier_id === $courrier->id, 404);
+
+        $path = $attachment->path;
+        if (Storage::exists($path)) {
+            Storage::delete($path);
+        }
+
+        $attachment->delete();
+
+        $this->auditService->log($courrier, 'attachment_deleted', $courrier->status, $courrier->status, [
+            'file' => $attachment->original_name,
+        ]);
+
+        return back()->with('status', 'attachment-deleted');
+    }
 
     private function storeUploadAttachment(Courrier $courrier, \Illuminate\Http\UploadedFile $file): void
     {

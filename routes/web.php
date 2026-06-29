@@ -19,9 +19,35 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
 
 
-    // Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard');
+    // Dashboard (Dynamique et connecté à la base de données)
+    Route::get('/dashboard', function (Request $request) {
+        $user = $request->user();
+        $isAdmin = $user->hasRole('admin');
+
+        // Requête de base pour les statistiques
+        $query = \App\Models\Courrier::query();
+
+        // Si l'utilisateur n'est pas Admin, on restreint à ses courriers (créés ou assignés)
+        if (!$isAdmin) {
+            $query->where(function ($sub) use ($user) {
+                $sub->where('created_by_user_id', $user->id)
+                    ->orWhere('assigned_to_user_id', $user->id);
+            });
+        }
+
+        // Calcul des KPI réels
+        $kpiIncoming = (clone $query)->where('type', 'entrant')->count();
+        $kpiInProgress = (clone $query)->whereIn('status', ['affecte', 'en_traitement', 'en_validation'])->count();
+        $kpiArchived = (clone $query)->where('status', 'archive')->count();
+
+        // Liste des 5 derniers courriers nécessitant une attention
+        $recentCourriers = (clone $query)
+            ->with(['assignedTo:id,name'])
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        return view('dashboard', compact('kpiIncoming', 'kpiInProgress', 'kpiArchived', 'recentCourriers', 'isAdmin'));
     })->name('dashboard');
 
     // Notifications (in-app)

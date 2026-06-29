@@ -1,3 +1,8 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root{
     --gutf-primary:#17384b;
     --gutf-accent:#dc633a;
@@ -391,7 +396,7 @@ body{
 }
 /* =========================
    Bootstrap theming (GUTF)
-   Objectif: cohérence globale sans modifier les vues
+   Objectif: coherence globale sans modifier les vues
 ========================= */
 
 /* Primary */
