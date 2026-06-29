@@ -74,17 +74,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendForm = document.getElementById('widgetSendForm');
     const msgInput = document.getElementById('widgetMsgInput');
 
+    // Cible de l'en-tête de navigation
+    const headerChatBadge = document.getElementById('headerChatBadge');
+
     let activeConversationId = null;
     let echoChannelInstance = null;
     let lastWidgetMessageCount = 0;
 
     function setUnread(n) {
-        if (!badge) return;
-        if (n > 0) {
-            badge.style.display = 'flex';
-            badge.textContent = String(n);
-        } else {
-            badge.style.display = 'none';
+        // 1. Pastille du widget flottant
+        if (badge) {
+            if (n > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = String(n);
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+        // 2. Pastille de l'en-tête de navigation
+        if (headerChatBadge) {
+            if (n > 0) {
+                headerChatBadge.style.display = 'inline-block';
+                headerChatBadge.textContent = String(n);
+            } else {
+                headerChatBadge.style.display = 'none';
+            }
         }
     }
 
@@ -283,8 +297,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    // SYSTÈME DE SECOURS INSTANTANÉ (Long-polling à 3,5s pour l'espace actif du widget) [a]
+    // SYSTÈME DE SECOURS INSTANTANÉ (Long-polling à 3,5s pour l'espace actif du widget et l'en-tête) [a]
     setInterval(async () => {
+        // 1. Rafraîchir les messages du mini-chat actif
         if (activeConversationId && (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected')) {
             try {
                 const res = await fetch(`/chat/mini/${activeConversationId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
@@ -292,6 +307,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (messages.length > lastWidgetMessageCount) {
                     lastWidgetMessageCount = messages.length;
                     renderMessages(messages);
+                }
+            } catch (e) {}
+        }
+
+        // 2. Rafraîchir également la liste et le compteur global du header si le WebSocket est coupé
+        if (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected') {
+            try {
+                const res = await fetch(`{{ route('chat.mini') }}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+                const data = await res.json();
+                setUnread(data.unread_total || 0);
+                if (panel.classList.contains('open') && !activeConversationId) {
+                    // Mettre à jour la liste des conversations du widget si ouvert
+                    listContainer.innerHTML = data.conversations.map(c => `
+                        <div class="chat-conv p-3 border rounded-3 mb-2 hover:bg-light" style="cursor:pointer;" data-id="${c.id}" data-title="${c.title}">
+                            <div class="d-flex align-items-center justify-content-between gap-2">
+                                <div class="fw-bold text-dark small text-truncate" style="max-width: 220px;">${c.title}</div>
+                                ${c.unread > 0 ? `<span class="badge text-bg-danger rounded-pill">${c.unread}</span>` : ``}
+                            </div>
+                            <div class="chat-conv-last text-muted small text-truncate mt-1" style="font-size:0.8rem;">${c.last || '—'}</div>
+                        </div>
+                    `).join('');
+
+                    listContainer.querySelectorAll('.chat-conv').forEach(el => {
+                        el.addEventListener('click', () => {
+                            const id = el.getAttribute('data-id');
+                            const title = el.getAttribute('data-title');
+                            openConversation(id, title);
+                        });
+                    });
                 }
             } catch (e) {}
         }
