@@ -161,8 +161,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     });
 
     Route::middleware('permission:chat.send')->group(function () {
-        Route::post('/messages/{conversation}', [MessagingController::class, 'send'])->name('messages.send');
         Route::post('/messages/direct', [MessagingController::class, 'startDirect'])->name('messages.direct');
+        Route::post('/messages/{conversation}', [MessagingController::class, 'send'])->name('messages.send');
     });
 
     Route::middleware('permission:chat.group.create')->group(function () {
