@@ -122,11 +122,35 @@
             const convId = {{ (int) $conversation->id }};
             const box = document.getElementById('messagesBox');
             const input = document.getElementById('msgInput');
+            let lastMessageCount = {{ $conversation->messages->count() }};
 
             if (box) {
                 box.scrollTop = box.scrollHeight;
             }
 
+            // Rendu des messages (utilisé pour le rafraîchissement d'arrière-plan)
+            function renderMessagesInFullPage(messages) {
+                const userId = {{ (int) auth()->id() }};
+                box.innerHTML = messages.map(m => {
+                    const isMe = (m.sender_user_id === userId || m.sender.id === userId);
+                    return `
+                        <div class="d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3">
+                            <div style="max-width: 75%;">
+                                ${!isMe ? `<div class="text-muted small fw-semibold mb-1 ms-1">${m.sender.name}</div>` : ''}
+                                <div class="p-3 rounded-4 shadow-sm ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border'}">
+                                    <div style="white-space: pre-line;" class="small">${m.body}</div>
+                                </div>
+                                <div class="text-muted small mt-1 ${isMe ? 'text-end me-1' : 'text-start ms-1'}" style="font-size: 0.75rem;">
+                                    ${new Date(m.created_at).toLocaleString('fr-FR', {day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                box.scrollTop = box.scrollHeight;
+            }
+
+            // Écoute temps réel via WebSockets (Laravel Reverb)
             if (window.Echo) {
                 window.Echo.private(`conversations.${convId}`)
                     .listen('.message.sent', (e) => {
@@ -148,8 +172,24 @@
                         
                         box.appendChild(wrap);
                         box.scrollTop = box.scrollHeight;
+                        lastMessageCount++;
                     });
             }
+
+            // Système de secours instantané (Long-Polling à 3,5s)
+            setInterval(async () => {
+                // S'active uniquement si le WebSocket n'est pas déjà connecté
+                if (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected') {
+                    try {
+                        const res = await fetch(`/chat/mini/${convId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+                        const messages = await res.json();
+                        if (messages.length > lastMessageCount) {
+                            lastMessageCount = messages.length;
+                            renderMessagesInFullPage(messages);
+                        }
+                    } catch (e) {}
+                }
+            }, 3500);
         });
     </script>
 </x-app-layout>

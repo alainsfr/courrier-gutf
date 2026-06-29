@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeConversationId = null;
     let echoChannelInstance = null;
+    let lastWidgetMessageCount = 0;
 
     function setUnread(n) {
         if (!badge) return;
@@ -94,12 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             panel.classList.remove('open');
             panel.setAttribute('aria-hidden', 'true');
-            // Fermer le canal d'écoute actif si on ferme le widget
             unsubscribeActiveChannel();
         }
     }
 
-    // Désinscription du canal temps réel actif
     function unsubscribeActiveChannel() {
         if (window.Echo && echoChannelInstance && activeConversationId) {
             window.Echo.leave(`conversations.${activeConversationId}`);
@@ -130,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `).join('');
 
-            // Rendre chaque ligne cliquable pour ouvrir la discussion à la volée
             listContainer.querySelectorAll('.chat-conv').forEach(el => {
                 el.addEventListener('click', () => {
                     const id = el.getAttribute('data-id');
@@ -149,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
         activeConversationId = convId;
         chatTitle.textContent = title;
 
-        // Bascule visuelle
         listView.style.setProperty('display', 'none', 'important');
         chatView.style.setProperty('display', 'flex', 'important');
 
@@ -158,12 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch(`/chat/mini/${convId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
             const messages = await res.json();
+            lastWidgetMessageCount = messages.length;
             renderMessages(messages);
 
-            // Re-calculer les non-lus globaux
             loadMiniInbox();
-
-            // S'inscrire à l'écoute en temps réel pour ce salon
             subscribeToChannel(convId);
 
         } catch (e) {
@@ -200,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .listen('.message.sent', (e) => {
                     if (parseInt(activeConversationId) === parseInt(e.conversation_id)) {
                         appendSingleMessage(e);
+                        lastWidgetMessageCount++;
                     }
                 });
         }
@@ -243,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.success) {
                 appendSingleMessage(data.message);
+                lastWidgetMessageCount++;
             }
         } catch (err) {
             alert('Erreur lors de l\'envoi du message.');
@@ -263,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const isOpen = panel.classList.contains('open');
         toggle(!isOpen);
         if (!isOpen) {
-            // Re-basculer sur l'inbox par défaut à la réouverture
             chatView.style.setProperty('display', 'none', 'important');
             listView.style.setProperty('display', 'flex', 'important');
             await loadMiniInbox();
@@ -273,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn?.addEventListener('click', () => toggle(false));
     chatCloseBtn?.addEventListener('click', () => toggle(false));
 
-    // Écoute globale des notifications non-lues
+    // Écoute globale des notifications non-lues (WebSockets)
     const userId = {{ (int) auth()->id() }};
     if (window.Echo && userId) {
         window.Echo.private(`users.${userId}`)
@@ -286,5 +282,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
     }
+
+    // SYSTÈME DE SECOURS INSTANTANÉ (Long-polling à 3,5s pour l'espace actif du widget) [a]
+    setInterval(async () => {
+        if (activeConversationId && (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected')) {
+            try {
+                const res = await fetch(`/chat/mini/${activeConversationId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+                const messages = await res.json();
+                if (messages.length > lastWidgetMessageCount) {
+                    lastWidgetMessageCount = messages.length;
+                    renderMessages(messages);
+                }
+            } catch (e) {}
+        }
+    }, 3500);
 });
 </script>

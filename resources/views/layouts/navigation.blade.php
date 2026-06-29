@@ -3,7 +3,18 @@
     $authName = $authUser ? (string) $authUser->name : '';
     $unreadCount = $authUser ? $authUser->unreadNotifications()->count() : 0;
     
-    // Génération des initiales de l'avatar (ex: Admin SYSCOM -> AS)
+    // Calcul dynamique des discussions non lues pour la pastille de l'en-tête
+    $unreadChatCount = 0;
+    if ($authUser) {
+        $unreadChatCount = \App\Models\ConversationParticipant::where('user_id', $authUser->id)
+            ->where(function($query) {
+                $query->whereNull('last_read_at')
+                      ->orWhereRaw('last_read_at < (select updated_at from conversations where id = conversation_participants.conversation_id)');
+            })
+            ->count();
+    }
+
+    // Initiales de l'avatar
     $initials = 'U';
     if ($authUser) {
         $words = explode(' ', $authUser->name);
@@ -71,9 +82,20 @@
             <div class="d-flex align-items-center gap-4 flex-wrap">
                 <x-locale-switcher />
 
+                {{-- ICÔNE DE MESSAGERIE DANS L'EN-TÊTE AVEC BADGE ROUGE --}}
+                @can('chat.view')
+                    <a href="{{ route('messages.index') }}" class="btn btn-link p-0 text-decoration-none position-relative" style="color: inherit;" title="Messagerie">
+                        <span class="fs-4">💬</span>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
+                              id="headerChatBadge" 
+                              style="font-size: 0.65rem; padding: 0.25em 0.45em; {{ $unreadChatCount > 0 ? '' : 'display:none;' }}">
+                            {{ $unreadChatCount }}
+                        </span>
+                    </a>
+                @endcan
+
                 <div class="dropdown">
                     <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: inherit;">
-                        {{-- Avatar dynamique coloré avec initiales --}}
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-sm" 
                              style="width: 34px; height: 34px; background: var(--gutf-accent); font-size: 0.85rem; letter-spacing: 0.5px;">
                             {{ $initials ?: 'U' }}
