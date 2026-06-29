@@ -1,41 +1,57 @@
+@php
+    $inst = config('institution');
+    $isFr = (app()->getLocale() === 'fr');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_','-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'COURRIER GUTF') }}</title>
+    <title>{{ $inst['app_label'] }} - Connexion</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
 <div class="auth-shell">
+    
+    {{-- Volet gauche de présentation --}}
     <aside class="auth-left">
         <div class="auth-brand">
-            <div class="auth-brand-badge">G</div>
+            <div class="auth-brand-badge">B</div>
             <div>
-                <div style="font-weight:800; font-size:1.1rem;">{{ config('app.name', 'COURRIER GUTF') }}</div>
-                <div style="opacity:.9;">{{ __('auth_ui.tagline') }}</div>
+                <div class="fw-bold" style="font-size:1.1rem; line-height: 1.2;">{{ $inst['app_label'] }}</div>
+                <div class="small" style="opacity:.85;">
+                    {{ $isFr ? 'Enregistrement & Liaison' : 'Registration & Liaison' }}
+                </div>
             </div>
         </div>
 
         <div style="max-width:520px;">
-            <h1 style="font-weight:900; margin-bottom:10px;">{{ __('auth_ui.hero_title') }}</h1>
-            <p style="opacity:.92; line-height:1.55;">
-                {{ __('auth_ui.hero_text') }}
+            <h1 class="fw-bold mb-3" style="font-size: 1.85rem; line-height: 1.25;">
+                {{ __('auth_ui.hero_title') }}
+            </h1>
+            
+            <p style="opacity:.92; line-height:1.55;" class="small">
+                @if($isFr)
+                    Centralisez la réception, la vérification de régularité, le traitement et la ventilation du courrier au sein des Conservations Foncières sous l'autorité conjointe du MINDCAF et du MINFI.
+                @else
+                    Centralize the receipt, compliance check, processing and distribution of mail within Land Registries under the joint authority of MINDCAF and MINFI.
+                @endif
             </p>
 
-            <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="margin-top:24px; display:flex; gap:10px; flex-wrap:wrap;">
                 <span class="badge text-bg-light">{{ __('auth_ui.badge_traceability') }}</span>
-                <span class="badge text-bg-light">{{ __('auth_ui.badge_sla') }}</span>
-                <span class="badge text-bg-light">{{ __('auth_ui.badge_security') }}</span>
-                <span class="badge text-bg-light">{{ __('auth_ui.badge_bilingual') }}</span>
+                <span class="badge text-bg-light">SLA (72h Max)</span>
+                <span class="badge text-bg-light">MINDCAF / MINFI</span>
+                <span class="badge text-bg-light">Bilingue (FR/EN)</span>
             </div>
         </div>
 
         <div style="opacity:.9; font-size:.9rem;">
-            © {{ date('Y') }} {{ config('app.name', 'COURRIER GUTF') }}
+            © {{ date('Y') }} - {{ $inst['app_label'] }}
         </div>
     </aside>
 
+    {{-- Volet droit : Espace formulaire --}}
     <main class="flex-grow-1 d-flex align-items-center justify-content-center p-3 p-lg-5">
         <div class="auth-card">
             {{ $slot }}

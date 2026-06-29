@@ -14,18 +14,16 @@ return [
     'mindcaf_url' => 'https://mindcaf.gov.cm/fr/',
     'minfi_url' => 'https://minfi.gov.cm/',
 
-    // Structure instituée par l'Arrêté Conjoint du 18 Juin 2018
-    'structure_fr' => 'Guichet Unique pour l\'accomplissement des formalités de l\'enregistrement et de la publicité foncière',
-    'structure_en' => 'One-Stop Shop for the completion of tax registration and land registration formalities',
+    // Structure de base (clé "structure" restaurée pour éviter le bug 404/500)
+    'structure' => 'Guichet Unique pour l\'accomplissement des formalités de l\'enregistrement et de la publicité foncière au sein des Conservations Foncières',
+    'structure_en' => 'One-Stop Shop for the completion of tax registration and land registration formalities within Land Registries',
     
-    // Le Bureau de traitement des courriers de l'application (BACL - Article 3 & 4)
-    'structure_short_fr' => 'Bureau de l\'Accueil, du Courrier et de Liaison (BACL)',
-    'structure_short_en' => 'Reception, Mail and Liaison Bureau (RMLB)',
+    // Le Bureau de traitement des courriers de l'application (BACL - GUTF)
+    'structure_short_fr' => 'Guichet Unique (GUTF) - Bureau de l\'Accueil, du Courrier et de Liaison',
+    'structure_short_en' => 'One-Stop Shop (GUTF) - Reception, Mail and Liaison Bureau',
     
-    'app_label' => 'BACL - GUICHET UNIQUE',
-    'decree_reference_fr' => 'Arrêté conjoint n° 000470/MINDCAF/MINFI du 18 juin 2018',
-    'decree_reference_en' => 'Joint Order No. 000470/MINDCAF/MINFI of 18 June 2018',
+    'app_label' => 'COURRIER GUTF',
 
-    // Mentions de bas de page
-    'confidentiality' => 'Document interne – Diffusion restreinte. Traitement géré sous l\'autorité du Bureau de l\'Accueil, du Courrier et de Liaison (BACL) conformément à l\'Arrêté conjoint n° 000470/MINDCAF/MINFI du 18 juin 2018.',
+    // Mentions de bas de page génériques
+    'confidentiality' => 'Document interne – Diffusion restreinte. Traitement géré au sein du Guichet Unique (GUTF) sous l\'autorité conjointe du MINDCAF et du MINFI.',
 ];
