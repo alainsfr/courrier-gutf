@@ -37,6 +37,15 @@ class CourriersSummarySheetExport implements FromArray, ShouldAutoSize, WithEven
         $data[] = [__('courrier.export_summary_title')];
         $data[] = [''];
 
+        // Contexte institutionnel (en-tête résumé)
+        $data[] = [
+            (string) config('institution.country', ''),
+            (string) config('institution.motto', ''),
+        ];
+        $data[] = [(string) config('institution.ministry', '')];
+        $data[] = [(string) config('institution.structure', '')];
+        $data[] = [''];
+
         // KPIs
         $data[] = [__('courrier.export_summary_kpis')];
         $data[] = [__('courrier.export_summary_total'), $total];
@@ -92,6 +101,12 @@ class CourriersSummarySheetExport implements FromArray, ShouldAutoSize, WithEven
                         $sheet->getStyle("A{$r}:B{$r}")->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF3F5F7');
                     }
                 }
+
+                // Style institution lines (rows 3 to 5)
+                $sheet->getStyle('A3:B3')->getFont()->setBold(true);
+                $sheet->getStyle('A3:B3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF9FAFB');
+
+                $sheet->getStyle('A4:B5')->getFont()->setBold(true);
             },
         ];
     }

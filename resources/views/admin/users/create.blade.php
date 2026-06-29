@@ -1,0 +1,76 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h1 class="h4 mb-0">{{ __('users.create_title') }}</h1>
+            <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">{{ __('users.back') }}</a>
+        </div>
+    </x-slot>
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <div class="fw-semibold mb-1">{{ __('users.form_error') }}</div>
+            <ul class="mb-0">
+                @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST" action="{{ route('admin.users.store') }}">
+                @csrf
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">{{ __('users.name') }}</label>
+                        <input class="form-control" name="name" value="{{ old('name') }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">{{ __('users.email') }}</label>
+                        <input class="form-control" name="email" value="{{ old('email') }}" required>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('users.locale') }}</label>
+                        <select class="form-select" name="locale" required>
+                            <option value="fr" @selected(old('locale','fr')==='fr')>FR</option>
+                            <option value="en" @selected(old('locale')==='en')>EN</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('users.role') }}</label>
+                        <select class="form-select" name="role" required>
+                            @foreach($roles as $r)
+                                <option value="{{ $r->name }}" @selected(old('role')===$r->name)>{{ $r->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">{{ __('users.status') }}</label>
+                        <select class="form-select" name="is_active">
+                            <option value="1" @selected(old('is_active','1')==='1')>{{ __('users.active') }}</option>
+                            <option value="0" @selected(old('is_active')==='0')>{{ __('users.inactive') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">{{ __('users.password') }}</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">{{ __('users.password_confirm') }}</label>
+                        <input type="password" class="form-control" name="password_confirmation" required>
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    <button class="btn btn-gutf" type="submit">{{ __('users.save') }}</button>
+                    <a class="btn btn-outline-secondary" href="{{ route('admin.users.index') }}">{{ __('users.cancel') }}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</x-app-layout>

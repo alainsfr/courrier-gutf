@@ -25,11 +25,21 @@ class RolesAndPermissionsSeeder extends Seeder
             'courrier.detach',
             'courrier.validate',
             'courrier.archive',
-            'courrier.export', // NEW
+            'courrier.export',
+            
+            // Chat
+            'chat.view',
+            'chat.send',
+            'chat.group.create',
+            'chat.group.manage',
 
             // Admin / système
             'user.manage',
             'settings.manage',
+
+            // Audit
+            'auditor.view',
+            'auditor.export',
         ];
 
         foreach ($permissions as $perm) {
@@ -37,7 +47,14 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         $roles = [
+            // Admin = tout
             'admin' => $permissions,
+
+            // Auditor = audit uniquement (lecture + export)
+            'auditor' => [
+                'auditor.view',
+                'auditor.export',
+            ],
 
             'agent_courrier' => [
                 'courrier.view',
@@ -46,6 +63,9 @@ class RolesAndPermissionsSeeder extends Seeder
                 'courrier.attach',
                 'courrier.detach',
                 'courrier.export',
+                'chat.view',
+                'chat.send',
+                'chat.group.create',
             ],
 
             'agent_traitement' => [
@@ -53,15 +73,24 @@ class RolesAndPermissionsSeeder extends Seeder
                 'courrier.process',
                 'courrier.attach',
                 'courrier.detach',
+                'chat.view',
+                'chat.send',
+                'chat.group.create',
             ],
 
             'validateur' => [
                 'courrier.view',
                 'courrier.validate',
+                'chat.view',
+                'chat.send',
+                'chat.group.create',
             ],
 
             'consultation' => [
                 'courrier.view',
+                'chat.view',
+                'chat.send',
+                
                 // 'courrier.export', // optionnel
             ],
         ];

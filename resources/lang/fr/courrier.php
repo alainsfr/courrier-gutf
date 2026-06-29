@@ -77,6 +77,8 @@ return [
         'archived' => 'Courrier archivé',
         'attachment_uploaded' => 'Pièce jointe ajoutée',
         'attachment_deleted' => 'Pièce jointe supprimée',
+        'processing_started' => 'Traitement démarré',
+
     ],
 
     'history_icons' => [
@@ -140,6 +142,7 @@ return [
     'export_summary_by_assignee' => 'Répartition par assignation',
     'export_summary_count' => 'Nombre',
 
+    'start_processing' => 'Passer en traitement',
 
 
 

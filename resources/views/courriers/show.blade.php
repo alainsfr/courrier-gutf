@@ -233,6 +233,18 @@
                     @endcan
 
                     @can('courrier.process')
+                        @if($courrier->status === 'affecte')
+                            <form method="POST" action="{{ route('courriers.start_processing', $courrier) }}">
+                                @csrf
+                                <button class="btn btn-outline-primary w-100" type="submit">
+                                    {{ __('courrier.start_processing') }}
+                                </button>
+                            </form>
+                        @endif
+                    @endcan
+
+
+                    @can('courrier.process')
                         <form method="POST" action="{{ route('courriers.submit_validation', $courrier) }}">
                             @csrf
                             <button class="btn btn-gutf w-100" type="submit">

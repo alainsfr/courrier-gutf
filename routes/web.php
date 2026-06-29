@@ -2,18 +2,58 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CourrierController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AuditController;
+use App\Http\Controllers\MessagingController;
+use App\Http\Controllers\ChatWidgetController;
+use App\Http\Controllers\Admin\UserAdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'active'])->group(function () {
+
+
+
+    // Dashboard
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
+    // Notifications (in-app)
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+
+    // Audit (V1 - journal d'audit)
+    Route::middleware('permission:auditor.view')->group(function () {
+        Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+
+        Route::get('/audit/export/excel', [AuditController::class, 'exportExcel'])
+            ->middleware('permission:auditor.export')
+            ->name('audit.export.excel');
+
+        Route::get('/audit/export/pdf', [AuditController::class, 'exportPdf'])
+            ->middleware('permission:auditor.export')
+            ->name('audit.export.pdf');
+    });
+
+    // --- Admin / Users ---
+    Route::prefix('admin')->name('admin.')->middleware('permission:user.manage')->group(function () {
+        Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserAdminController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserAdminController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserAdminController::class, 'update'])->name('users.update');
+        Route::patch('/users/{user}/toggle-active', [UserAdminController::class, 'toggleActive'])->name('users.toggle_active');
+        Route::patch('/users/{user}/reset-password', [UserAdminController::class, 'resetPassword'])->name('users.reset_password');
+    });
+
+    // --- Courriers ---
     Route::prefix('courriers')->name('courriers.')->group(function () {
         Route::get('/', [CourrierController::class, 'index'])
             ->middleware('permission:courrier.view')
@@ -35,6 +75,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('permission:courrier.assign')
             ->name('assign');
 
+        // Processing
+        Route::post('/{courrier}/start-processing', [CourrierController::class, 'startProcessing'])
+            ->middleware('permission:courrier.process')
+            ->name('start_processing');
+
         Route::post('/{courrier}/submit-validation', [CourrierController::class, 'submitForValidation'])
             ->middleware('permission:courrier.process')
             ->name('submit_validation');
@@ -51,24 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->middleware('permission:courrier.archive')
             ->name('archive');
 
-        Route::get('/export/excel', [CourrierController::class, 'exportExcel'])
-            ->middleware('permission:courrier.export')
-            ->name('export.excel');
-
-        Route::get('/export/pdf', [CourrierController::class, 'exportPdf'])
-            ->middleware('permission:courrier.export')
-            ->name('export.pdf');
-
-        Route::get('/export/excel', [CourrierController::class, 'exportExcel'])
-            ->middleware('permission:courrier.export')
-            ->name('export.excel');
-
-        Route::get('/export/pdf', [CourrierController::class, 'exportPdf'])
-            ->middleware('permission:courrier.export')
-            ->name('export.pdf');
-
-
-        // Attachments (IMPORTANT: preview BEFORE download)
+        // Attachments (preview BEFORE download)
         Route::post('/{courrier}/attachments', [CourrierController::class, 'uploadAttachment'])
             ->middleware('permission:courrier.attach')
             ->name('attachments.upload');
@@ -84,11 +112,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/{courrier}/attachments/{attachment}', [CourrierController::class, 'deleteAttachment'])
             ->middleware('permission:courrier.detach')
             ->name('attachments.delete');
+
+        // Exports
+        Route::get('/export/excel', [CourrierController::class, 'exportExcel'])
+            ->middleware('permission:courrier.export')
+            ->name('export.excel');
+
+        Route::get('/export/pdf', [CourrierController::class, 'exportPdf'])
+            ->middleware('permission:courrier.export')
+            ->name('export.pdf');
     });
 
+    // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Messaging
+    Route::middleware('permission:chat.view')->group(function () {
+        Route::get('/messages', [MessagingController::class, 'index'])->name('messages.index');
+        Route::get('/messages/{conversation}', [MessagingController::class, 'show'])->name('messages.show');
+    });
+
+    Route::middleware('permission:chat.send')->group(function () {
+        Route::post('/messages/{conversation}', [MessagingController::class, 'send'])->name('messages.send');
+        Route::post('/messages/direct', [MessagingController::class, 'startDirect'])->name('messages.direct');
+    });
+
+    Route::middleware('permission:chat.group.create')->group(function () {
+        Route::post('/messages/group', [MessagingController::class, 'createGroup'])->name('messages.group.create');
+    });
+
+    // Chat Widget
+    Route::get('/chat/mini', [ChatWidgetController::class, 'mini'])
+        ->middleware('permission:chat.view')
+        ->name('chat.mini');
 });
 
 Route::post('/locale', function (Request $request) {

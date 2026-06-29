@@ -1,6 +1,7 @@
 @php
     $authUser = Auth::user();
     $authName = $authUser ? (string) $authUser->name : '';
+    $unreadCount = $authUser ? $authUser->unreadNotifications()->count() : 0;
 @endphp
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
@@ -33,6 +34,23 @@
                         </a>
                     </li>
                 @endcan
+
+                @can('user.manage')
+                    <li class="nav-item">
+                        <a class="nav-link @if(request()->routeIs('admin.users.*')) active @endif" href="{{ route('admin.users.index') }}">
+                            {{ __('nav.users') }}
+                        </a>
+                    </li>
+                @endcan
+
+                <li class="nav-item">
+                    <a class="nav-link @if(request()->routeIs('notifications.*')) active @endif" href="{{ route('notifications.index') }}">
+                        {{ __('notifications.title') }}
+                        @if($unreadCount > 0)
+                            <span class="badge text-bg-danger ms-1">{{ $unreadCount }}</span>
+                        @endif
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex align-items-center gap-3">
