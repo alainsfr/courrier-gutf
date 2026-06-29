@@ -52,11 +52,24 @@
                     {{-- 3. Liste des conversations actives --}}
                     <div class="list-group list-group-flush">
                         @forelse($conversations as $c)
+                            @php
+                                // Détection du partenaire de discussion pour le listing
+                                $chatPartner = null;
+                                if ($c->type === 'direct') {
+                                    $chatPartner = $c->participants
+                                        ->first(fn($p) => (int) $p->user_id !== (int) auth()->id())
+                                        ?->user;
+                                }
+                            @endphp
                             <a class="list-group-item list-group-item-action border rounded-3 p-3 mb-2 d-flex align-items-center justify-content-between hover:bg-light"
                                href="{{ route('messages.show', $c) }}">
                                 <div style="min-width: 0; flex: 1;">
                                     <div class="fw-bold text-dark text-truncate">
-                                        {{ $c->type === 'group' ? '👥 ' . ($c->title ?? 'Groupe') : '👤 Discussion directe' }}
+                                        @if($c->type === 'direct' && $chatPartner)
+                                            👤 {{ $chatPartner->name }}
+                                        @else
+                                            👥 {{ $c->title ?? 'Groupe' }}
+                                        @endif
                                     </div>
                                     <div class="text-muted small text-truncate mt-1">
                                         @php $last = $c->messages->first(); @endphp

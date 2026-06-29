@@ -169,6 +169,15 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::post('/messages/group', [MessagingController::class, 'createGroup'])->name('messages.group.create');
     });
 
+    // API complémentaires pour l'interactivité du Chat Widget flottant
+    Route::get('/chat/mini/{conversation}/messages', [ChatWidgetController::class, 'getMessages'])
+        ->middleware('permission:chat.view')
+        ->name('chat.mini.messages');
+
+    Route::post('/chat/mini/{conversation}/send', [ChatWidgetController::class, 'sendMessage'])
+        ->middleware('permission:chat.send')
+        ->name('chat.mini.send');
+
     // Chat Widget
     Route::get('/chat/mini', [ChatWidgetController::class, 'mini'])
         ->middleware('permission:chat.view')

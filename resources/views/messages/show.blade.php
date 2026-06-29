@@ -1,4 +1,14 @@
 <x-app-layout>
+    @php
+        // Détection dynamique du collaborateur pour les discussions directes
+        $chatPartner = null;
+        if ($conversation->type === 'direct') {
+            $chatPartner = $conversation->participants
+                ->first(fn($p) => (int) $p->user_id !== (int) auth()->id())
+                ?->user;
+        }
+    @endphp
+
     <div class="row g-4" style="height: calc(100vh - 180px); min-height: 500px;">
         
         {{-- COLONNE GAUCHE : NAVIGATION (1/3) --}}
@@ -10,11 +20,6 @@
                 
                 <div class="card-body p-4 overflow-y-auto" style="flex: 1;">
                     <div class="list-group list-group-flush">
-                        {{-- Liste des conversations (dupliquée pour la navigation fluide) --}}
-                        @foreach($conversation->participants as $part)
-                            {{-- On récupère la liste complète des conversations de l'utilisateur --}}
-                        @endforeach
-                        
                         {{-- Bouton de retour rapide vers l'accueil --}}
                         <a class="btn btn-outline-secondary w-100 py-2.5 rounded-3 fw-semibold mb-3 small" href="{{ route('messages.index') }}">
                             ← Liste de mes discussions
@@ -47,9 +52,19 @@
                 <div class="card-header bg-white p-4 border-bottom d-flex align-items-center justify-content-between">
                     <div>
                         <h5 class="fw-bold text-dark mb-1">
-                            {{ $conversation->type === 'group' ? '👥 ' . ($conversation->title ?? 'Groupe') : '👤 Discussion directe' }}
+                            @if($conversation->type === 'direct' && $chatPartner)
+                                👤 {{ $chatPartner->name }}
+                            @else
+                                👥 {{ $conversation->title ?? 'Groupe' }}
+                            @endif
                         </h5>
-                        <p class="text-muted small mb-0">{{ $conversation->participants->count() }} collaborateur(s) dans ce salon</p>
+                        <p class="text-muted small mb-0">
+                            @if($conversation->type === 'direct' && $chatPartner)
+                                Discussion directe avec {{ $chatPartner->name }}
+                            @else
+                                {{ $conversation->participants->count() }} collaborateur(s) dans ce salon
+                            @endif
+                        </p>
                     </div>
                     <a class="btn btn-outline-secondary btn-sm rounded-3 d-lg-none" href="{{ route('messages.index') }}">← Retour</a>
                 </div>
@@ -109,11 +124,9 @@
             const input = document.getElementById('msgInput');
 
             if (box) {
-                // Défilement automatique vers le bas à l'ouverture
                 box.scrollTop = box.scrollHeight;
             }
 
-            // Écoute dynamique du canal privé de la conversation
             if (window.Echo) {
                 window.Echo.private(`conversations.${convId}`)
                     .listen('.message.sent', (e) => {
