@@ -8,19 +8,15 @@ use Illuminate\Support\Facades\Schema;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Enregistrer les services applicatifs
+     * Register any application services.
      */
     public function register(): void
     {
-        // En production (sur PlanetHoster), on redirige dynamiquement le dossier public
-        // vers le dossier parent de l'application (/home/ydykrmdy/courrier/)
-        if (config('app.env') === 'production') {
-            $this->app->usePublicPath(dirname(base_path()));
-        }
+        //
     }
 
     /**
-     * Initialiser les services applicatifs au démarrage
+     * Bootstrap any application services.
      */
     public function boot(): void
     {

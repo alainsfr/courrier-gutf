@@ -11,7 +11,7 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         channels: __DIR__.'/../routes/channels.php',
         web: __DIR__ . '/../routes/web.php',
@@ -41,3 +41,13 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->create();
+
+/**
+ * EN PRODUCTION : Redirige précocement le chemin public vers le dossier parent (/home/ydykrmdy/courrier/)
+ * de façon à ce que le manifeste Vite soit résolu à la racine du sous-domaine.
+ */
+if (env('APP_ENV') === 'production') {
+    $app->usePublicPath(dirname(__DIR__));
+}
+
+return $app;
