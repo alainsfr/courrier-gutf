@@ -6,12 +6,9 @@ define('LARAVEL_START', microtime(true));
 
 $basePath = __DIR__ . '/app';
 
+// 1. Charger l'autoloader de Composer
 require $basePath . '/vendor/autoload.php';
-$app = require_once $basePath . '/bootstrap/app.php';
 
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-
-$request = Illuminate\Http\Request::capture();
-$response = $kernel->handle($request)->send();
-
-$kernel->terminate($request, $response);
+// 2. Démarrer Laravel 12 et traiter la requête entrante
+(require_once $basePath . '/bootstrap/app.php')
+    ->handleRequest(Illuminate\Http\Request::capture());
