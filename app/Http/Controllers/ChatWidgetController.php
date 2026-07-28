@@ -18,38 +18,41 @@ class ChatWidgetController extends Controller
         $userId = Auth::id();
 
         $conversations = Conversation::query()
-            ->whereHas('participants', fn($q) => $q->where('user_id', $userId))
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $userId))
             ->with([
-                'messages' => fn($q) => $q->latest()->limit(1),
-                'participants.user:id,name'
+                'messages' => fn ($q) => $q->latest()->limit(1),
+                'participants.user:id,name',
+            ])
+            ->withCount([
+                // Un seul sous-select par conversation (évite le N+1 sur messages()->count())
+                'messages as unread_count' => function ($q) use ($userId) {
+                    $q->whereRaw(
+                        'messages.created_at > COALESCE(
+                            (SELECT last_read_at FROM conversation_participants
+                             WHERE conversation_participants.conversation_id = messages.conversation_id
+                               AND conversation_participants.user_id = ?),
+                            \'1970-01-01\'
+                        )',
+                        [$userId]
+                    );
+                },
             ])
             ->latest('updated_at')
             ->limit(20)
             ->get();
 
-        $parts = ConversationParticipant::where('user_id', $userId)
-            ->get()
-            ->keyBy('conversation_id');
-
         $items = [];
         $unreadTotal = 0;
 
         foreach ($conversations as $c) {
-            $p = $parts->get($c->id);
-            $lastRead = $p?->last_read_at;
-
-            $unread = $lastRead 
-                ? $c->messages()->where('created_at', '>', $lastRead)->count()
-                : $c->messages()->count();
-
+            $unread = (int) $c->unread_count;
             $unreadTotal += $unread;
 
-            // Détection du titre bilingue ou du nom du correspondant
             $title = __('chat.group');
             if ($c->type === 'group') {
                 $title = $c->title ?: __('chat.group');
             } else {
-                $partner = $c->participants->first(fn($part) => $part->user_id !== $userId)?->user;
+                $partner = $c->participants->first(fn ($part) => $part->user_id !== $userId)?->user;
                 $title = $partner ? $partner->name : __('chat.direct');
             }
 
@@ -75,8 +78,7 @@ class ChatWidgetController extends Controller
      */
     public function getMessages(Conversation $conversation)
     {
-        // Sécurité : Vérifier que l'utilisateur est bien membre de la conversation
-        abort_unless($conversation->participants()->where('user_id', Auth::id())->exists(), 403);
+        $this->authorize('view', $conversation);
 
         $messages = $conversation->messages()
             ->with('sender:id,name')
@@ -86,7 +88,6 @@ class ChatWidgetController extends Controller
             ->reverse()
             ->values();
 
-        // Marquer la conversation comme lue par la même occasion
         ConversationParticipant::where('conversation_id', $conversation->id)
             ->where('user_id', Auth::id())
             ->update(['last_read_at' => now()]);
@@ -99,7 +100,7 @@ class ChatWidgetController extends Controller
      */
     public function sendMessage(Request $request, Conversation $conversation)
     {
-        abort_unless($conversation->participants()->where('user_id', Auth::id())->exists(), 403);
+        $this->authorize('send', $conversation);
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:2000'],
@@ -111,7 +112,6 @@ class ChatWidgetController extends Controller
             'body' => $validated['body'],
         ]);
 
-        // Diffusion temps réel via WebSockets
         broadcast(new \App\Events\MessageSent($msg))->toOthers();
 
         return response()->json([
@@ -121,7 +121,7 @@ class ChatWidgetController extends Controller
                 'body' => $msg->body,
                 'sender' => ['id' => Auth::id(), 'name' => Auth::user()->name],
                 'created_at' => $msg->created_at->toISOString(),
-            ]
+            ],
         ]);
     }
 }

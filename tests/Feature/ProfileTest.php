@@ -30,6 +30,7 @@ class ProfileTest extends TestCase
             ->patch('/profile', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'locale' => 'fr',
             ]);
 
         $response
@@ -40,6 +41,7 @@ class ProfileTest extends TestCase
 
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
+        $this->assertSame('fr', $user->locale);
         $this->assertNull($user->email_verified_at);
     }
 
@@ -52,6 +54,7 @@ class ProfileTest extends TestCase
             ->patch('/profile', [
                 'name' => 'Test User',
                 'email' => $user->email,
+                'locale' => 'fr',
             ]);
 
         $response
@@ -90,8 +93,11 @@ class ProfileTest extends TestCase
                 'password' => 'wrong-password',
             ]);
 
+        // destroy() utilise validate() (bag default) sur le champ "password"
+        // avec la règle current_password — la clé d'erreur reste "password"
+        // (le message affiché peut être "validation.current_password").
         $response
-            ->assertSessionHasErrorsIn('userDeletion', 'password')
+            ->assertSessionHasErrors('password')
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->fresh());

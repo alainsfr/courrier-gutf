@@ -18,6 +18,7 @@ class UserAdminController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         $users = User::query()
+            ->with('roles:id,name')
             ->when($q !== '', function ($sub) use ($q) {
                 $sub->where('name', 'like', "%{$q}%")
                     ->orWhere('email', 'like', "%{$q}%");
@@ -44,7 +45,7 @@ class UserAdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'lowercase', 'unique:users,email'],
             'locale' => ['required', Rule::in(['fr', 'en'])],
-            'role' => ['required', 'string'],
+            'role' => ['required', 'string', Rule::exists('roles', 'name')],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -78,7 +79,7 @@ class UserAdminController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'lowercase', Rule::unique('users', 'email')->ignore($user->id)],
             'locale' => ['required', Rule::in(['fr', 'en'])],
-            'role' => ['required', 'string'],
+            'role' => ['required', 'string', Rule::exists('roles', 'name')],
             'is_active' => ['nullable', 'boolean'],
         ]);
 

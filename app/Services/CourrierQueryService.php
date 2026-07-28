@@ -33,6 +33,11 @@ class CourrierQueryService
             $q->where(function ($sub) use ($request) {
                 $sub->where('created_by_user_id', $request->user()->id)
                     ->orWhere('assigned_to_user_id', $request->user()->id);
+
+                // Validateurs : voir aussi les plis en attente de validation
+                if ($request->user()->can('courrier.validate')) {
+                    $sub->orWhere('status', 'en_validation');
+                }
             });
         }
 

@@ -36,12 +36,17 @@ class MessagingController extends Controller
 
     public function show(Conversation $conversation): View
     {
-        $this->authorizeMembership($conversation->id);
+        $this->authorize('view', $conversation);
 
         $conversation->load([
             'participants.user:id,name,email',
-            'messages.sender:id,name,email',
+            'messages' => fn ($q) => $q->with('sender:id,name,email')->latest()->limit(200),
         ]);
+        // Remettre chronologique pour l'UI
+        $conversation->setRelation(
+            'messages',
+            $conversation->messages->sortBy('id')->values()
+        );
 
         // mark read
         ConversationParticipant::where('conversation_id', $conversation->id)
@@ -134,7 +139,7 @@ class MessagingController extends Controller
 
     public function send(Request $request, Conversation $conversation): RedirectResponse
     {
-        $this->authorizeMembership($conversation->id);
+        $this->authorize('send', $conversation);
 
         $validated = $request->validate([
             'body' => ['required','string','max:2000'],
@@ -150,15 +155,5 @@ class MessagingController extends Controller
         broadcast(new MessageSent($msg))->toOthers();
 
         return back();
-    }
-
-    private function authorizeMembership(int $conversationId): void
-    {
-        abort_unless(
-            ConversationParticipant::where('conversation_id', $conversationId)
-                ->where('user_id', Auth::id())
-                ->exists(),
-            403
-        );
     }
 }

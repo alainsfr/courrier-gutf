@@ -28,10 +28,15 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         $query = \App\Models\Courrier::query();
 
         // Si l'utilisateur n'est pas Admin, on restreint à ses courriers (créés ou assignés)
+        // + plis en validation pour les validateurs
         if (!$isAdmin) {
             $query->where(function ($sub) use ($user) {
                 $sub->where('created_by_user_id', $user->id)
                     ->orWhere('assigned_to_user_id', $user->id);
+
+                if ($user->can('courrier.validate')) {
+                    $sub->orWhere('status', 'en_validation');
+                }
             });
         }
 
@@ -93,6 +98,15 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->middleware('permission:courrier.create')
             ->name('store');
 
+        // Exports AVANT /{courrier} pour éviter le shadowing du model binding
+        Route::get('/export/excel', [CourrierController::class, 'exportExcel'])
+            ->middleware('permission:courrier.export')
+            ->name('export.excel');
+
+        Route::get('/export/pdf', [CourrierController::class, 'exportPdf'])
+            ->middleware('permission:courrier.export')
+            ->name('export.pdf');
+
         Route::get('/{courrier}', [CourrierController::class, 'show'])
             ->middleware('permission:courrier.view')
             ->name('show');
@@ -138,15 +152,6 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::delete('/{courrier}/attachments/{attachment}', [CourrierController::class, 'deleteAttachment'])
             ->middleware('permission:courrier.detach')
             ->name('attachments.delete');
-
-        // Exports
-        Route::get('/export/excel', [CourrierController::class, 'exportExcel'])
-            ->middleware('permission:courrier.export')
-            ->name('export.excel');
-
-        Route::get('/export/pdf', [CourrierController::class, 'exportPdf'])
-            ->middleware('permission:courrier.export')
-            ->name('export.pdf');
     });
 
     // Profile
