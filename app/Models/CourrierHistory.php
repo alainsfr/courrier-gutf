@@ -14,6 +14,10 @@ class CourrierHistory extends Model
         'action',
         'from_status',
         'to_status',
+        'ancienne_etape_id',
+        'nouvelle_etape_id',
+        'note_metier',
+        'action_type',
         'actor_user_id',
         'metadata',
         'created_at',
@@ -32,5 +36,15 @@ class CourrierHistory extends Model
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_user_id');
+    }
+
+    public function ancienneEtape(): BelongsTo
+    {
+        return $this->belongsTo(WorkflowEtape::class, 'ancienne_etape_id');
+    }
+
+    public function nouvelleEtape(): BelongsTo
+    {
+        return $this->belongsTo(WorkflowEtape::class, 'nouvelle_etape_id');
     }
 }

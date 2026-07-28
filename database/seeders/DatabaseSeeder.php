@@ -8,6 +8,12 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Référentiels workflow (CCT) — toujours
+        $this->call([
+            BureauSeeder::class,
+            WorkflowEtapesSeeder::class,
+        ]);
+
         if (app()->environment(['local', 'development'])) {
             $this->call([
                 RolesAndPermissionsSeeder::class,

@@ -24,6 +24,8 @@ class Courrier extends Model
         'status',
         'created_by_user_id',
         'assigned_to_user_id',
+        'bureau_actuel_id',
+        'workflow_etape_id',
         'validated_by_user_id',
         'validated_at',
         'archived_at',
@@ -45,6 +47,21 @@ class Courrier extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to_user_id');
+    }
+
+    public function bureauActuel(): BelongsTo
+    {
+        return $this->belongsTo(Bureau::class, 'bureau_actuel_id');
+    }
+
+    public function workflowEtape(): BelongsTo
+    {
+        return $this->belongsTo(WorkflowEtape::class, 'workflow_etape_id');
+    }
+
+    public function validatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'validated_by_user_id');
     }
 
     public function histories(): HasMany
