@@ -5,5 +5,6 @@ return [
     'profile' => 'Profile',
     'logout' => 'Log out',
     'users' => 'Users',
+    'kanban' => 'Kanban',
 
 ];

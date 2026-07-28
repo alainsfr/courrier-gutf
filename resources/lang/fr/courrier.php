@@ -144,10 +144,15 @@ return [
 
     'start_processing' => 'Passer en traitement',
 
-
-
-
-
-
-
+    'kanban_title' => 'Tableau Kanban',
+    'kanban_subtitle' => 'Pipeline de votre circuit de traitement',
+    'kanban_bureau' => 'Bureau : :bureau',
+    'kanban_all_bureaux' => 'Tous les bureaux',
+    'kanban_list_view' => 'Vue liste',
+    'kanban_empty' => 'Aucun courrier',
+    'kanban_invalid_move' => 'Déplacement non autorisé (circuit séquentiel).',
+    'kanban_reject_title' => 'Rejet métier',
+    'kanban_reject_help' => 'Indiquez le motif du retour vers une étape antérieure.',
+    'kanban_reject_confirm' => 'Confirmer le rejet',
+    'kanban_reject_required' => 'Le motif de rejet est obligatoire.',
 ];

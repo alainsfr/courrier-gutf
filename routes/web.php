@@ -7,6 +7,7 @@ use App\Http\Controllers\AuditController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\ChatWidgetController;
 use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\WorkflowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -106,6 +107,14 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::get('/export/pdf', [CourrierController::class, 'exportPdf'])
             ->middleware('permission:courrier.export')
             ->name('export.pdf');
+
+        Route::get('/kanban', [WorkflowController::class, 'kanban'])
+            ->middleware('permission:courrier.view')
+            ->name('kanban');
+
+        Route::post('/{courrier}/transfer', [WorkflowController::class, 'transfer'])
+            ->middleware('permission:courrier.view')
+            ->name('transfer');
 
         Route::get('/{courrier}', [CourrierController::class, 'show'])
             ->middleware('permission:courrier.view')

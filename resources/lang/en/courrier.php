@@ -140,9 +140,15 @@ return [
     'export_summary_by_assignee' => 'Répartition par assignation',
     'export_summary_count' => 'Nombre',
 
-
-
-
-
-
+    'kanban_title' => 'Kanban board',
+    'kanban_subtitle' => 'Pipeline view of your processing circuit',
+    'kanban_bureau' => 'Bureau: :bureau',
+    'kanban_all_bureaux' => 'All bureaux',
+    'kanban_list_view' => 'List view',
+    'kanban_empty' => 'No mail items',
+    'kanban_invalid_move' => 'Invalid move (sequential workflow only).',
+    'kanban_reject_title' => 'Business rejection',
+    'kanban_reject_help' => 'Provide a reason for returning to a previous step.',
+    'kanban_reject_confirm' => 'Confirm rejection',
+    'kanban_reject_required' => 'A rejection reason is required.',
 ];

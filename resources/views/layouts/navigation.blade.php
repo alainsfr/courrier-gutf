@@ -53,11 +53,19 @@
                 {{-- 2. Courriers --}}
                 @can('courrier.view')
                     <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('courriers.*')) active bg-light fw-bold @endif" href="{{ route('courriers.index') }}">
+                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('courriers.*') && ! request()->routeIs('courriers.kanban')) active bg-light fw-bold @endif" href="{{ route('courriers.index') }}">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0l-7.5-4.615a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                             </svg>
                             <span>{{ __('nav.courriers') }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('courriers.kanban')) active bg-light fw-bold @endif" href="{{ route('courriers.kanban') }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
+                            </svg>
+                            <span>{{ __('nav.kanban') }}</span>
                         </a>
                     </li>
                 @endcan

@@ -28,5 +28,7 @@
         @vite(['resources/js/chat.js'])
         <x-chat-widget :initial-unread="0" />
     @endcan
+
+    @stack('scripts')
 </body>
 </html>
