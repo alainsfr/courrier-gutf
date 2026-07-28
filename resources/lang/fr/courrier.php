@@ -78,6 +78,7 @@ return [
         'attachment_uploaded' => 'Pièce jointe ajoutée',
         'attachment_deleted' => 'Pièce jointe supprimée',
         'processing_started' => 'Traitement démarré',
+        'workflow_transfer' => 'Transfert d’étape',
 
     ],
 
@@ -155,4 +156,20 @@ return [
     'kanban_reject_help' => 'Indiquez le motif du retour vers une étape antérieure.',
     'kanban_reject_confirm' => 'Confirmer le rejet',
     'kanban_reject_required' => 'Le motif de rejet est obligatoire.',
+
+    'show_viewer_title' => 'Document numérisé',
+    'show_viewer_unsupported' => 'Aperçu non disponible pour ce format.',
+    'show_viewer_empty_hint' => 'Ajoutez une pièce jointe pour activer le visualiseur.',
+    'show_meta_title' => 'Fiche du dossier',
+    'show_tf' => 'Réf. TF / externe',
+    'show_owner' => 'Propriétaire / partie',
+    'show_bureau' => 'Bureau actuel',
+    'show_actions_title' => 'Actions de traitement',
+    'show_action_validate' => 'Valider',
+    'show_action_reject' => 'Rejeter',
+    'show_action_return' => 'Renvoyer',
+    'show_actions_none' => 'Aucune transition disponible sur cette étape.',
+    'show_actions_locked' => 'Actions réservées aux agents du bureau : :bureau.',
+    'show_archived' => 'Dossier archivé — actions clôturées.',
+    'show_transfer_ok' => 'Transfert workflow enregistré.',
 ];

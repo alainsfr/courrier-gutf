@@ -6,6 +6,7 @@ use App\Exports\CourriersWorkbookExport;
 use App\Models\Courrier;
 use App\Models\CourrierAttachment;
 use App\Models\User;
+use App\Models\WorkflowEtape;
 use App\Services\CourrierQueryService;
 use App\Services\AuditService;
 use App\Notifications\CourrierStatusNotification;
@@ -200,17 +201,49 @@ class CourrierController extends Controller
     {
         $this->authorize('view', $courrier);
 
-        // Chargement des relations nécessaires pour l'affichage de l'historique et des PJ
         $courrier->load([
             'assignedTo:id,name,email',
             'createdBy:id,name,email',
+            'bureauActuel:id,nom,code,icon,color',
+            'workflowEtape:id,libelle,ordre,ui_color,ui_icon,is_rejectable,bureau_id,delai_jours',
+            'histories' => fn ($q) => $q->latest('id'),
             'histories.actor:id,name,email',
-            'attachments.uploadedBy:id,name,email'
+            'histories.ancienneEtape:id,libelle,ordre,ui_color',
+            'histories.nouvelleEtape:id,libelle,ordre,ui_color',
+            'attachments.uploadedBy:id,name,email',
         ]);
 
         $agents = User::orderBy('name')->get(['id', 'name', 'email']);
 
-        return view('courriers.show', compact('courrier', 'agents'));
+        $nextEtape = null;
+        $prevEtape = null;
+        if ($courrier->workflowEtape) {
+            $nextEtape = WorkflowEtape::query()
+                ->where('ordre', (int) $courrier->workflowEtape->ordre + 1)
+                ->first();
+            $prevEtape = WorkflowEtape::query()
+                ->where('ordre', (int) $courrier->workflowEtape->ordre - 1)
+                ->first();
+        }
+
+        $previewAttachment = $courrier->attachments
+            ->first(fn ($a) => str_contains(strtolower((string) $a->mime), 'pdf'))
+            ?? $courrier->attachments->first();
+
+        $user = Auth::user();
+        $canActOnBureau = $user
+            && $user->bureau_id
+            && $courrier->bureau_actuel_id
+            && (int) $user->bureau_id === (int) $courrier->bureau_actuel_id;
+
+        return view('courriers.show', compact(
+            'courrier',
+            'agents',
+            'nextEtape',
+            'prevEtape',
+            'previewAttachment',
+            'canActOnBureau'
+        ));
     }
 
     public function assign(Request $request, Courrier $courrier): RedirectResponse

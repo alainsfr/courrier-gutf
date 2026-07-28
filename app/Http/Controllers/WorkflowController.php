@@ -108,19 +108,31 @@ class WorkflowController extends Controller
                 $actionType
             );
         } catch (ValidationException $e) {
-            return response()->json([
-                'ok' => false,
-                'message' => collect($e->errors())->flatten()->first() ?? 'Transition invalide.',
-                'errors' => $e->errors(),
-            ], 422);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => collect($e->errors())->flatten()->first() ?? 'Transition invalide.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            throw $e;
         } catch (\Throwable $e) {
-            return response()->json([
-                'ok' => false,
-                'message' => $e->getMessage() ?: 'Échec du transfert.',
-            ], 422);
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $e->getMessage() ?: 'Échec du transfert.',
+                ], 422);
+            }
+
+            return back()->withErrors(['workflow' => $e->getMessage() ?: 'Échec du transfert.']);
         }
 
         $courrier->refresh()->load(['workflowEtape', 'bureauActuel']);
+
+        if (! $request->expectsJson()) {
+            return back()->with('status', 'workflow-transferred');
+        }
 
         return response()->json([
             'ok' => true,

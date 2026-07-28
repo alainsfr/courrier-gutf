@@ -1,33 +1,42 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div>
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="badge text-bg-light border small text-muted">Référence</span>
-                    <h1 class="h5 mb-0 text-dark fw-bold">{{ $courrier->reference_interne }}</h1>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+                <div class="mb-1 flex flex-wrap items-center gap-2">
+                    <span class="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                        {{ __('courrier.ref') }}
+                    </span>
+                    <h1 class="truncate text-lg font-bold text-slate-900">{{ $courrier->reference_interne }}</h1>
+                    @if($courrier->workflowEtape)
+                        <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white"
+                              style="background: {{ $courrier->workflowEtape->ui_color ?? '#64748B' }}">
+                            {{ $courrier->workflowEtape->libelle }}
+                        </span>
+                    @endif
                 </div>
-                <p class="text-muted small mb-0">{{ \Illuminate\Support\Str::limit($courrier->objet, 100) }}</p>
+                <p class="mb-0 truncate text-sm text-slate-500">{{ $courrier->objet }}</p>
             </div>
-            <a href="{{ route('courriers.index') }}" class="btn btn-outline-secondary px-4 rounded-3 fw-semibold">
-                ← {{ __('courrier.back') }}
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('courriers.kanban') }}" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 no-underline hover:bg-slate-50">
+                    {{ __('nav.kanban') }}
+                </a>
+                <a href="{{ route('courriers.index') }}" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 no-underline hover:bg-slate-50">
+                    ← {{ __('courrier.back') }}
+                </a>
+            </div>
         </div>
     </x-slot>
 
-    @php
-        $statusClass = 'status-' . str_replace('-', '_', $courrier->status);
-    @endphp
-
     @if (session('status'))
-        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center gap-2">
-            <span>✅</span> <div>{{ session('status') }}</div>
+        <div class="mb-4 flex items-center gap-2 rounded-2xl border-0 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 shadow-sm">
+            {{ session('status') === 'workflow-transferred' ? __('courrier.show_transfer_ok') : session('status') }}
         </div>
     @endif
 
     @if ($errors->any())
-        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">
-            <div class="fw-bold mb-2">{{ __('courrier.form_error_title') }}</div>
-            <ul class="mb-0 small">
+        <div class="mb-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
+            <div class="mb-1 font-bold">{{ __('courrier.form_error_title') }}</div>
+            <ul class="mb-0 list-disc ps-4">
                 @foreach($errors->all() as $e)
                     <li>{{ $e }}</li>
                 @endforeach
@@ -35,316 +44,228 @@
         </div>
     @endif
 
-    <div class="row g-4">
-        {{-- COLONNE PRINCIPALE : DÉTAILS, DOCUMENTS ET TIMELINE --}}
-        <div class="col-lg-8">
-            
-            {{-- 1. Informations générales --}}
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="fs-4">📄</span>
-                            <h5 class="card-title fw-bold text-dark mb-0">Données du pli</h5>
-                        </div>
-                        <span class="status-badge {{ $statusClass }} px-3 py-2">
-                            {{ __('courrier.status_label.' . $courrier->status) }}
-                        </span>
-                    </div>
+    @php
+        $isPdf = $previewAttachment && str_contains(strtolower((string) $previewAttachment->mime), 'pdf');
+        $isImage = $previewAttachment && str_starts_with(strtolower((string) $previewAttachment->mime), 'image/');
+        $proprietaire = $courrier->type === 'entrant'
+            ? ($courrier->expediteur ?: '—')
+            : ($courrier->destinataire ?: '—');
+        $etapeColor = $courrier->workflowEtape?->ui_color ?? '#64748B';
+    @endphp
 
-                    <div class="row g-3">
-                        <div class="col-sm-6 border-bottom pb-2">
-                            <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">{{ __('courrier.type') }}</div>
-                            <div class="text-dark fw-bold mt-1">
-                                @if($courrier->type === 'entrant')
-                                    📥 ENTRANT (Pli reçu)
-                                @else
-                                    📤 SORTANT (Pli envoyé)
-                                @endif
-                            </div>
-                        </div>
+    {{-- SPLIT-SCREEN PREMIUM --}}
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-5">
 
-                        <div class="col-sm-6 border-bottom pb-2">
-                            <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">{{ __('courrier.external_ref') }}</div>
-                            <div class="text-dark fw-semibold mt-1">{{ $courrier->reference_externe ?? '—' }}</div>
-                        </div>
-
-                        <div class="col-sm-6 border-bottom pb-2">
-                            <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">{{ __('courrier.sender') }}</div>
-                            <div class="text-dark fw-semibold mt-1">{{ $courrier->expediteur ?? '—' }}</div>
-                        </div>
-
-                        <div class="col-sm-6 border-bottom pb-2">
-                            <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">{{ __('courrier.recipient') }}</div>
-                            <div class="text-dark fw-semibold mt-1">{{ $courrier->destinataire ?? '—' }}</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <div class="text-muted small fw-semibold text-uppercase mb-2" style="font-size: 0.75rem;">{{ __('courrier.description') }}</div>
-                        <div class="bg-light p-3 rounded-3 text-dark style-text" style="white-space: pre-line;">{{ $courrier->description ?? 'Aucune description ou note sur ce pli.' }}</div>
+        {{-- GAUCHE : VISUALISEUR DOCUMENT (col-span-2) --}}
+        <section class="order-2 flex min-h-[60vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:order-1 lg:col-span-2 lg:min-h-[78vh]">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+                <div class="min-w-0">
+                    <div class="text-sm font-bold text-slate-800">{{ __('courrier.show_viewer_title') }}</div>
+                    <div class="truncate text-xs text-slate-500">
+                        {{ $previewAttachment?->original_name ?? __('courrier.no_attachments') }}
                     </div>
                 </div>
+                @if($previewAttachment)
+                    <div class="flex shrink-0 items-center gap-2">
+                        <a href="{{ route('courriers.attachments.preview', [$courrier, $previewAttachment]) }}"
+                           target="_blank"
+                           class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 no-underline hover:bg-slate-50">
+                            {{ __('courrier.preview') }}
+                        </a>
+                        <a href="{{ route('courriers.attachments.download', [$courrier, $previewAttachment]) }}"
+                           class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-600 no-underline hover:bg-slate-50">
+                            {{ __('courrier.download') }}
+                        </a>
+                    </div>
+                @endif
             </div>
 
-            {{-- 2. Gestionnaire de Pièces Jointes --}}
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fs-4">📎</span>
-                        <h5 class="card-title fw-bold text-dark mb-0">{{ __('courrier.attachments') }}</h5>
+            <div class="relative flex-1 bg-slate-900/95">
+                @if($previewAttachment && $isPdf)
+                    @php
+                        $previewUrl = route('courriers.attachments.preview', [$courrier, $previewAttachment]);
+                    @endphp
+                    {{-- <object> prioritaire ; iframe en fallback navigateur --}}
+                    <object
+                        data="{{ $previewUrl }}#toolbar=1&navpanes=0"
+                        type="application/pdf"
+                        class="absolute inset-0 h-full w-full border-0 bg-slate-200"
+                        aria-label="{{ $previewAttachment->original_name }}"
+                    >
+                        <iframe
+                            title="{{ $previewAttachment->original_name }}"
+                            src="{{ $previewUrl }}#toolbar=1&navpanes=0"
+                            class="absolute inset-0 h-full w-full border-0 bg-slate-200"
+                        ></iframe>
+                    </object>
+                @elseif($previewAttachment && $isImage)
+                    <div class="flex h-full min-h-[50vh] items-center justify-center p-4 lg:min-h-full">
+                        <img
+                            src="{{ route('courriers.attachments.preview', [$courrier, $previewAttachment]) }}"
+                            alt="{{ $previewAttachment->original_name }}"
+                            class="max-h-full max-w-full rounded-lg object-contain shadow-lg"
+                        >
                     </div>
-                    <span class="badge text-bg-light border px-2 py-1 small text-muted">
-                        {{ $courrier->attachments->count() }} document(s)
+                @elseif($previewAttachment)
+                    <div class="flex h-full min-h-[40vh] flex-col items-center justify-center gap-3 p-6 text-center text-slate-300">
+                        <div class="text-sm">{{ __('courrier.show_viewer_unsupported') }}</div>
+                        <a href="{{ route('courriers.attachments.download', [$courrier, $previewAttachment]) }}"
+                           class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-800 no-underline">
+                            {{ __('courrier.download') }}
+                        </a>
+                    </div>
+                @else
+                    <div class="flex h-full min-h-[40vh] flex-col items-center justify-center gap-2 p-8 text-center text-slate-400">
+                        <div class="text-4xl opacity-40">📄</div>
+                        <div class="text-sm font-medium">{{ __('courrier.no_attachments') }}</div>
+                        <div class="text-xs text-slate-500">{{ __('courrier.show_viewer_empty_hint') }}</div>
+                    </div>
+                @endif
+            </div>
+
+            @if($courrier->attachments->count() > 1)
+                <div class="flex gap-2 overflow-x-auto border-t border-slate-100 bg-slate-50 px-3 py-2">
+                    @foreach($courrier->attachments as $att)
+                        <a href="{{ route('courriers.attachments.preview', [$courrier, $att]) }}"
+                           target="_blank"
+                           class="shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold no-underline
+                                  {{ $previewAttachment && $previewAttachment->id === $att->id ? 'border-slate-800 bg-slate-800 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100' }}">
+                            {{ \Illuminate\Support\Str::limit($att->original_name, 28) }}
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
+        {{-- DROITE : MÉTADONNÉES + ACTIONS + TIMELINE (col-span-1) --}}
+        <aside class="order-1 flex flex-col gap-4 lg:sticky lg:top-4 lg:order-2 lg:col-span-1 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+
+            {{-- Métadonnées --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h2 class="m-0 text-sm font-bold text-slate-900">{{ __('courrier.show_meta_title') }}</h2>
+                    <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                          style="color: {{ $etapeColor }}; background: {{ $etapeColor }}18;">
+                        {{ __('courrier.status_label.'.$courrier->status) }}
                     </span>
                 </div>
 
-                <div class="card-body p-4">
-                    @can('courrier.attach')
-                        @if($courrier->status !== 'archive')
-                            <form method="POST" action="{{ route('courriers.attachments.upload', $courrier) }}" enctype="multipart/form-data" class="mb-4">
-                                @csrf
-                                <div class="row g-2 align-items-center">
-                                    <div class="col-md-9">
-                                        <input type="file" name="file" class="form-control border-slate-200 rounded-3" required>
-                                        <div class="form-text small">{{ __('courrier.attachments_help') }}</div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <button class="btn btn-gutf w-100 py-2 rounded-3 shadow-sm font-semibold small" type="submit">
-                                            {{ __('courrier.upload') }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        @endif
-                    @endcan
-
-                    @if($courrier->attachments->count())
-                        <div class="list-group list-group-flush border rounded-3 overflow-hidden">
-                            @foreach($courrier->attachments as $att)
-                                <div class="list-group-item d-flex align-items-center justify-content-between p-3 flex-wrap gap-2 hover:bg-light">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <span class="fs-3">📄</span>
-                                        <div>
-                                            <div class="fw-bold text-dark mb-1">{{ $att->original_name }}</div>
-                                            <div class="text-muted small" style="font-size: 0.8rem;">
-                                                Par {{ $att->uploadedBy?->name ?? 'Système' }} 
-                                                · {{ number_format(($att->size ?? 0) / 1024, 0) }} KB 
-                                                · {{ $att->created_at->format('d/m/Y H:i') }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex align-items-center gap-2">
-                                        <a class="btn btn-outline-secondary btn-sm px-3 rounded-3 font-semibold"
-                                           target="_blank"
-                                           href="{{ route('courriers.attachments.preview', [$courrier, $att]) }}">
-                                            👁️ {{ __('courrier.preview') }}
-                                        </a>
-
-                                        <a class="btn btn-outline-secondary btn-sm px-3 rounded-3 font-semibold"
-                                           href="{{ route('courriers.attachments.download', [$courrier, $att]) }}">
-                                            📥 {{ __('courrier.download') }}
-                                        </a>
-
-                                        @can('courrier.detach')
-                                            @if($courrier->status !== 'archive')
-                                                <form method="POST" action="{{ route('courriers.attachments.delete', [$courrier, $att]) }}" onsubmit="return confirm('{{ __('courrier.confirm_delete_attachment') }}');" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm px-3 rounded-3 font-semibold">
-                                                        🗑️ {{ __('courrier.delete_attachment') }}
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        @endcan
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-center py-4 text-muted border border-dashed rounded-3">
-                            <div class="fs-1 mb-2">📁</div>
-                            <div class="small">{{ __('courrier.no_attachments') }}</div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- 3. Historique d'Audit (Timeline) --}}
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white border-bottom p-4">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fs-4">⏳</span>
-                        <h5 class="card-title fw-bold text-dark mb-0">{{ __('courrier.history') }}</h5>
+                <dl class="m-0 space-y-3">
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('courrier.show_tf') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm font-semibold text-slate-800">
+                            {{ $courrier->reference_externe ?: $courrier->reference_interne }}
+                        </dd>
                     </div>
-                </div>
-
-                <div class="card-body p-4">
-                    @forelse($courrier->histories as $h)
-                        @php
-                            $labelKey = 'courrier.history_actions.' . $h->action;
-                            $iconKey  = 'courrier.history_icons.' . $h->action;
-
-                            $label = __($labelKey);
-                            if ($label === $labelKey) { $label = $h->action; }
-
-                            $icon  = __($iconKey);
-                            if ($icon === $iconKey) { $icon = '•'; }
-                        @endphp
-
-                        <ul class="timeline">
-                            <li class="timeline-item pb-4">
-                                <span class="timeline-dot"></span>
-
-                                <div class="timeline-meta small text-muted">
-                                    {{ $h->created_at->format('d/m/Y H:i') }} — par <strong>{{ $h->actor?->name ?? 'Système' }}</strong>
-                                </div>
-
-                                <div class="timeline-title fw-bold text-dark mt-1">
-                                    {{ $icon }} {{ $label }}
-                                </div>
-
-                                @if($h->from_status || $h->to_status)
-                                    <div class="text-muted small mt-1">
-                                        {{ $h->from_status ? __('courrier.status_label.' . $h->from_status) : 'Début' }}
-                                        ➔ 
-                                        <strong>{{ $h->to_status ? __('courrier.status_label.' . $h->to_status) : '—' }}</strong>
-                                    </div>
-                                @endif
-
-                                @if($h->metadata)
-                                    <div class="timeline-box bg-light border-0 rounded-3 p-3 mt-2">
-                                        @foreach($h->metadata as $k => $v)
-                                            @php
-                                                $metaLabelKey = 'courrier.history_meta.' . $k;
-                                                $metaLabel = __($metaLabelKey);
-                                                if ($metaLabel === $metaLabelKey) {
-                                                    $metaLabel = ucfirst(str_replace('_', ' ', (string) $k));
-                                                }
-                                            @endphp
-                                            <div class="small text-dark mb-1">
-                                                <strong>{{ $metaLabel }} :</strong> {{ $v }}
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </li>
-                        </ul>
-                    @empty
-                        <div class="text-center py-4 text-muted border border-dashed rounded-3">
-                            <div class="small">{{ __('courrier.no_history') }}</div>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        {{-- COLONNE LATÉRALE : ACTIONS INTELLIGENTES DU WORKFLOW --}}
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm rounded-4 position-sticky" style="top: 24px;">
-                <div class="card-header bg-white border-bottom p-4">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fs-4">⚡</span>
-                        <h5 class="card-title fw-bold text-dark mb-0">Workflow</h5>
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('courrier.subject') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm font-semibold leading-snug text-slate-800">{{ $courrier->objet }}</dd>
                     </div>
-                </div>
-
-                <div class="card-body p-4 d-grid gap-3">
-                    
-                    {{-- Action d'Affectation (Spatie Permission) --}}
-                    @can('courrier.assign')
-                        @if($courrier->status !== 'archive')
-                            <form method="POST" action="{{ route('courriers.assign', $courrier) }}" class="border rounded-3 p-3 bg-light">
-                                @csrf
-                                <label class="form-label fw-bold text-dark small mb-2">{{ __('courrier.assign_to') }}</label>
-                                <select name="assigned_to_user_id" class="form-select border-slate-200 rounded-3 mb-3" required>
-                                    <option value="" disabled selected>Choisir un collaborateur</option>
-                                    @foreach($agents as $a)
-                                        <option value="{{ $a->id }}" @selected($courrier->assigned_to_user_id == $a->id)>
-                                            {{ $a->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button class="btn btn-gutf w-100 py-2 rounded-3 shadow-sm font-semibold small" type="submit">
-                                    📌 {{ __('courrier.assign') }}
-                                </button>
-                            </form>
-                        @endif
-                    @endcan
-
-                    {{-- Action Début Traitement --}}
-                    @can('courrier.process')
-                        @if($courrier->status === 'affecte')
-                            <form method="POST" action="{{ route('courriers.start_processing', $courrier) }}">
-                                @csrf
-                                <button class="btn btn-outline-primary py-3 w-100 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2" type="submit">
-                                    <span>⚙️</span> {{ __('courrier.start_processing') }}
-                                </button>
-                            </form>
-                        @endif
-                    @endcan
-
-                    {{-- Action Soumission Validation --}}
-                    @can('courrier.process')
-                        @if(in_array($courrier->status, ['affecte', 'en_traitement']))
-                            <form method="POST" action="{{ route('courriers.submit_validation', $courrier) }}">
-                                @csrf
-                                <button class="btn btn-primary py-3 w-100 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2" type="submit">
-                                    <span>📤</span> {{ __('courrier.submit_validation') }}
-                                </button>
-                            </form>
-                        @endif
-                    @endcan
-
-                    {{-- Actions de Validation/Rejet (Pour les Validateurs) --}}
-                    @can('courrier.validate')
-                        @if($courrier->status === 'en_validation')
-                            <div class="border rounded-3 p-3 bg-light">
-                                <div class="fw-bold text-dark small mb-3">Décision du validateur</div>
-                                
-                                <form method="POST" action="{{ route('courriers.validate', $courrier) }}" class="mb-3">
-                                    @csrf
-                                    <button class="btn btn-success w-100 py-2.5 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2" type="submit">
-                                        <span>✅</span> {{ __('courrier.validate') }}
-                                    </button>
-                                </form>
-
-                                <form method="POST" action="{{ route('courriers.reject', $courrier) }}">
-                                    @csrf
-                                    <label class="form-label text-muted small fw-semibold">{{ __('courrier.reject_reason') }}</label>
-                                    <textarea name="reason" class="form-control border-slate-200 rounded-3 mb-2" rows="2" required placeholder="Saisir la raison du rejet..."></textarea>
-                                    <button class="btn btn-outline-danger w-100 py-2 rounded-3 font-semibold" type="submit">
-                                        ❌ {{ __('courrier.reject') }}
-                                    </button>
-                                </form>
-                            </div>
-                        @endif
-                    @endcan
-
-                    {{-- Action Archivage --}}
-                    @can('courrier.archive')
-                        @if(in_array($courrier->status, ['valide', 'rejete']))
-                            <form method="POST" action="{{ route('courriers.archive', $courrier) }}">
-                                @csrf
-                                <button class="btn btn-outline-dark py-3 w-100 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2" type="submit">
-                                    <span>📦</span> {{ __('courrier.archive') }}
-                                </button>
-                            </form>
-                        @endif
-                    @endcan
-
-                    {{-- État final clos (Archivé) --}}
-                    @if($courrier->status === 'archive')
-                        <div class="text-center py-4 text-muted bg-light border border-slate-200 rounded-3">
-                            <div class="fs-1 mb-1">📦</div>
-                            <div class="fw-bold">Dossier Archivé</div>
-                            <div class="small">Ce pli est clos et archivé définitivement.</div>
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('courrier.show_owner') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm font-semibold text-slate-800">{{ $proprietaire }}</dd>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                        <div>
+                            <dt class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('courrier.type') }}</dt>
+                            <dd class="m-0 mt-0.5 text-xs font-semibold uppercase text-slate-700">{{ $courrier->type }}</dd>
                         </div>
-                    @endif
-
-                </div>
+                        <div>
+                            <dt class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('courrier.show_bureau') }}</dt>
+                            <dd class="m-0 mt-0.5 text-xs font-semibold text-slate-700">{{ $courrier->bureauActuel?->nom ?? '—' }}</dd>
+                        </div>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ __('courrier.assigned_to') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm text-slate-700">{{ $courrier->assignedTo?->name ?? '—' }}</dd>
+                    </div>
+                </dl>
             </div>
-        </div>
+
+            {{-- Actions bureau (strict) --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h2 class="mb-3 text-sm font-bold text-slate-900">{{ __('courrier.show_actions_title') }}</h2>
+
+                @if($canActOnBureau && $courrier->status !== 'archive')
+                    <div class="space-y-2">
+                        @if($nextEtape)
+                            <form method="POST" action="{{ route('courriers.transfer', $courrier) }}">
+                                @csrf
+                                <input type="hidden" name="nouvelle_etape_id" value="{{ $nextEtape->id }}">
+                                <input type="hidden" name="action_type" value="forward">
+                                <button type="submit"
+                                        class="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-95"
+                                        style="background: {{ $nextEtape->ui_color ?? '#10B981' }}">
+                                    ✓ {{ __('courrier.show_action_validate') }}
+                                    <span class="text-[11px] font-medium opacity-90">→ {{ $nextEtape->libelle }}</span>
+                                </button>
+                            </form>
+                        @endif
+
+                        @if($prevEtape && $courrier->workflowEtape?->is_rejectable)
+                            <form method="POST" action="{{ route('courriers.transfer', $courrier) }}" class="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
+                                @csrf
+                                <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
+                                <input type="hidden" name="action_type" value="reject">
+                                <label class="mb-1 block text-[11px] font-semibold text-rose-700">{{ __('courrier.reject_reason') }}</label>
+                                <textarea name="note_metier" rows="2" required
+                                          class="mb-2 w-full rounded-lg border border-rose-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200"
+                                          placeholder="{{ __('courrier.reject_reason') }}"></textarea>
+                                <button type="submit"
+                                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-white px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-50">
+                                    ✕ {{ __('courrier.show_action_reject') }}
+                                </button>
+                            </form>
+                        @endif
+
+                        @if($prevEtape)
+                            <form method="POST" action="{{ route('courriers.transfer', $courrier) }}">
+                                @csrf
+                                <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
+                                <input type="hidden" name="action_type" value="backward">
+                                <button type="submit"
+                                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100">
+                                    ↺ {{ __('courrier.show_action_return') }}
+                                    <span class="text-[11px] font-medium text-slate-500">→ {{ $prevEtape->libelle }}</span>
+                                </button>
+                            </form>
+                        @endif
+
+                        @if(! $nextEtape && ! $prevEtape)
+                            <p class="mb-0 text-xs text-slate-500">{{ __('courrier.show_actions_none') }}</p>
+                        @endif
+                    </div>
+                @elseif($courrier->status === 'archive')
+                    <div class="rounded-xl bg-slate-50 px-3 py-4 text-center text-xs text-slate-500">
+                        {{ __('courrier.show_archived') }}
+                    </div>
+                @else
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 px-3 py-3 text-xs text-amber-800">
+                        {{ __('courrier.show_actions_locked', ['bureau' => $courrier->bureauActuel?->nom ?? '—']) }}
+                    </div>
+                @endif
+
+                {{-- Affectation (permission séparée, hors actions bureau) --}}
+                @can('courrier.assign')
+                    @if($courrier->status !== 'archive')
+                        <form method="POST" action="{{ route('courriers.assign', $courrier) }}" class="mt-3 border-t border-slate-100 pt-3">
+                            @csrf
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ __('courrier.assign_to') }}</label>
+                            <select name="assigned_to_user_id" class="mb-2 w-full rounded-xl border border-slate-200 px-2.5 py-2 text-sm" required>
+                                @foreach($agents as $a)
+                                    <option value="{{ $a->id }}" @selected($courrier->assigned_to_user_id == $a->id)>{{ $a->name }}</option>
+                                @endforeach
+                            </select>
+                            <button class="w-full rounded-xl bg-slate-800 px-3 py-2 text-sm font-semibold text-white" type="submit">
+                                {{ __('courrier.assign') }}
+                            </button>
+                        </form>
+                    @endif
+                @endcan
+            </div>
+
+            {{-- Timeline traçabilité --}}
+            <x-courrier-timeline :histories="$courrier->histories" />
+        </aside>
     </div>
 </x-app-layout>

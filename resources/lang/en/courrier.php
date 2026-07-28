@@ -77,6 +77,8 @@ return [
         'archived' => 'Mail archived',
         'attachment_uploaded' => 'Attachment added',
         'attachment_deleted' => 'Attachment deleted',
+        'processing_started' => 'Processing started',
+        'workflow_transfer' => 'Step transfer',
     ],
 
     'history_icons' => [
@@ -151,4 +153,20 @@ return [
     'kanban_reject_help' => 'Provide a reason for returning to a previous step.',
     'kanban_reject_confirm' => 'Confirm rejection',
     'kanban_reject_required' => 'A rejection reason is required.',
+
+    'show_viewer_title' => 'Scanned document',
+    'show_viewer_unsupported' => 'Preview unavailable for this format.',
+    'show_viewer_empty_hint' => 'Add an attachment to enable the viewer.',
+    'show_meta_title' => 'File sheet',
+    'show_tf' => 'TF / external ref.',
+    'show_owner' => 'Owner / party',
+    'show_bureau' => 'Current bureau',
+    'show_actions_title' => 'Processing actions',
+    'show_action_validate' => 'Validate',
+    'show_action_reject' => 'Reject',
+    'show_action_return' => 'Send back',
+    'show_actions_none' => 'No transition available on this step.',
+    'show_actions_locked' => 'Actions reserved for agents of bureau: :bureau.',
+    'show_archived' => 'Archived file — actions closed.',
+    'show_transfer_ok' => 'Workflow transfer saved.',
 ];
