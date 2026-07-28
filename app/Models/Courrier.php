@@ -29,6 +29,8 @@ class Courrier extends Model
         'validated_by_user_id',
         'validated_at',
         'archived_at',
+        'date_limite',
+        'is_late',
     ];
 
     protected $casts = [
@@ -37,6 +39,8 @@ class Courrier extends Model
         'date_envoi' => 'date',
         'validated_at' => 'datetime',
         'archived_at' => 'datetime',
+        'date_limite' => 'datetime',
+        'is_late' => 'boolean',
     ];
 
     public function createdBy(): BelongsTo

@@ -8,6 +8,8 @@ use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\ChatWidgetController;
 use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\StatisticsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +63,19 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
 
+    // Statistiques & Rapports (CCF)
+    Route::middleware('permission:courrier.view')->group(function () {
+        Route::get('/statistics', [StatisticsController::class, 'index'])->name('statistics.index');
+
+        Route::get('/statistics/export/pdf', [StatisticsController::class, 'exportPdf'])
+            ->middleware('permission:courrier.export')
+            ->name('statistics.export.pdf');
+
+        Route::get('/statistics/export/excel', [StatisticsController::class, 'exportExcel'])
+            ->middleware('permission:courrier.export')
+            ->name('statistics.export.excel');
+    });
+
     // Audit (V1 - journal d'audit)
     Route::middleware('permission:auditor.view')->group(function () {
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
@@ -111,6 +126,10 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::get('/kanban', [WorkflowController::class, 'kanban'])
             ->middleware('permission:courrier.view')
             ->name('kanban');
+
+        Route::get('/search', [SearchController::class, 'index'])
+            ->middleware('permission:courrier.view')
+            ->name('search');
 
         Route::post('/{courrier}/transfer', [WorkflowController::class, 'transfer'])
             ->middleware('permission:courrier.view')

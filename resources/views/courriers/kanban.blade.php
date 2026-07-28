@@ -76,7 +76,7 @@
                          style="max-height: calc(70vh - 64px);">
 
                         @forelse($cards as $c)
-                            <article class="kanban-card group cursor-grab active:cursor-grabbing rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                            <article class="kanban-card group cursor-grab active:cursor-grabbing rounded-xl border bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md {{ $c->is_late ? 'border-rose-300 ring-1 ring-rose-100' : 'border-slate-200' }}"
                                      data-courrier-id="{{ $c->id }}"
                                      data-etape-id="{{ $etape->id }}"
                                      data-etape-ordre="{{ $etape->ordre }}"
@@ -86,10 +86,17 @@
                                        class="text-[11px] font-bold tracking-wide text-slate-500 hover:text-slate-800 no-underline">
                                         {{ $c->reference_interne }}
                                     </a>
-                                    <span class="rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase"
-                                          style="color: {{ $color }}; background: {{ $color }}18;">
-                                        {{ $c->type }}
-                                    </span>
+                                    <div class="flex shrink-0 flex-col items-end gap-1">
+                                        @if($c->is_late)
+                                            <span class="rounded-md bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                                {{ __('courrier.kanban_late') }}
+                                            </span>
+                                        @endif
+                                        <span class="rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                                              style="color: {{ $color }}; background: {{ $color }}18;">
+                                            {{ $c->type }}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="mb-2 line-clamp-2 text-sm font-semibold text-slate-800 leading-snug">
                                     {{ $c->objet }}
@@ -102,6 +109,11 @@
                                         {{ __('courrier.status_label.'.$c->status) }}
                                     </span>
                                 </div>
+                                @if($c->date_limite)
+                                    <div class="mt-2 text-[10px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-slate-400' }}">
+                                        SLA : {{ $c->date_limite->format('d/m/Y') }}
+                                    </div>
+                                @endif
                             </article>
                         @empty
                             <div class="kanban-empty pointer-events-none rounded-xl border border-dashed border-slate-300 bg-white/40 px-3 py-8 text-center text-xs text-slate-400">

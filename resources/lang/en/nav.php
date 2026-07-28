@@ -6,5 +6,6 @@ return [
     'logout' => 'Log out',
     'users' => 'Users',
     'kanban' => 'Kanban',
-
+    'search' => 'Search',
+    'statistics' => 'Statistics',
 ];

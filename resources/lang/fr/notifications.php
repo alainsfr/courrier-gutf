@@ -22,4 +22,7 @@ return [
 
     'courrier_rejected_title' => 'Courrier rejeté',
     'courrier_rejected_msg' => 'Le courrier :ref a été rejeté.',
+
+    'courrier_late_title' => 'Courrier en retard (SLA)',
+    'courrier_late_msg' => 'Le courrier :ref a dépassé le délai de l’étape « :etape » (limite : :limite).',
 ];

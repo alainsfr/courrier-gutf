@@ -7,6 +7,8 @@ use App\Models\Courrier;
 use App\Models\CourrierHistory;
 use App\Models\User;
 use App\Models\WorkflowEtape;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -63,10 +65,14 @@ class WorkflowService
             $fromStatus = $courrier->status;
             $toStatus = $this->statusPourEtape($nouvelleEtape, $actionType);
 
+            $dateLimite = $this->calculerDateLimite($nouvelleEtape);
+
             $courrier->forceFill([
                 'workflow_etape_id' => $nouvelleEtape->id,
                 'bureau_actuel_id' => $nouvelleEtape->bureau_id,
                 'status' => $toStatus,
+                'date_limite' => $dateLimite,
+                'is_late' => false,
                 'archived_at' => (int) $nouvelleEtape->ordre === 6 ? now() : null,
             ])->save();
 
@@ -87,6 +93,8 @@ class WorkflowService
                     'etape_ordre' => $nouvelleEtape->ordre,
                     'ui_color' => $nouvelleEtape->ui_color,
                     'ui_icon' => $nouvelleEtape->ui_icon,
+                    'delai_jours' => $nouvelleEtape->delai_jours,
+                    'date_limite' => $dateLimite?->toIso8601String(),
                 ],
                 'created_at' => now(),
             ]);
@@ -202,5 +210,24 @@ class WorkflowService
             6 => 'archive',
             default => 'recu',
         };
+    }
+
+    /**
+     * SLA CCT : now + delai_jours en jours ouvrés (week-ends exclus).
+     * Archivage (ordre 6) → plus de date limite.
+     */
+    private function calculerDateLimite(WorkflowEtape $etape): ?CarbonInterface
+    {
+        if ((int) $etape->ordre === 6) {
+            return null;
+        }
+
+        $jours = max(0, (int) $etape->delai_jours);
+
+        if ($jours === 0) {
+            return Carbon::now()->endOfDay();
+        }
+
+        return Carbon::now()->addWeekdays($jours)->endOfDay();
     }
 }

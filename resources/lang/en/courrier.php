@@ -154,6 +154,22 @@ return [
     'kanban_reject_confirm' => 'Confirm rejection',
     'kanban_reject_required' => 'A rejection reason is required.',
 
+    'kanban_late' => 'Overdue',
+
+    'type_internal' => 'Internal',
+    'search_title' => 'Multi-criteria search',
+    'search_subtitle' => 'Filter files by TF, type, bureau, period or parties',
+    'search_tf' => 'TF / external ref.',
+    'search_tf_placeholder' => 'Land title no. or reference…',
+    'search_global' => 'Global search',
+    'search_global_placeholder' => 'Owner, applicant, seller, notary office…',
+    'search_submit' => 'Search',
+    'search_results' => 'Results',
+    'search_hits' => 'result(s)',
+    'search_empty' => 'No mail matches these criteria.',
+    'search_hint' => 'Fill at least one criterion then run the search.',
+    'search_open' => 'Open',
+
     'show_viewer_title' => 'Scanned document',
     'show_viewer_unsupported' => 'Preview unavailable for this format.',
     'show_viewer_empty_hint' => 'Add an attachment to enable the viewer.',

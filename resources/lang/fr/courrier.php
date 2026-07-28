@@ -157,6 +157,22 @@ return [
     'kanban_reject_confirm' => 'Confirmer le rejet',
     'kanban_reject_required' => 'Le motif de rejet est obligatoire.',
 
+    'kanban_late' => 'En retard',
+
+    'type_internal' => 'Interne',
+    'search_title' => 'Recherche multicritère',
+    'search_subtitle' => 'Filtrez les dossiers par TF, type, bureau, période ou parties',
+    'search_tf' => 'TF / réf. externe',
+    'search_tf_placeholder' => 'N° titre foncier ou référence…',
+    'search_global' => 'Recherche globale',
+    'search_global_placeholder' => 'Propriétaire, requérant, vendeur, étude…',
+    'search_submit' => 'Lancer la recherche',
+    'search_results' => 'Résultats',
+    'search_hits' => 'résultat(s)',
+    'search_empty' => 'Aucun courrier ne correspond à ces critères.',
+    'search_hint' => 'Renseignez au moins un critère puis lancez la recherche.',
+    'search_open' => 'Ouvrir',
+
     'show_viewer_title' => 'Document numérisé',
     'show_viewer_unsupported' => 'Aperçu non disponible pour ce format.',
     'show_viewer_empty_hint' => 'Ajoutez une pièce jointe pour activer le visualiseur.',

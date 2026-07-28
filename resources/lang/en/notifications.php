@@ -22,4 +22,7 @@ return [
 
     'courrier_rejected_title' => 'Mail rejected',
     'courrier_rejected_msg' => 'Mail :ref has been rejected.',
+
+    'courrier_late_title' => 'Overdue mail (SLA)',
+    'courrier_late_msg' => 'Mail :ref exceeded the deadline for step “:etape” (due : :limite).',
 ];

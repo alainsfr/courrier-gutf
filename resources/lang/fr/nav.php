@@ -6,4 +6,6 @@ return [
     'logout' => 'Déconnexion',
     'users' => 'Utilisateurs',
     'kanban' => 'Kanban',
+    'search' => 'Recherche',
+    'statistics' => 'Statistiques',
 ];

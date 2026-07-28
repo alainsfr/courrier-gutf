@@ -88,4 +88,89 @@ class CourrierQueryService
 
         return $q;
     }
+
+    /**
+     * Recherche multicritère CCF (page Search).
+     */
+    public function buildMulticriteriaSearchQuery(Request $request): Builder
+    {
+        $q = Courrier::query()
+            ->with([
+                'assignedTo:id,name',
+                'bureauActuel:id,nom,color',
+                'workflowEtape:id,libelle,ordre,ui_color',
+            ])
+            ->withCount('attachments')
+            ->latest('id');
+
+        $this->applyVisibilityScope($q, $request);
+
+        $tf = trim((string) $request->query('tf', ''));
+        $type = (string) $request->query('type', '');
+        $dateFrom = (string) $request->query('date_from', '');
+        $dateTo = (string) $request->query('date_to', '');
+        $bureauId = (string) $request->query('bureau_actuel_id', '');
+        $global = trim((string) $request->query('q', ''));
+
+        $q->when($tf !== '', function (Builder $query) use ($tf) {
+            $query->where(function (Builder $sub) use ($tf) {
+                $sub->where('reference_externe', 'like', "%{$tf}%")
+                    ->orWhere('reference_interne', 'like', "%{$tf}%");
+            });
+        });
+
+        $q->when(in_array($type, ['entrant', 'sortant', 'interne'], true), function (Builder $query) use ($type) {
+            $query->where('type', $type);
+        });
+
+        $q->when($dateFrom !== '', function (Builder $query) use ($dateFrom) {
+            $query->whereRaw('COALESCE(date_reception, date_courrier) >= ?', [$dateFrom]);
+        });
+
+        $q->when($dateTo !== '', function (Builder $query) use ($dateTo) {
+            $query->whereRaw('COALESCE(date_reception, date_courrier) <= ?', [$dateTo]);
+        });
+
+        $q->when($bureauId !== '' && ctype_digit($bureauId), function (Builder $query) use ($bureauId) {
+            $query->where('bureau_actuel_id', (int) $bureauId);
+        });
+
+        // Texte global : propriétaire / requérant / vendeur / étude (champs existants + description)
+        $q->when($global !== '', function (Builder $query) use ($global) {
+            $query->where(function (Builder $sub) use ($global) {
+                $sub->where('expediteur', 'like', "%{$global}%")
+                    ->orWhere('destinataire', 'like', "%{$global}%")
+                    ->orWhere('objet', 'like', "%{$global}%")
+                    ->orWhere('description', 'like', "%{$global}%")
+                    ->orWhere('reference_externe', 'like', "%{$global}%")
+                    ->orWhere('reference_interne', 'like', "%{$global}%");
+            });
+        });
+
+        return $q;
+    }
+
+    /**
+     * Périmètre de visibilité (admin / stakeholder / validateur).
+     */
+    private function applyVisibilityScope(Builder $q, Request $request): void
+    {
+        $user = $request->user();
+        if (! $user || $user->hasRole('admin')) {
+            return;
+        }
+
+        $q->where(function (Builder $sub) use ($user) {
+            $sub->where('created_by_user_id', $user->id)
+                ->orWhere('assigned_to_user_id', $user->id);
+
+            if ($user->can('courrier.validate')) {
+                $sub->orWhere('status', 'en_validation');
+            }
+
+            if ($user->bureau_id) {
+                $sub->orWhere('bureau_actuel_id', $user->bureau_id);
+            }
+        });
+    }
 }
