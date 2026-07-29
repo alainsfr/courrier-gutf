@@ -154,14 +154,12 @@
             <div class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-6">
                 <p class="mb-0 max-w-md text-xs text-gray-500">{{ __('courrier.form_workflow_hint') }}</p>
                 <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('courriers.index') }}"
-                       class="rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 no-underline hover:bg-gray-50">
+                    <x-buttons.secondary :href="route('courriers.index')">
                         {{ __('courrier.cancel') }}
-                    </a>
-                    <button type="submit"
-                            class="rounded-xl bg-[#17384b] px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#122c3b]">
+                    </x-buttons.secondary>
+                    <x-buttons.primary type="submit">
                         {{ __('courrier.save') }}
-                    </button>
+                    </x-buttons.primary>
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@
 return [
     'title' => 'Statistics & Reports',
     'subtitle' => 'CCF KPIs and mail activity trends',
-    'nav' => 'Statistics',
+    'nav' => 'Reports & Oversight',
 
     'kpis' => 'Key indicators',
     'treated_this_month' => 'Mail processed this month',

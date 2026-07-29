@@ -12,6 +12,7 @@ class Bureau extends Model
     protected $fillable = [
         'code',
         'nom',
+        'description',
         'icon',
         'color',
         'is_active',
@@ -31,5 +32,10 @@ class Bureau extends Model
     public function courriersActuels(): HasMany
     {
         return $this->hasMany(Courrier::class, 'bureau_actuel_id');
+    }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'bureau_id');
     }
 }

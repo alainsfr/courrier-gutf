@@ -3,7 +3,7 @@
 return [
     'title' => 'Statistiques & Rapports',
     'subtitle' => 'Indicateurs CCF et évolution de l’activité courrier',
-    'nav' => 'Statistiques',
+    'nav' => 'Rapports & Pilotage',
 
     'kpis' => 'Indicateurs clés',
     'treated_this_month' => 'Courriers traités ce mois',

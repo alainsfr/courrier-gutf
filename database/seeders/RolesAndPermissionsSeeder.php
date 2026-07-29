@@ -93,6 +93,15 @@ class RolesAndPermissionsSeeder extends Seeder
                 
                 // 'courrier.export', // optionnel
             ],
+
+            // Direction : lecture + pilotage (rapports)
+            'directeur' => [
+                'courrier.view',
+                'courrier.export',
+                'chat.view',
+                'chat.send',
+                'auditor.view',
+            ],
         ];
 
         foreach ($roles as $roleName => $perms) {

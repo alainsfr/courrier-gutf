@@ -38,6 +38,8 @@ class MessagingController extends Controller
     {
         $this->authorize('view', $conversation);
 
+        $userId = Auth::id();
+
         $conversation->load([
             'participants.user:id,name,email',
             'messages' => fn ($q) => $q->with('sender:id,name,email')->latest()->limit(200),
@@ -50,10 +52,21 @@ class MessagingController extends Controller
 
         // mark read
         ConversationParticipant::where('conversation_id', $conversation->id)
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->update(['last_read_at' => now()]);
 
-        return view('messages.show', compact('conversation'));
+        $conversations = Conversation::query()
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $userId))
+            ->with([
+                'participants.user:id,name,email',
+                'messages' => fn ($q) => $q->latest()->limit(1),
+            ])
+            ->latest('updated_at')
+            ->get();
+
+        $users = User::orderBy('name')->get(['id', 'name', 'email']);
+
+        return view('messages.show', compact('conversation', 'conversations', 'users'));
     }
 
     public function startDirect(Request $request): RedirectResponse

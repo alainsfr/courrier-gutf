@@ -1,125 +1,124 @@
+@php
+    $input = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30';
+    $label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="h4 mb-1 text-dark fw-bold">{{ __('users.title') }}</h1>
-                <p class="text-muted small mb-0">Gestion et attribution des accès sur la plateforme du GUTF</p>
+                <h1 class="text-lg font-bold text-gray-900">{{ __('users.title') }}</h1>
+                <p class="mb-0 text-sm text-gray-500">{{ __('nav.administration') }}</p>
             </div>
-            <a class="btn btn-gutf px-4 rounded-3 fw-semibold d-flex align-items-center gap-2" href="{{ route('admin.users.create') }}">
+            <x-buttons.primary :href="route('admin.users.create')">
                 <span>+</span> {{ __('users.new') }}
-            </a>
+            </x-buttons.primary>
         </div>
     </x-slot>
 
     @if (session('status'))
-        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center gap-2">
-            <span>✅</span> <div>{{ session('status') }}</div>
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ session('status') }}
         </div>
     @endif
 
-    {{-- BARRE DE RECHERCHE --}}
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4">
-            <form method="GET" action="{{ route('admin.users.index') }}">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-8">
-                        <label class="form-label fw-semibold text-muted small">{{ __('users.search') }}</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light border-slate-200 text-muted">🔍</span>
-                            <input name="q" value="{{ $q }}" class="form-control border-slate-200" placeholder="{{ __('users.search_placeholder') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-2 col-6">
-                        <button class="btn btn-outline-secondary w-100 py-2 rounded-3 small font-semibold" type="submit">
-                            {{ __('users.apply') }}
-                        </button>
-                    </div>
-                    <div class="col-md-2 col-6">
-                        <a class="btn btn-light border border-slate-200 w-100 py-2 rounded-3 small text-center d-block text-decoration-none" href="{{ route('admin.users.index') }}">
-                            {{ __('users.reset') }}
-                        </a>
-                    </div>
-                </div>
-            </form>
+    @if ($errors->any())
+        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <ul class="mb-0 list-disc pl-4">
+                @foreach($errors->all() as $e)
+                    <li>{{ $e }}</li>
+                @endforeach
+            </ul>
         </div>
-    </div>
+    @endif
 
-    {{-- TABLEAU DES UTILISATEURS --}}
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table mb-0 align-middle table-hover">
-                    <thead class="table-light">
-                        <tr class="small text-muted">
-                            <th class="ps-4 py-3">{{ __('users.name') }}</th>
-                            <th class="py-3">{{ __('users.email') }}</th>
-                            <th class="py-3">{{ __('users.role') }}</th>
-                            <th class="py-3">{{ __('users.locale') }}</th>
-                            <th class="py-3">{{ __('users.status') }}</th>
-                            <th class="pe-4 py-3 text-end">{{ __('users.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($users as $u)
-                            <tr>
-                                <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <span class="fs-4">👤</span>
-                                        <div>
-                                            <div class="fw-bold text-dark">{{ $u->name }}</div>
-                                            <div class="small text-muted">ID: #{{ $u->id }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-dark fw-semibold">{{ $u->email }}</td>
-                                <td>
-                                    <span class="badge text-bg-light border text-dark text-capitalize px-3 py-2 rounded-3 small">
-                                        ⚙️ {{ str_replace('_', ' ', $u->getRoleNames()->first() ?? 'Aucun') }}
-                                    </span>
-                                </td>
-                                <td class="text-muted fw-bold">{{ strtoupper($u->locale ?? 'fr') }}</td>
-                                <td>
-                                    @if($u->is_active)
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill small fw-bold">
-                                            ● {{ __('users.active') }}
-                                        </span>
-                                    @else
-                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill small fw-bold">
-                                            ● {{ __('users.inactive') }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="pe-4 text-end">
-                                    <div class="d-flex align-items-center justify-content-end gap-2">
-                                        <a class="btn btn-outline-secondary btn-sm px-3 rounded-3 fw-semibold small" href="{{ route('admin.users.edit', $u) }}">
-                                            {{ __('users.edit') }}
-                                        </a>
-                                        <form method="POST" action="{{ route('admin.users.toggle_active', $u) }}" class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button class="btn btn-outline-dark btn-sm px-3 rounded-3 fw-semibold small" type="submit">
-                                                {{ $u->is_active ? __('users.deactivate') : __('users.activate') }}
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center text-muted py-5">
-                                    <div class="fs-1 mb-2">👥</div>
-                                    <div>{{ __('users.empty') }}</div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="min-w-0 flex-1">
+                <label class="{{ $label }}">{{ __('users.search') }}</label>
+                <input name="q" value="{{ $q }}" class="{{ $input }}" placeholder="{{ __('users.search_placeholder') }}">
             </div>
+            <div class="flex gap-2">
+                <x-buttons.primary type="submit">
+                    {{ __('users.apply') }}
+                </x-buttons.primary>
+                <x-buttons.secondary :href="route('admin.users.index')">
+                    {{ __('users.reset') }}
+                </x-buttons.secondary>
+            </div>
+        </form>
+    </div>
+
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <th class="px-4 py-3">{{ __('users.name') }}</th>
+                        <th class="px-4 py-3">{{ __('users.email') }}</th>
+                        <th class="px-4 py-3">{{ __('users.role') }}</th>
+                        <th class="px-4 py-3">{{ __('users.bureau') }}</th>
+                        <th class="px-4 py-3">{{ __('users.status') }}</th>
+                        <th class="px-4 py-3 text-right">{{ __('users.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($users as $u)
+                        <tr class="hover:bg-gray-50/80">
+                            <td class="px-4 py-3">
+                                <div class="font-semibold text-gray-900">{{ $u->name }}</div>
+                                <div class="text-xs text-gray-400">#{{ $u->id }}</div>
+                            </td>
+                            <td class="px-4 py-3 text-gray-700">{{ $u->email }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                                    {{ str_replace('_', ' ', $u->getRoleNames()->first() ?? '—') }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600">{{ $u->bureau?->nom ?? '—' }}</td>
+                            <td class="px-4 py-3">
+                                @if($u->is_active)
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                        {{ __('users.active') }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                                        {{ __('users.inactive') }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <a href="{{ route('admin.users.edit', $u) }}"
+                                   class="text-sm font-semibold text-[#17384b] no-underline hover:underline">
+                                    {{ __('users.edit') }}
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-4">
+                                <x-empty-state
+                                    :title="__('users.empty')"
+                                    description="Créez un premier compte pour affecter rôles et bureaux."
+                                >
+                                    <x-slot:icon>
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                        </svg>
+                                    </x-slot:icon>
+                                    <x-buttons.primary :href="route('admin.users.create')">
+                                        {{ __('users.new') }}
+                                    </x-buttons.primary>
+                                </x-empty-state>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
-    {{-- PAGINATION --}}
-    <div class="mt-4">
-        {{ $users->links() }}
-    </div>
+    <div class="mt-4">{{ $users->links() }}</div>
 </x-app-layout>

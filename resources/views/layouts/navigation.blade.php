@@ -88,15 +88,17 @@
                 </svg>
                 <span>{{ __('nav.search') }}</span>
             </a>
+        @endcan
 
+        @if($authUser && $authUser->hasRole(['super-admin', 'directeur']))
             <a href="{{ route('statistics.index') }}"
                class="{{ $linkBase }} {{ request()->routeIs('statistics.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
                 </svg>
-                <span>{{ __('statistics.nav') }}</span>
+                <span>{{ __('nav.statistics') }}</span>
             </a>
-        @endcan
+        @endif
 
         @can('chat.view')
             <a href="{{ route('messages.index') }}"
@@ -111,16 +113,16 @@
             </a>
         @endcan
 
-        @can('user.manage')
-            <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Admin</p>
-            <a href="{{ route('admin.users.index') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('admin.users.*') ? $linkActive : $linkIdle }}">
+        @role('super-admin')
+            <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Gouvernance</p>
+            <a href="{{ route('admin.index') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('admin.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 20a11.383 11.386 0 0 1-4.717-.941v-.109m0 0.013a9.38 9.38 0 0 1-2.625.372 9.337 9.337 0 0 1-4.121-.952 4.125 4.125 0 0 1 7.533-2.493M10.089 20v-.003c0-1.113.285-2.16.786-3.07" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.174.1.31.245.41.41.112.183.164.39.146.599l-.213 1.281c-.09.542-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.645-.87 1.125 1.125 0 0 1-.41-.41 1.125 1.125 0 0 1-.146-.599l.213-1.281ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
                 </svg>
-                <span>{{ __('nav.users') }}</span>
+                <span>{{ __('nav.administration') }}</span>
             </a>
-        @endcan
+        @endrole
 
         @can('auditor.view')
             <a href="{{ route('audit.index') }}"

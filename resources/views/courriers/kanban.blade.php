@@ -119,9 +119,16 @@
                                 @endif
                             </article>
                         @empty
-                            <div class="kanban-empty pointer-events-none rounded-lg border border-dashed border-gray-300 bg-white/60 px-3 py-8 text-center text-xs text-gray-400">
-                                {{ __('courrier.kanban_empty') }}
-                            </div>
+                            <x-empty-state
+                                class="kanban-empty pointer-events-none py-8"
+                                :title="__('courrier.kanban_empty')"
+                            >
+                                <x-slot:icon>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
+                                    </svg>
+                                </x-slot:icon>
+                            </x-empty-state>
                         @endforelse
                     </div>
                 </section>

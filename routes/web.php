@@ -6,7 +6,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\ChatWidgetController;
-use App\Http\Controllers\Admin\UserAdminController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\Admin\BureauController as AdminBureauController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StatisticsController;
@@ -70,8 +72,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
 
-    // Statistiques & Rapports (CCF)
-    Route::middleware('permission:courrier.view')->group(function () {
+    // Statistiques & Rapports — réservé super-admin / directeur
+    Route::middleware(['role:super-admin|directeur', 'permission:courrier.view'])->group(function () {
         Route::get('/statistics', [StatisticsController::class, 'index'])->name('statistics.index');
 
         Route::get('/statistics/export/pdf', [StatisticsController::class, 'exportPdf'])
@@ -96,15 +98,13 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->name('audit.export.pdf');
     });
 
-    // --- Admin / Users ---
-    Route::prefix('admin')->name('admin.')->middleware('permission:user.manage')->group(function () {
-        Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
-        Route::get('/users/create', [UserAdminController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserAdminController::class, 'store'])->name('users.store');
-        Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{user}', [UserAdminController::class, 'update'])->name('users.update');
-        Route::patch('/users/{user}/toggle-active', [UserAdminController::class, 'toggleActive'])->name('users.toggle_active');
-        Route::patch('/users/{user}/reset-password', [UserAdminController::class, 'resetPassword'])->name('users.reset_password');
+    // --- Administration (gouvernance) ---
+    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super-admin'])->group(function () {
+        Route::get('/', [AdminDashboardController::class, 'index'])->name('index');
+        Route::resource('users', AdminUserController::class)->except(['show']);
+        Route::resource('bureaux', AdminBureauController::class)
+            ->except(['show'])
+            ->parameters(['bureaux' => 'bureau']);
     });
 
     // --- Courriers ---

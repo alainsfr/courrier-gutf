@@ -1,187 +1,165 @@
+@php
+    $chatPartner = null;
+    if ($conversation->type === 'direct') {
+        $chatPartner = $conversation->participants
+            ->first(fn ($p) => (int) $p->user_id !== (int) auth()->id())
+            ?->user;
+    }
+    $chatTitle = ($conversation->type === 'direct' && $chatPartner)
+        ? $chatPartner->name
+        : ($conversation->title ?? 'Groupe');
+    $chatInitial = strtoupper(substr($chatTitle, 0, 1));
+@endphp
+
 <x-app-layout>
-    @php
-        // Détection dynamique du collaborateur pour les discussions directes
-        $chatPartner = null;
-        if ($conversation->type === 'direct') {
-            $chatPartner = $conversation->participants
-                ->first(fn($p) => (int) $p->user_id !== (int) auth()->id())
-                ?->user;
-        }
-    @endphp
+    <x-slot name="header">
+        <div>
+            <h1 class="mb-0 text-lg font-bold text-gray-900">{{ __('nav.messages') }}</h1>
+            <p class="mb-0 text-sm text-gray-500">{{ $chatTitle }}</p>
+        </div>
+    </x-slot>
 
-    <div class="row g-4" style="height: calc(100vh - 180px); min-height: 500px;">
-        
-        {{-- COLONNE GAUCHE : NAVIGATION (1/3) --}}
-        <div class="col-lg-4 d-none d-lg-flex flex-column h-100">
-            <div class="card border-0 shadow-sm rounded-4 flex-grow-1 overflow-hidden d-flex flex-column">
-                <div class="card-header bg-white p-4 border-bottom">
-                    <h5 class="fw-bold text-dark mb-0">💬 Discussions</h5>
-                </div>
-                
-                <div class="card-body p-4 overflow-y-auto" style="flex: 1;">
-                    <div class="list-group list-group-flush">
-                        {{-- Bouton de retour rapide vers l'accueil --}}
-                        <a class="btn btn-outline-secondary w-100 py-2.5 rounded-3 fw-semibold mb-3 small" href="{{ route('messages.index') }}">
-                            ← Liste de mes discussions
-                        </a>
+    <div class="flex h-[calc(100vh-8rem)] flex-col gap-4 lg:flex-row lg:gap-6">
 
-                        <hr class="my-3">
+        {{-- Liste (masquée sur mobile pendant le chat) --}}
+        <div class="hidden min-h-0 flex-col lg:flex lg:w-1/3">
+            @include('messages.partials.conversation-list')
+        </div>
 
-                        <div class="fw-bold text-muted small mb-2 text-uppercase" style="font-size: 0.75rem;">Membres du salon</div>
-                        <div class="list-group list-group-flush border rounded-3 p-2 bg-light">
-                            @foreach($conversation->participants as $p)
-                                <div class="p-2 border-bottom last-border-0 d-flex align-items-center gap-2">
-                                    <span class="small">👤</span>
-                                    <div style="min-width: 0;">
-                                        <div class="fw-semibold text-dark small text-truncate">{{ $p->user->name }}</div>
-                                        <div class="text-muted small text-truncate" style="font-size: 0.75rem;">{{ $p->user->email }}</div>
-                                    </div>
-                                </div>
-                            @endforeach
+        {{-- Zone chat --}}
+        <div class="flex min-h-0 flex-1 flex-col lg:w-2/3">
+            <div class="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+
+                {{-- En-tête conversation --}}
+                <div class="flex shrink-0 items-center gap-3 border-b border-gray-200 px-4 py-3.5">
+                    <a href="{{ route('messages.index') }}"
+                       class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-600 no-underline hover:bg-gray-50 lg:hidden"
+                       aria-label="Retour">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                        </svg>
+                    </a>
+                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#17384b] text-sm font-bold text-white">
+                        {{ $chatInitial }}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <div class="truncate text-sm font-bold text-gray-900">{{ $chatTitle }}</div>
+                        <div class="truncate text-xs text-gray-500">
+                            @if($conversation->type === 'direct' && $chatPartner)
+                                {{ $chatPartner->email }}
+                            @else
+                                {{ $conversation->participants->count() }} participant(s)
+                            @endif
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- COLONNE DROITE : SALON DE DISCUSSION ACTIF (2/3) --}}
-        <div class="col-lg-8 d-flex flex-column h-100">
-            <div class="card border-0 shadow-sm rounded-4 flex-grow-1 overflow-hidden d-flex flex-column bg-white h-100">
-                
-                {{-- En-tête de la discussion --}}
-                <div class="card-header bg-white p-4 border-bottom d-flex align-items-center justify-content-between">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1">
-                            @if($conversation->type === 'direct' && $chatPartner)
-                                👤 {{ $chatPartner->name }}
-                            @else
-                                👥 {{ $conversation->title ?? 'Groupe' }}
-                            @endif
-                        </h5>
-                        <p class="text-muted small mb-0">
-                            @if($conversation->type === 'direct' && $chatPartner)
-                                Discussion directe avec {{ $chatPartner->name }}
-                            @else
-                                {{ $conversation->participants->count() }} collaborateur(s) dans ce salon
-                            @endif
-                        </p>
-                    </div>
-                    <a class="btn btn-outline-secondary btn-sm rounded-3 d-lg-none" href="{{ route('messages.index') }}">← Retour</a>
-                </div>
-
-                {{-- Flux de messages (Bulles) --}}
-                <div class="card-body p-4 overflow-y-auto bg-light" id="messagesBox" style="flex: 1;">
+                {{-- Messages --}}
+                <div id="messagesBox" class="min-h-0 flex-1 space-y-3 overflow-y-auto bg-gray-50/60 p-5">
                     @foreach($conversation->messages as $m)
-                        @php $isMe = ($m->sender_user_id === auth()->id()); @endphp
-                        
-                        <div class="d-flex {{ $isMe ? 'justify-content-end' : 'justify-content-start' }} mb-3">
-                            <div style="max-width: 75%;">
-                                @if(!$isMe)
-                                    <div class="text-muted small fw-semibold mb-1 ms-1">{{ $m->sender?->name }}</div>
-                                @endif
-                                
-                                <div class="p-3 rounded-4 shadow-sm {{ $isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border' }}">
-                                    <div style="white-space: pre-line;" class="small">{{ $m->body }}</div>
+                        @php $isMe = ((int) $m->sender_user_id === (int) auth()->id()); @endphp
+                        <div class="flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
+                            <div class="max-w-[80%] sm:max-w-[70%]">
+                                @unless($isMe)
+                                    <div class="mb-1 px-1 text-[11px] font-semibold text-gray-500">{{ $m->sender?->name }}</div>
+                                @endunless
+                                <div class="rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-sm
+                                            {{ $isMe
+                                                ? 'rounded-br-md bg-[#17384b] text-white'
+                                                : 'rounded-bl-md border border-gray-200 bg-white text-gray-800' }}">
+                                    <div class="whitespace-pre-line">{{ $m->body }}</div>
                                 </div>
-                                
-                                <div class="text-muted small mt-1 {{ $isMe ? 'text-end me-1' : 'text-start ms-1' }}" style="font-size: 0.75rem;">
-                                    {{ $m->created_at->format('d/m/Y H:i') }}
+                                <div class="mt-1 px-1 text-[10px] text-gray-400 {{ $isMe ? 'text-right' : 'text-left' }}">
+                                    {{ $m->created_at->format('H:i') }}
                                 </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
 
-                {{-- Formulaire de saisie du message --}}
+                {{-- Saisie --}}
                 @can('chat.send')
-                    <div class="card-footer bg-white p-4 border-top">
-                        <form method="POST" action="{{ route('messages.send', $conversation) }}" id="sendForm">
+                    <div class="shrink-0 border-t border-gray-200 bg-white p-3 sm:p-4">
+                        <form method="POST" action="{{ route('messages.send', $conversation) }}" id="sendForm" class="flex items-center gap-2">
                             @csrf
-                            <div class="input-group">
-                                <input class="form-control border-slate-200 py-2.5 rounded-start-3" 
-                                       name="body" 
-                                       id="msgInput" 
-                                       placeholder="Saisissez un message de collaboration..." 
-                                       required 
-                                       maxlength="2000"
-                                       autocomplete="off">
-                                <button class="btn btn-gutf px-4 rounded-end-3" type="submit">Envoyer ➔</button>
-                            </div>
+                            <input class="min-w-0 flex-1 rounded-full border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                   name="body"
+                                   id="msgInput"
+                                   placeholder="Écrire un message…"
+                                   required
+                                   maxlength="2000"
+                                   autocomplete="off">
+                            <button type="submit"
+                                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#17384b] text-white shadow-sm transition hover:bg-[#122c3b] focus:outline-none focus:ring-4 focus:ring-[#17384b]/20"
+                                    aria-label="Envoyer">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+                                    <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                                </svg>
+                            </button>
                         </form>
                     </div>
                 @endcan
-
             </div>
         </div>
-
     </div>
 
-    {{-- Script d'écoute du temps réel via WebSockets --}}
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const convId = {{ (int) $conversation->id }};
             const box = document.getElementById('messagesBox');
-            const input = document.getElementById('msgInput');
+            const userId = {{ (int) auth()->id() }};
             let lastMessageCount = {{ $conversation->messages->count() }};
 
-            if (box) {
-                box.scrollTop = box.scrollHeight;
+            if (box) box.scrollTop = box.scrollHeight;
+
+            function bubbleHtml(body, isMe, senderName, createdAt) {
+                const time = createdAt
+                    ? new Date(createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                    : '';
+                const name = (!isMe && senderName)
+                    ? `<div class="mb-1 px-1 text-[11px] font-semibold text-gray-500">${senderName}</div>`
+                    : '';
+                const bubble = isMe
+                    ? 'rounded-2xl rounded-br-md bg-[#17384b] text-white'
+                    : 'rounded-2xl rounded-bl-md border border-gray-200 bg-white text-gray-800';
+                return `
+                    <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[80%] sm:max-w-[70%]">
+                            ${name}
+                            <div class="px-3.5 py-2.5 text-sm leading-relaxed shadow-sm ${bubble}">
+                                <div class="whitespace-pre-line">${body}</div>
+                            </div>
+                            <div class="mt-1 px-1 text-[10px] text-gray-400 ${isMe ? 'text-right' : 'text-left'}">${time}</div>
+                        </div>
+                    </div>`;
             }
 
-            // Rendu des messages (utilisé pour le rafraîchissement d'arrière-plan)
             function renderMessagesInFullPage(messages) {
-                const userId = {{ (int) auth()->id() }};
                 box.innerHTML = messages.map(m => {
-                    const isMe = (m.sender_user_id === userId || m.sender.id === userId);
-                    return `
-                        <div class="d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3">
-                            <div style="max-width: 75%;">
-                                ${!isMe ? `<div class="text-muted small fw-semibold mb-1 ms-1">${m.sender.name}</div>` : ''}
-                                <div class="p-3 rounded-4 shadow-sm ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border'}">
-                                    <div style="white-space: pre-line;" class="small">${m.body}</div>
-                                </div>
-                                <div class="text-muted small mt-1 ${isMe ? 'text-end me-1' : 'text-start ms-1'}" style="font-size: 0.75rem;">
-                                    ${new Date(m.created_at).toLocaleString('fr-FR', {day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    const isMe = (m.sender_user_id === userId || m.sender?.id === userId);
+                    return bubbleHtml(m.body, isMe, m.sender?.name, m.created_at);
                 }).join('');
                 box.scrollTop = box.scrollHeight;
             }
 
-            // Écoute temps réel via WebSockets (Laravel Reverb)
             if (window.Echo) {
                 window.Echo.private(`conversations.${convId}`)
                     .listen('.message.sent', (e) => {
+                        const isMe = (e.sender.id === userId);
                         const wrap = document.createElement('div');
-                        const isMe = (e.sender.id === {{ (int) auth()->id() }});
-                        
-                        wrap.className = `d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-3`;
-                        wrap.innerHTML = `
-                            <div style="max-width: 75%;">
-                                ${!isMe ? `<div class="text-muted small fw-semibold mb-1 ms-1">${e.sender.name}</div>` : ''}
-                                <div class="p-3 rounded-4 shadow-sm ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border'}">
-                                    <div style="white-space: pre-line;" class="small">${e.body}</div>
-                                </div>
-                                <div class="text-muted small mt-1 ${isMe ? 'text-end me-1' : 'text-start ms-1'}" style="font-size: 0.75rem;">
-                                    ${new Date(e.created_at).toLocaleString('fr-FR', {day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
-                                </div>
-                            </div>
-                        `;
-                        
-                        box.appendChild(wrap);
+                        wrap.innerHTML = bubbleHtml(e.body, isMe, e.sender.name, e.created_at);
+                        box.appendChild(wrap.firstElementChild);
                         box.scrollTop = box.scrollHeight;
                         lastMessageCount++;
                     });
             }
 
-            // Système de secours instantané (Long-Polling à 3,5s)
             setInterval(async () => {
-                // S'active uniquement si le WebSocket n'est pas déjà connecté
-                if (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected') {
+                if (!window.Echo || window.Echo.connector?.pusher?.connection?.state !== 'connected') {
                     try {
-                        const res = await fetch(`/chat/mini/${convId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+                        const res = await fetch(`/chat/mini/${convId}/messages`, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        });
                         const messages = await res.json();
                         if (messages.length > lastMessageCount) {
                             lastMessageCount = messages.length;

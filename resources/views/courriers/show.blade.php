@@ -187,12 +187,10 @@
                                 @csrf
                                 <input type="hidden" name="nouvelle_etape_id" value="{{ $nextEtape->id }}">
                                 <input type="hidden" name="action_type" value="forward">
-                                <button type="submit"
-                                        class="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:opacity-95"
-                                        style="background: {{ $nextEtape->ui_color ?? '#10B981' }}">
+                                <x-buttons.primary type="submit" class="w-full">
                                     {{ __('courrier.show_action_validate') }}
-                                    <span class="text-[11px] font-medium opacity-90">→ {{ $nextEtape->libelle }}</span>
-                                </button>
+                                    <span class="text-[11px] font-normal opacity-90">→ {{ $nextEtape->libelle }}</span>
+                                </x-buttons.primary>
                             </form>
                         @endif
 
@@ -205,10 +203,9 @@
                                 <textarea name="note_metier" rows="2" required
                                           class="mb-2 w-full rounded-md border border-rose-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200"
                                           placeholder="{{ __('courrier.reject_reason') }}"></textarea>
-                                <button type="submit"
-                                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-white px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-50">
+                                <x-buttons.danger type="submit" class="w-full">
                                     {{ __('courrier.show_action_reject') }}
-                                </button>
+                                </x-buttons.danger>
                             </form>
                         @endif
 
@@ -217,11 +214,10 @@
                                 @csrf
                                 <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
                                 <input type="hidden" name="action_type" value="backward">
-                                <button type="submit"
-                                        class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-100">
+                                <x-buttons.secondary type="submit" class="w-full">
                                     {{ __('courrier.show_action_return') }}
-                                    <span class="text-[11px] font-medium text-gray-500">→ {{ $prevEtape->libelle }}</span>
-                                </button>
+                                    <span class="text-[11px] font-normal text-gray-500">→ {{ $prevEtape->libelle }}</span>
+                                </x-buttons.secondary>
                             </form>
                         @endif
 
@@ -249,9 +245,9 @@
                                     <option value="{{ $a->id }}" @selected($courrier->assigned_to_user_id == $a->id)>{{ $a->name }}</option>
                                 @endforeach
                             </select>
-                            <button class="w-full rounded-xl bg-[#17384b] px-3 py-2 text-sm font-semibold text-white hover:bg-[#122c3b]" type="submit">
+                            <x-buttons.primary type="submit" class="w-full">
                                 {{ __('courrier.assign') }}
-                            </button>
+                            </x-buttons.primary>
                         </form>
                     @endif
                 @endcan
