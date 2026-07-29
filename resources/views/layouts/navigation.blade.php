@@ -54,14 +54,14 @@
     </div>
 
     <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Menu</p>
+        <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{{ __('Menu') }}</p>
 
         <a href="{{ route('dashboard') }}"
            class="{{ $linkBase }} {{ request()->routeIs('dashboard') ? $linkActive : $linkIdle }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
             </svg>
-            <span>{{ __('app.dashboard') }}</span>
+            <span>{{ __('Tableau de bord') }}</span>
         </a>
 
         @can('courrier.view')
@@ -70,7 +70,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.07 8.909A2.25 2.25 0 0 1 2 6.993V6.75" />
                 </svg>
-                <span>{{ __('nav.courriers') }}</span>
+                <span>{{ __('Registre des Courriers') }}</span>
             </a>
 
             <a href="{{ route('courriers.kanban') }}"
@@ -78,7 +78,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
                 </svg>
-                <span>{{ __('nav.kanban') }}</span>
+                <span>{{ __('Espace de Traitement') }}</span>
             </a>
 
             <a href="{{ route('courriers.search') }}"
@@ -86,7 +86,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
-                <span>{{ __('nav.search') }}</span>
+                <span>{{ __('Recherche Avancée') }}</span>
             </a>
         @endcan
 
@@ -96,7 +96,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
                 </svg>
-                <span>{{ __('nav.statistics') }}</span>
+                <span>{{ __('Rapports & Pilotage') }}</span>
             </a>
         @endif
 
@@ -106,7 +106,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.63m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
                 </svg>
-                <span class="flex-1">{{ __('nav.messages') }}</span>
+                <span class="flex-1">{{ __('Messagerie Interne') }}</span>
                 @if($unreadChatCount > 0)
                     <span class="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{{ $unreadChatCount }}</span>
                 @endif
@@ -114,13 +114,13 @@
         @endcan
 
         @role('super-admin')
-            <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Gouvernance</p>
+            <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{{ __('Gouvernance') }}</p>
             <a href="{{ route('admin.index') }}"
                class="{{ $linkBase }} {{ request()->routeIs('admin.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.174.1.31.245.41.41.112.183.164.39.146.599l-.213 1.281c-.09.542-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.645-.87 1.125 1.125 0 0 1-.41-.41 1.125 1.125 0 0 1-.146-.599l.213-1.281ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
                 </svg>
-                <span>{{ __('nav.administration') }}</span>
+                <span>{{ __('Administration') }}</span>
             </a>
         @endrole
 
@@ -130,7 +130,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                <span>{{ __('audit.title') }}</span>
+                <span>{{ __("Journal d'audit") }}</span>
             </a>
         @endcan
     </nav>

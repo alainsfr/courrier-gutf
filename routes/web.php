@@ -9,6 +9,7 @@ use App\Http\Controllers\ChatWidgetController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\BureauController as AdminBureauController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\StatisticsController;
@@ -225,6 +226,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         ->name('chat.mini');
 });
 
+Route::get('/lang/{locale}', [LanguageController::class, 'switch'])
+    ->whereIn('locale', ['fr', 'en'])
+    ->name('lang.switch');
+
+// Compatibilité pages login / welcome (formulaires POST)
 Route::post('/locale', function (Request $request) {
     $locale = (string) $request->input('locale', config('app.fallback_locale', 'fr'));
 
@@ -232,13 +238,7 @@ Route::post('/locale', function (Request $request) {
         $locale = config('app.fallback_locale', 'fr');
     }
 
-    session(['locale' => $locale]);
-
-    if ($request->user()) {
-        $request->user()->forceFill(['locale' => $locale])->save();
-    }
-
-    return back();
+    return app(LanguageController::class)->switch($locale);
 })->name('locale.set');
 
 require __DIR__ . '/auth.php';
