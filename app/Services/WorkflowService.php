@@ -216,7 +216,7 @@ class WorkflowService
      * SLA CCT : now + delai_jours en jours ouvrés (week-ends exclus).
      * Archivage (ordre 6) → plus de date limite.
      */
-    private function calculerDateLimite(WorkflowEtape $etape): ?CarbonInterface
+    public function calculerDateLimite(WorkflowEtape $etape): ?CarbonInterface
     {
         if ((int) $etape->ordre === 6) {
             return null;

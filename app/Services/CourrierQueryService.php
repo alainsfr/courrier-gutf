@@ -114,8 +114,11 @@ class CourrierQueryService
 
         $q->when($tf !== '', function (Builder $query) use ($tf) {
             $query->where(function (Builder $sub) use ($tf) {
-                $sub->where('reference_externe', 'like', "%{$tf}%")
-                    ->orWhere('reference_interne', 'like', "%{$tf}%");
+                $sub->where('tf', 'like', "%{$tf}%")
+                    ->orWhere('reference_externe', 'like', "%{$tf}%")
+                    ->orWhere('reference_interne', 'like', "%{$tf}%")
+                    ->orWhere('numero_acte', 'like', "%{$tf}%")
+                    ->orWhere('numero_repertoire', 'like', "%{$tf}%");
             });
         });
 
@@ -135,15 +138,20 @@ class CourrierQueryService
             $query->where('bureau_actuel_id', (int) $bureauId);
         });
 
-        // Texte global : propriétaire / requérant / vendeur / étude (champs existants + description)
+        // Texte global : propriétaire / requérant / vendeur / étude (+ champs classiques)
         $q->when($global !== '', function (Builder $query) use ($global) {
             $query->where(function (Builder $sub) use ($global) {
-                $sub->where('expediteur', 'like', "%{$global}%")
+                $sub->where('proprietaire', 'like', "%{$global}%")
+                    ->orWhere('requerant', 'like', "%{$global}%")
+                    ->orWhere('vendeur', 'like', "%{$global}%")
+                    ->orWhere('etude_notariale', 'like', "%{$global}%")
+                    ->orWhere('expediteur', 'like', "%{$global}%")
                     ->orWhere('destinataire', 'like', "%{$global}%")
                     ->orWhere('objet', 'like', "%{$global}%")
                     ->orWhere('description', 'like', "%{$global}%")
                     ->orWhere('reference_externe', 'like', "%{$global}%")
-                    ->orWhere('reference_interne', 'like', "%{$global}%");
+                    ->orWhere('reference_interne', 'like', "%{$global}%")
+                    ->orWhere('tf', 'like', "%{$global}%");
             });
         });
 

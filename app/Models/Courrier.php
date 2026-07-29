@@ -14,10 +14,18 @@ class Courrier extends Model
         'seq',
         'reference_interne',
         'reference_externe',
+        'tf',
         'objet',
         'description',
         'expediteur',
         'destinataire',
+        'proprietaire',
+        'requerant',
+        'vendeur',
+        'etude_notariale',
+        'valeur_immeuble',
+        'numero_acte',
+        'numero_repertoire',
         'date_courrier',
         'date_reception',
         'date_envoi',
@@ -41,6 +49,7 @@ class Courrier extends Model
         'archived_at' => 'datetime',
         'date_limite' => 'datetime',
         'is_late' => 'boolean',
+        'valeur_immeuble' => 'decimal:2',
     ];
 
     public function createdBy(): BelongsTo

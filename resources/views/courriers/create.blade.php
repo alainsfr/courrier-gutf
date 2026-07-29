@@ -1,20 +1,21 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="h4 mb-1 text-dark fw-bold">{{ __('courrier.create_title') }}</h1>
-                <p class="text-muted small mb-0">Enregistrement d'un nouveau pli au registre du GUTF</p>
+                <h1 class="mb-1 text-lg font-bold text-slate-900">{{ __('courrier.create_title') }}</h1>
+                <p class="mb-0 text-sm text-slate-500">{{ __('courrier.create_subtitle') }}</p>
             </div>
-            <a href="{{ route('courriers.index') }}" class="btn btn-outline-secondary px-4 rounded-3 fw-semibold">
+            <a href="{{ route('courriers.index') }}"
+               class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 no-underline hover:bg-slate-50">
                 ← {{ __('courrier.back') }}
             </a>
         </div>
     </x-slot>
 
     @if ($errors->any())
-        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">
-            <div class="fw-bold mb-2">{{ __('courrier.form_error_title') }}</div>
-            <ul class="mb-0 small">
+        <div class="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <p class="mb-2 font-bold">{{ __('courrier.form_error_title') }}</p>
+            <ul class="mb-0 list-disc ps-4">
                 @foreach($errors->all() as $e)
                     <li>{{ $e }}</li>
                 @endforeach
@@ -22,153 +23,223 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('courriers.store') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('courriers.store') }}" enctype="multipart/form-data" class="space-y-5">
         @csrf
 
-        <div class="row g-4">
-            {{-- Colonne Principale : Informations & Contacts --}}
-            <div class="col-lg-8">
-                
-                {{-- Carte 1 : Classification du Courrier --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-2 mb-4">
-                            <span class="fs-4">📝</span>
-                            <h5 class="card-title fw-bold text-dark mb-0">Classification du courrier</h5>
-                        </div>
+        <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
+            <div class="space-y-5 xl:col-span-2">
 
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.type') }} <span class="text-danger">*</span></label>
-                                <select name="type" class="form-select border-slate-200 rounded-3" required>
-                                    <option value="entrant" @selected(old('type')==='entrant')>📥 {{ __('courrier.type_in') }}</option>
-                                    <option value="sortant" @selected(old('type')==='sortant')>📤 {{ __('courrier.type_out') }}</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-8">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.subject') }} <span class="text-danger">*</span></label>
-                                <input name="objet" class="form-control border-slate-200 rounded-3" value="{{ old('objet') }}" required placeholder="Ex: Demande de transcription d'acte de naissance">
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.description') }}</label>
-                                <textarea name="description" class="form-control border-slate-200 rounded-3" rows="4" placeholder="Résumé ou notes supplémentaires concernant le pli..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Carte 2 : Provenance & Destination --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-2 mb-4">
-                            <span class="fs-4">🏢</span>
-                            <h5 class="card-title fw-bold text-dark mb-0">Identification des parties</h5>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.sender') }}</label>
-                                <input name="expediteur" class="form-control border-slate-200 rounded-3" value="{{ old('expediteur') }}" placeholder="Nom de l'expéditeur (ex: Consulat du Cameroun à Paris)">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.recipient') }}</label>
-                                <input name="destinataire" class="form-control border-slate-200 rounded-3" value="{{ old('destinataire') }}" placeholder="Service destinataire au sein du GUTF">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Carte 3 : Dates & Calendrier --}}
-                <div class="card border-0 shadow-sm rounded-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-2 mb-4">
-                            <span class="fs-4">📅</span>
-                            <h5 class="card-title fw-bold text-dark mb-0">Dates de suivi</h5>
-                        </div>
-
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.date_mail') }}</label>
-                                <input type="date" name="date_courrier" class="form-control border-slate-200 rounded-3" value="{{ old('date_courrier', now()->format('Y-m-d')) }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.date_received') }}</label>
-                                <input type="date" name="date_reception" class="form-control border-slate-200 rounded-3" value="{{ old('date_reception', now()->format('Y-m-d')) }}">
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold text-muted small">{{ __('courrier.date_sent') }}</label>
-                                <input type="date" name="date_envoi" class="form-control border-slate-200 rounded-3" value="{{ old('date_envoi') }}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Colonne Latérale : Traitement & Document Numérique --}}
-            <div class="col-lg-4">
-                
-                {{-- Carte 4 : Affectation du pli --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <span class="fs-4">📌</span>
-                            <h5 class="card-title fw-bold text-dark mb-0">Traitement</h5>
-                        </div>
-                        <p class="text-muted small">Affectez directement ce courrier à un agent pour traitement immédiat.</p>
-
-                        <div class="mb-2">
-                            <label class="form-label fw-semibold text-muted small">{{ __('courrier.assign_to') }}</label>
-                            <select name="assigned_to_user_id" class="form-select border-slate-200 rounded-3">
-                                <option value="">{{ __('courrier.assign_none') }}</option>
-                                @foreach($agents as $a)
-                                    <option value="{{ $a->id }}" @selected(old('assigned_to_user_id') == $a->id)>
-                                        {{ $a->name }} ({{ $a->email }})
-                                    </option>
-                                @endforeach
+                {{-- Classification --}}
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-4 text-sm font-bold text-slate-900">{{ __('courrier.form_section_class') }}</h2>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.type') }} <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="type" required
+                                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                                <option value="entrant" @selected(old('type', 'entrant') === 'entrant')>{{ __('courrier.type_in') }}</option>
+                                <option value="sortant" @selected(old('type') === 'sortant')>{{ __('courrier.type_out') }}</option>
+                                <option value="interne" @selected(old('type') === 'interne')>{{ __('courrier.type_internal') }}</option>
                             </select>
                         </div>
-                    </div>
-                </div>
 
-                {{-- Carte 5 : Numérisation & Fichiers --}}
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-2 mb-3">
-                            <span class="fs-4">📎</span>
-                            <h5 class="card-title fw-bold text-dark mb-0">Document numérisé</h5>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_tf') }}
+                            </label>
+                            <input type="text" name="tf" value="{{ old('tf') }}"
+                                   placeholder="{{ __('courrier.field_tf_placeholder') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
                         </div>
-                        <p class="text-muted small">{{ __('courrier.document_help') }}</p>
 
-                        @can('courrier.attach')
-                            <div class="mb-2">
-                                <input type="file" name="document_file" class="form-control border-slate-200 rounded-3">
-                                <div class="form-text small mt-2">{{ __('courrier.attachments_help') }}</div>
-                            </div>
-                        @else
-                            <div class="alert alert-warning border-0 small mb-0 rounded-3">
-                                {{ __('courrier.no_attach_permission') }}
-                            </div>
-                        @endcan
+                        <div class="md:col-span-2">
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.subject') }} <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" name="objet" value="{{ old('objet') }}" required
+                                   placeholder="{{ __('courrier.field_objet_placeholder') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.description') }}
+                            </label>
+                            <textarea name="description" rows="3"
+                                      placeholder="{{ __('courrier.field_description_placeholder') }}"
+                                      class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">{{ old('description') }}</textarea>
+                        </div>
+
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.external_ref') }}
+                            </label>
+                            <input type="text" name="reference_externe" value="{{ old('reference_externe') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                {{-- Boutons d'Action --}}
-                <div class="card border-0 bg-transparent mb-4">
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-gutf py-3 rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2" type="submit">
-                            <span>💾</span> {{ __('courrier.save') }}
-                        </button>
-                        <a class="btn btn-light py-3 border border-slate-200 rounded-3" href="{{ route('courriers.index') }}">
-                            {{ __('courrier.cancel') }}
-                        </a>
+                {{-- Parties --}}
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-4 text-sm font-bold text-slate-900">{{ __('courrier.form_section_parties') }}</h2>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.sender') }}
+                            </label>
+                            <input type="text" name="expediteur" value="{{ old('expediteur') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.recipient') }}
+                            </label>
+                            <input type="text" name="destinataire" value="{{ old('destinataire') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_proprietaire') }}
+                            </label>
+                            <input type="text" name="proprietaire" value="{{ old('proprietaire') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_requerant') }}
+                            </label>
+                            <input type="text" name="requerant" value="{{ old('requerant') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_vendeur') }}
+                            </label>
+                            <input type="text" name="vendeur" value="{{ old('vendeur') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_etude') }}
+                            </label>
+                            <input type="text" name="etude_notariale" value="{{ old('etude_notariale') }}"
+                                   placeholder="{{ __('courrier.field_etude_placeholder') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
                     </div>
-                </div>
+                </section>
 
+                {{-- Acte & bien --}}
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-4 text-sm font-bold text-slate-900">{{ __('courrier.form_section_acte') }}</h2>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_numero_acte') }}
+                            </label>
+                            <input type="text" name="numero_acte" value="{{ old('numero_acte') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_numero_repertoire') }}
+                            </label>
+                            <input type="text" name="numero_repertoire" value="{{ old('numero_repertoire') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.field_valeur') }}
+                            </label>
+                            <input type="number" step="0.01" min="0" name="valeur_immeuble" value="{{ old('valeur_immeuble') }}"
+                                   placeholder="0.00"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                    </div>
+                </section>
+
+                {{-- Dates --}}
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-4 text-sm font-bold text-slate-900">{{ __('courrier.form_section_dates') }}</h2>
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.date_mail') }}
+                            </label>
+                            <input type="date" name="date_courrier" value="{{ old('date_courrier', now()->format('Y-m-d')) }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.date_received') }}
+                            </label>
+                            <input type="date" name="date_reception" value="{{ old('date_reception', now()->format('Y-m-d')) }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {{ __('courrier.date_sent') }}
+                            </label>
+                            <input type="date" name="date_envoi" value="{{ old('date_envoi') }}"
+                                   class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {{-- Colonne latérale --}}
+            <div class="space-y-5">
+                <section class="rounded-2xl border border-sky-100 bg-sky-50/60 p-5 shadow-sm">
+                    <h2 class="mb-2 text-sm font-bold text-slate-900">{{ __('courrier.form_workflow_hint_title') }}</h2>
+                    <p class="mb-0 text-xs leading-relaxed text-slate-600">
+                        {{ __('courrier.form_workflow_hint') }}
+                    </p>
+                </section>
+
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-3 text-sm font-bold text-slate-900">{{ __('courrier.form_section_assign') }}</h2>
+                    <p class="mb-3 text-xs text-slate-500">{{ __('courrier.form_assign_help') }}</p>
+                    <label class="mb-1 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        {{ __('courrier.assign_to') }}
+                    </label>
+                    <select name="assigned_to_user_id"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200">
+                        <option value="">{{ __('courrier.assign_none') }}</option>
+                        @foreach($agents as $a)
+                            <option value="{{ $a->id }}" @selected(old('assigned_to_user_id') == $a->id)>
+                                {{ $a->name }} ({{ $a->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                </section>
+
+                <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-3 text-sm font-bold text-slate-900">{{ __('courrier.document_title') }}</h2>
+                    <p class="mb-3 text-xs text-slate-500">{{ __('courrier.document_help') }}</p>
+                    @can('courrier.attach')
+                        <input type="file" name="document_file"
+                               class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-700">
+                        <p class="mt-2 mb-0 text-xs text-slate-400">{{ __('courrier.attachments_help') }}</p>
+                    @else
+                        <p class="mb-0 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            {{ __('courrier.no_attach_permission') }}
+                        </p>
+                    @endcan
+                </section>
+
+                <div class="flex flex-col gap-2">
+                    <button type="submit"
+                            class="rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+                        {{ __('courrier.save') }}
+                    </button>
+                    <a href="{{ route('courriers.index') }}"
+                       class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-600 no-underline hover:bg-slate-50">
+                        {{ __('courrier.cancel') }}
+                    </a>
+                </div>
             </div>
         </div>
     </form>

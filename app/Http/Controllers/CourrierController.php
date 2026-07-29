@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Exports\CourriersWorkbookExport;
 use App\Models\Courrier;
 use App\Models\CourrierAttachment;
+use App\Models\CourrierHistory;
 use App\Models\User;
 use App\Models\WorkflowEtape;
 use App\Services\CourrierQueryService;
 use App\Services\AuditService;
+use App\Services\WorkflowService;
 use App\Notifications\CourrierStatusNotification;
+use RuntimeException;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +28,8 @@ class CourrierController extends Controller
 {
     public function __construct(
         private readonly CourrierQueryService $queryService,
-        private readonly AuditService $auditService
+        private readonly AuditService $auditService,
+        private readonly WorkflowService $workflowService,
     ) {}
 
     /* =========================================================
@@ -148,12 +152,20 @@ class CourrierController extends Controller
         $this->authorize('create', Courrier::class);
 
         $validated = $request->validate([
-            'type' => ['required', Rule::in(['entrant', 'sortant'])],
+            'type' => ['required', Rule::in(['entrant', 'sortant', 'interne'])],
             'objet' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'reference_externe' => ['nullable', 'string', 'max:100'],
+            'tf' => ['nullable', 'string', 'max:100'],
             'expediteur' => ['nullable', 'string', 'max:255'],
             'destinataire' => ['nullable', 'string', 'max:255'],
+            'proprietaire' => ['nullable', 'string', 'max:255'],
+            'requerant' => ['nullable', 'string', 'max:255'],
+            'vendeur' => ['nullable', 'string', 'max:255'],
+            'etude_notariale' => ['nullable', 'string', 'max:255'],
+            'valeur_immeuble' => ['nullable', 'numeric', 'min:0'],
+            'numero_acte' => ['nullable', 'string', 'max:100'],
+            'numero_repertoire' => ['nullable', 'string', 'max:100'],
             'date_courrier' => ['nullable', 'date'],
             'date_reception' => ['nullable', 'date'],
             'date_envoi' => ['nullable', 'date'],
@@ -161,28 +173,72 @@ class CourrierController extends Controller
             'document_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png'],
         ]);
 
+        unset($validated['document_file']);
+
         $courrier = DB::transaction(function () use ($validated, $request) {
+            $etapeReception = WorkflowEtape::query()
+                ->with('bureau:id,nom,code')
+                ->where('ordre', 1)
+                ->first();
+
+            if (! $etapeReception) {
+                throw new RuntimeException(
+                    'Étape « Réception » (ordre 1) introuvable. Exécutez WorkflowEtapesSeeder.'
+                );
+            }
+
+            $dateLimite = $this->workflowService->calculerDateLimite($etapeReception);
 
             $year = now()->year;
             $seq = (Courrier::where('type', $validated['type'])->where('year', $year)->max('seq') ?? 0) + 1;
-            $prefix = $validated['type'] === 'entrant' ? 'ENT' : 'SOR';
+            $prefix = match ($validated['type']) {
+                'sortant' => 'SOR',
+                'interne' => 'INT',
+                default => 'ENT',
+            };
+
+            $status = 'recu'; // étape 1 — aligné WorkflowService::statusPourEtape
 
             $courrier = Courrier::create([
                 ...$validated,
                 'year' => $year,
                 'seq' => $seq,
                 'reference_interne' => sprintf('GUTF-%s-%d-%06d', $prefix, $year, $seq),
-                'status' => empty($validated['assigned_to_user_id']) ? 'recu' : 'affecte',
+                'status' => $status,
                 'created_by_user_id' => Auth::id(),
+                'workflow_etape_id' => $etapeReception->id,
+                'bureau_actuel_id' => $etapeReception->bureau_id,
+                'date_limite' => $dateLimite,
+                'is_late' => false,
             ]);
 
-            $this->auditService->log($courrier, 'created', null, $courrier->status, [
-                'reference_interne' => $courrier->reference_interne,
+            // Première entrée d’historique : création + entrée circuit Kanban
+            CourrierHistory::create([
+                'courrier_id' => $courrier->id,
+                'action' => 'created',
+                'from_status' => null,
+                'to_status' => $status,
+                'ancienne_etape_id' => null,
+                'nouvelle_etape_id' => $etapeReception->id,
+                'note_metier' => null,
+                'action_type' => null,
+                'actor_user_id' => Auth::id(),
+                'metadata' => [
+                    'reference_interne' => $courrier->reference_interne,
+                    'tf' => $courrier->tf,
+                    'bureau_id' => $etapeReception->bureau_id,
+                    'bureau_nom' => $etapeReception->bureau?->nom,
+                    'etape_libelle' => $etapeReception->libelle,
+                    'etape_ordre' => $etapeReception->ordre,
+                    'delai_jours' => $etapeReception->delai_jours,
+                    'date_limite' => $dateLimite?->toIso8601String(),
+                ],
+                'created_at' => now(),
             ]);
 
             if ($courrier->assigned_to_user_id) {
                 $assignee = User::find($courrier->assigned_to_user_id);
-                $this->auditService->log($courrier, 'assigned', 'recu', 'affecte', [
+                $this->auditService->log($courrier, 'assigned', $status, $status, [
                     'assigned_to' => $assignee?->name,
                 ]);
             }
