@@ -8,4 +8,5 @@ return [
     'kanban' => 'Kanban',
     'search' => 'Recherche',
     'statistics' => 'Statistiques',
+    'messages' => 'Messagerie',
 ];

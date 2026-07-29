@@ -2,173 +2,146 @@
     $authUser = Auth::user();
     $authName = $authUser ? (string) $authUser->name : '';
     $unreadCount = $authUser ? $authUser->unreadNotifications()->count() : 0;
-    
-    // Calcul dynamique de départ des discussions non lues
+
     $unreadChatCount = 0;
     if ($authUser) {
         $unreadChatCount = \App\Models\ConversationParticipant::where('user_id', $authUser->id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereNull('last_read_at')
-                      ->orWhereRaw('last_read_at < (select updated_at from conversations where id = conversation_participants.conversation_id)');
+                    ->orWhereRaw('last_read_at < (select updated_at from conversations where id = conversation_participants.conversation_id)');
             })
             ->count();
     }
 
-    // Initiales de l'avatar
     $initials = 'U';
     if ($authUser) {
-        $words = explode(' ', $authUser->name);
-        $initials = strtoupper(substr($words[0], 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
+        $words = preg_split('/\s+/', trim($authUser->name)) ?: [];
+        $initials = strtoupper(
+            substr($words[0] ?? 'U', 0, 1).
+            (isset($words[1]) ? substr($words[1], 0, 1) : '')
+        );
     }
+
+    $linkBase = 'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition no-underline';
+    $linkIdle = 'text-slate-600 hover:bg-slate-100 hover:text-[#17384b]';
+    $linkActive = 'bg-[#17384b]/10 text-[#17384b] font-semibold';
 @endphp
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3">
-    <div class="container">
-        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ route('dashboard') }}" style="color: var(--gutf-primary); letter-spacing: -0.5px;">
-            <span class="d-inline-flex align-items-center justify-content-center rounded-3 shadow-sm text-white fw-bold"
-                  style="width:34px;height:34px;background:var(--gutf-primary);font-size: 1.15rem;">
-                G
-            </span>
-            <span>{{ config('app.name', 'COURRIER GUTF') }}</span>
+{{-- Overlay mobile --}}
+<div id="sidebar-overlay"
+     class="fixed inset-0 z-40 bg-slate-900/40 opacity-0 pointer-events-none transition-opacity duration-200 lg:hidden"
+     aria-hidden="true"></div>
+
+<aside id="app-sidebar"
+       class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0">
+    <div class="flex h-16 items-center gap-3 border-b border-slate-100 px-5">
+        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#17384b] text-sm font-bold text-white">
+            G
+        </span>
+        <div class="min-w-0">
+            <div class="truncate text-sm font-semibold tracking-wide text-[#17384b]">
+                {{ config('app.name', 'COURRIER GUTF') }}
+            </div>
+            <div class="truncate text-[11px] text-slate-400">MINDCAF · MINFI</div>
+        </div>
+        <button type="button"
+                class="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden"
+                data-sidebar-close aria-label="Fermer">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Menu</p>
+
+        <a href="{{ route('dashboard') }}"
+           class="{{ $linkBase }} {{ request()->routeIs('dashboard') ? $linkActive : $linkIdle }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+            </svg>
+            <span>{{ __('app.dashboard') }}</span>
         </a>
 
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#gutfNavbar"
-                aria-controls="gutfNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        @can('courrier.view')
+            <a href="{{ route('courriers.index') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('courriers.*') && ! request()->routeIs(['courriers.kanban', 'courriers.search']) ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.07 8.909A2.25 2.25 0 0 1 2 6.993V6.75" />
+                </svg>
+                <span>{{ __('nav.courriers') }}</span>
+            </a>
 
-        <div class="collapse navbar-collapse" id="gutfNavbar" style="visibility: visible;">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4 gap-1">
-                
-                {{-- 1. Tableau de bord --}}
-                <li class="nav-item">
-                    <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('dashboard')) active bg-light fw-bold @endif" href="{{ route('dashboard') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-                        </svg>
-                        <span>{{ __('app.dashboard') }}</span>
-                    </a>
-                </li>
+            <a href="{{ route('courriers.kanban') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('courriers.kanban') ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
+                </svg>
+                <span>{{ __('nav.kanban') }}</span>
+            </a>
 
-                {{-- 2. Courriers --}}
-                @can('courrier.view')
-                    <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('courriers.*') && ! request()->routeIs(['courriers.kanban', 'courriers.search'])) active bg-light fw-bold @endif" href="{{ route('courriers.index') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0l-7.5-4.615a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                            </svg>
-                            <span>{{ __('nav.courriers') }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('courriers.search')) active bg-light fw-bold @endif" href="{{ route('courriers.search') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                            </svg>
-                            <span>{{ __('nav.search') }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('courriers.kanban')) active bg-light fw-bold @endif" href="{{ route('courriers.kanban') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
-                            </svg>
-                            <span>{{ __('nav.kanban') }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('statistics.*')) active bg-light fw-bold @endif" href="{{ route('statistics.index') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                            </svg>
-                            <span>{{ __('statistics.nav') }}</span>
-                        </a>
-                    </li>
-                @endcan
+            <a href="{{ route('courriers.search') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('courriers.search') ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+                <span>{{ __('nav.search') }}</span>
+            </a>
 
-                {{-- 3. Utilisateurs --}}
-                @can('user.manage')
-                    <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('admin.users.*')) active bg-light fw-bold @endif" href="{{ route('admin.users.index') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 20a11.383 11.386 0 0 1-4.717-.941v-.109m0 0.013a9.38 9.38 0 0 1-2.625.372 9.337 9.337 0 0 1-4.121-.952 4.125 4.125 0 0 1 7.533-2.493M10.089 20v-.003c0-1.113.285-2.16.786-3.07M10.089 20V19.9M8.25 12a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0Z" />
-                            </svg>
-                            <span>{{ __('nav.users') }}</span>
-                        </a>
-                    </li>
-                @endcan
+            <a href="{{ route('statistics.index') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('statistics.*') ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                </svg>
+                <span>{{ __('statistics.nav') }}</span>
+            </a>
+        @endcan
 
-                {{-- 4. Journal d'audit --}}
-                @can('auditor.view')
-                    <li class="nav-item">
-                        <a class="nav-link px-3 py-2 rounded-3 d-flex align-items-center gap-2 @if(request()->routeIs('audit.*')) active bg-light fw-bold @endif" href="{{ route('audit.index') }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 18px; height: 18px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-                            <span>{{ __('audit.title') }}</span>
-                        </a>
-                    </li>
-                @endcan
-            </ul>
+        @can('chat.view')
+            <a href="{{ route('messages.index') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('messages.*') ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.63m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
+                </svg>
+                <span class="flex-1">{{ __('nav.messages') }}</span>
+                @if($unreadChatCount > 0)
+                    <span class="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">{{ $unreadChatCount }}</span>
+                @endif
+            </a>
+        @endcan
 
-            <div class="d-flex align-items-center gap-3">
-                <x-locale-switcher />
+        @can('user.manage')
+            <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Admin</p>
+            <a href="{{ route('admin.users.index') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('admin.users.*') ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 20a11.383 11.386 0 0 1-4.717-.941v-.109m0 0.013a9.38 9.38 0 0 1-2.625.372 9.337 9.337 0 0 1-4.121-.952 4.125 4.125 0 0 1 7.533-2.493M10.089 20v-.003c0-1.113.285-2.16.786-3.07" />
+                </svg>
+                <span>{{ __('nav.users') }}</span>
+            </a>
+        @endcan
 
-                {{-- ICÔNE DE NOTIFICATIONS (BELL) AVEC BADGE ROUGE --}}
-                <a href="{{ route('notifications.index') }}" class="btn btn-link p-1 text-decoration-none position-relative me-1" style="color: inherit;" title="Notifications">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 22px; height: 22px; color: var(--gutf-primary);">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                    </svg>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
-                          id="headerNotificationBadge" 
-                          style="font-size: 0.65rem; padding: 0.2em 0.4em; {{ $unreadCount > 0 ? '' : 'display:none;' }}">
-                        {{ $unreadCount }}
-                    </span>
-                </a>
+        @can('auditor.view')
+            <a href="{{ route('audit.index') }}"
+               class="{{ $linkBase }} {{ request()->routeIs('audit.*') ? $linkActive : $linkIdle }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <span>{{ __('audit.title') }}</span>
+            </a>
+        @endcan
+    </nav>
 
-                {{-- ICÔNE DE MESSAGERIE (CHAT BUBBLE) AVEC BADGE ROUGE --}}
-                @can('chat.view')
-                    <a href="{{ route('messages.index') }}" class="btn btn-link p-1 text-decoration-none position-relative me-3" style="color: inherit;" title="Messagerie">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" style="width: 22px; height: 22px; color: var(--gutf-primary);">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.63m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
-                        </svg>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" 
-                              id="headerChatBadge" 
-                              style="font-size: 0.65rem; padding: 0.2em 0.4em; {{ $unreadChatCount > 0 ? '' : 'display:none;' }}">
-                            {{ $unreadChatCount }}
-                        </span>
-                    </a>
-                @endcan
-
-                {{-- Profil --}}
-                <div class="dropdown">
-                    <button class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: inherit;">
-                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold shadow-sm" 
-                             style="width: 34px; height: 34px; background: var(--gutf-accent); font-size: 0.85rem; letter-spacing: 0.5px;">
-                            {{ $initials ?: 'U' }}
-                        </div>
-                        <span class="d-none d-md-inline fw-bold small" style="color: var(--gutf-primary);">{{ $authName }}</span>
-                    </button>
-
-                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3 mt-2 p-2">
-                        <li>
-                            <a class="dropdown-item rounded-2 py-2 small fw-semibold" href="{{ route('profile.edit') }}">
-                                👤 {{ __('nav.profile') }}
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider border-slate-100"></li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" class="p-1">
-                                @csrf
-                                <button type="submit" class="btn btn-link dropdown-item text-danger rounded-2 py-2 small fw-bold">
-                                    🚪 {{ __('nav.logout') }}
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
+    <div class="border-t border-slate-100 p-4">
+        <div class="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#dc633a] text-xs font-bold text-white">
+                {{ $initials }}
+            </span>
+            <div class="min-w-0 flex-1">
+                <div class="truncate text-sm font-semibold text-slate-800">{{ $authName }}</div>
+                <div class="truncate text-[11px] text-slate-400">{{ $authUser?->email }}</div>
             </div>
-
         </div>
     </div>
-</nav>
+</aside>
