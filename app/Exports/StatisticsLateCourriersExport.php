@@ -30,9 +30,9 @@ class StatisticsLateCourriersExport implements FromQuery, WithHeadings, WithMapp
     public function query(): Builder
     {
         return Courrier::query()
-            ->with(['bureauActuel:id,nom', 'assignedTo:id,name'])
+            ->with(['bureauActuel:id,nom', 'assignedTo:id,name', 'workflowEtape:id,libelle'])
             ->where('is_late', true)
-            ->where('status', '!=', 'archive')
+            ->notArchived()
             ->orderBy('id');
     }
 
@@ -41,7 +41,7 @@ class StatisticsLateCourriersExport implements FromQuery, WithHeadings, WithMapp
         return [
             __('courrier.ref'),
             __('courrier.subject'),
-            __('courrier.status'),
+            __('courrier.filters.etape'),
             __('statistics.bureau'),
             __('courrier.assigned_to'),
             __('statistics.deadline'),
@@ -56,7 +56,7 @@ class StatisticsLateCourriersExport implements FromQuery, WithHeadings, WithMapp
         return [
             $courrier->reference_interne,
             $courrier->objet,
-            __('courrier.status_label.'.$courrier->status),
+            $courrier->workflowEtape?->libelle ?? '—',
             $courrier->bureauActuel?->nom ?? '—',
             $courrier->assignedTo?->name ?? '—',
             $courrier->date_limite ? ExcelDate::dateTimeToExcel($courrier->date_limite) : null,

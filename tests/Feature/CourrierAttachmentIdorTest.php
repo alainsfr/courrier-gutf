@@ -54,7 +54,6 @@ class CourrierAttachmentIdorTest extends TestCase
             'seq' => 1,
             'reference_interne' => 'GUTF-ENT-' . now()->year . '-000001',
             'objet' => 'Courrier test IDOR',
-            'status' => 'affecte',
             'created_by_user_id' => $creator->id,
             'assigned_to_user_id' => $this->assignee->id,
         ]);
@@ -120,7 +119,6 @@ class CourrierAttachmentIdorTest extends TestCase
             'seq' => 2,
             'reference_interne' => 'GUTF-SOR-' . now()->year . '-000002',
             'objet' => 'Autre courrier',
-            'status' => 'affecte',
             'created_by_user_id' => $this->assignee->id,
             'assigned_to_user_id' => $this->assignee->id,
         ]);

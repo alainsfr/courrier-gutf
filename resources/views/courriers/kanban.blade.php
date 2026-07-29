@@ -106,7 +106,7 @@
                                         {{ $c->assignedTo?->name ?? '—' }}
                                     </span>
                                     <span class="shrink-0 rounded-full bg-slate-50 px-2 py-0.5 border border-slate-100">
-                                        {{ __('courrier.status_label.'.$c->status) }}
+                                        {{ $c->workflowEtape?->libelle ?? '—' }}
                                     </span>
                                 </div>
                                 @if($c->date_limite)

@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Courrier extends Model
 {
+    public const ETAPE_RECEPTION = 1;
+    public const ETAPE_ANALYSE = 2;
+    public const ETAPE_TRAITEMENT = 3;
+    public const ETAPE_VALIDATION = 4;
+    public const ETAPE_SORTIE = 5;
+    public const ETAPE_ARCHIVAGE = 6;
+
     protected $fillable = [
         'type',
         'year',
@@ -29,7 +37,6 @@ class Courrier extends Model
         'date_courrier',
         'date_reception',
         'date_envoi',
-        'status',
         'created_by_user_id',
         'assigned_to_user_id',
         'bureau_actuel_id',
@@ -85,5 +92,52 @@ class Courrier extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(CourrierAttachment::class);
+    }
+
+    public function etapeOrdre(): ?int
+    {
+        if ($this->relationLoaded('workflowEtape')) {
+            return $this->workflowEtape?->ordre !== null
+                ? (int) $this->workflowEtape->ordre
+                : null;
+        }
+
+        return $this->workflowEtape()->value('ordre');
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived_at !== null
+            || $this->etapeOrdre() === self::ETAPE_ARCHIVAGE;
+    }
+
+    public function isEnValidation(): bool
+    {
+        return $this->etapeOrdre() === self::ETAPE_VALIDATION;
+    }
+
+    public function isAtOrdre(int $ordre): bool
+    {
+        return $this->etapeOrdre() === $ordre;
+    }
+
+    public function scopeNotArchived(Builder $query): Builder
+    {
+        return $query
+            ->whereNull('archived_at')
+            ->where(function (Builder $q) {
+                $q->whereNull('workflow_etape_id')
+                    ->orWhereHas('workflowEtape', fn (Builder $e) => $e->where('ordre', '<', self::ETAPE_ARCHIVAGE));
+            });
+    }
+
+    public function scopeWhereEtapeOrdre(Builder $query, int $ordre): Builder
+    {
+        return $query->whereHas('workflowEtape', fn (Builder $e) => $e->where('ordre', $ordre));
+    }
+
+    public function scopeWhereEtapeOrdreIn(Builder $query, array $ordres): Builder
+    {
+        return $query->whereHas('workflowEtape', fn (Builder $e) => $e->whereIn('ordre', $ordres));
     }
 }

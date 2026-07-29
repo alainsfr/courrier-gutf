@@ -28,7 +28,7 @@ Broadcast::channel('courriers.{courrierId}', function ($user, $courrierId) {
 
     return (int) $courrier->created_by_user_id === (int) $user->id
         || (int) $courrier->assigned_to_user_id === (int) $user->id
-        || ($user->can('courrier.validate') && $courrier->status === 'en_validation');
+        || ($user->can('courrier.validate') && $courrier->isEnValidation());
 });
 
 Broadcast::channel('bureaux.{bureauId}', function ($user, $bureauId) {

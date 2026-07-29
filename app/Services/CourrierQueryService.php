@@ -18,7 +18,10 @@ class CourrierQueryService
     {
         $q = Courrier::query()
             ->withCount('attachments')
-            ->with(['assignedTo:id,name,email'])
+            ->with([
+                'assignedTo:id,name,email',
+                'workflowEtape:id,libelle,ordre,ui_color',
+            ])
             ->latest('id');
 
         $isAdmin = $request->user()->hasRole('admin');
@@ -34,16 +37,16 @@ class CourrierQueryService
                 $sub->where('created_by_user_id', $request->user()->id)
                     ->orWhere('assigned_to_user_id', $request->user()->id);
 
-                // Validateurs : voir aussi les plis en attente de validation
+                // Validateurs : voir aussi les plis en attente de validation (étape 4)
                 if ($request->user()->can('courrier.validate')) {
-                    $sub->orWhere('status', 'en_validation');
+                    $sub->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_VALIDATION));
                 }
             });
         }
 
         $search = trim((string) $request->query('q', ''));
         $type = (string) $request->query('type', '');
-        $status = (string) $request->query('status', '');
+        $etapeId = (string) $request->query('workflow_etape_id', '');
         $hasAttachments = (string) $request->query('has_attachments', '');
         $assignedTo = (string) $request->query('assigned_to', '');
         $dateFrom = (string) $request->query('date_from', '');
@@ -59,13 +62,12 @@ class CourrierQueryService
             });
         }
 
-        if (in_array($type, ['entrant', 'sortant'], true)) {
+        if (in_array($type, ['entrant', 'sortant', 'interne'], true)) {
             $q->where('type', $type);
         }
 
-        $allowedStatuses = ['recu', 'affecte', 'en_traitement', 'en_validation', 'valide', 'rejete', 'archive'];
-        if (in_array($status, $allowedStatuses, true)) {
-            $q->where('status', $status);
+        if ($etapeId !== '' && ctype_digit($etapeId)) {
+            $q->where('workflow_etape_id', (int) $etapeId);
         }
 
         if ($hasAttachments === 'yes') {
@@ -173,7 +175,7 @@ class CourrierQueryService
                 ->orWhere('assigned_to_user_id', $user->id);
 
             if ($user->can('courrier.validate')) {
-                $sub->orWhere('status', 'en_validation');
+                $sub->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_VALIDATION));
             }
 
             if ($user->bureau_id) {

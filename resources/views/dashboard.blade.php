@@ -76,9 +76,6 @@
                             </thead>
                             <tbody>
                                 @forelse($recentCourriers as $c)
-                                    @php
-                                        $statusClass = 'status-' . str_replace('-', '_', $c->status);
-                                    @endphp
                                     <tr>
                                         <td class="ps-4 py-3 fw-bold text-dark">{{ $c->reference_interne }}</td>
                                         <td class="text-dark fw-semibold">{{ \Illuminate\Support\Str::limit($c->objet, 45) }}</td>

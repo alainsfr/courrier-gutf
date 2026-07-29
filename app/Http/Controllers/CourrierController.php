@@ -53,12 +53,10 @@ class CourrierController extends Controller
 
         $isAdmin = $request->user()->hasRole('admin');
 
-        $allowedStatuses = ['recu', 'affecte', 'en_traitement', 'en_validation', 'valide', 'rejete', 'archive'];
-
         $filters = [
             'q' => trim((string) $request->query('q', '')),
             'type' => (string) $request->query('type', ''),
-            'status' => (string) $request->query('status', ''),
+            'workflow_etape_id' => (string) $request->query('workflow_etape_id', ''),
             'has_attachments' => (string) $request->query('has_attachments', ''),
             'assigned_to' => (string) $request->query('assigned_to', ''),
             'date_from' => (string) $request->query('date_from', ''),
@@ -72,11 +70,12 @@ class CourrierController extends Controller
             ->withQueryString();
 
         $agentsList = User::orderBy('name')->get(['id', 'name', 'email']);
+        $etapes = WorkflowEtape::query()->orderBy('ordre')->get(['id', 'libelle', 'ordre']);
 
         return view('courriers.index', compact(
             'courriers',
             'filters',
-            'allowedStatuses',
+            'etapes',
             'isAdmin',
             'agentsList'
         ));
@@ -107,8 +106,9 @@ class CourrierController extends Controller
         if ($type = $request->query('type')) {
             $filtersHuman[] = __('courrier.filters.type') . ': ' . strtoupper($type);
         }
-        if ($status = $request->query('status')) {
-            $filtersHuman[] = __('courrier.filters.status') . ': ' . __('courrier.status_label.' . $status);
+        if ($etapeId = $request->query('workflow_etape_id')) {
+            $etape = WorkflowEtape::find($etapeId);
+            $filtersHuman[] = __('courrier.filters.etape') . ': ' . ($etape?->libelle ?? $etapeId);
         }
         if ($request->query('has_attachments') === 'yes') {
             $filtersHuman[] = __('courrier.filters.attachments') . ': ' . __('courrier.filters.attachments_yes');
@@ -197,14 +197,13 @@ class CourrierController extends Controller
                 default => 'ENT',
             };
 
-            $status = 'recu'; // étape 1 — aligné WorkflowService::statusPourEtape
+            $etapeLabel = $etapeReception->libelle;
 
             $courrier = Courrier::create([
                 ...$validated,
                 'year' => $year,
                 'seq' => $seq,
                 'reference_interne' => sprintf('GUTF-%s-%d-%06d', $prefix, $year, $seq),
-                'status' => $status,
                 'created_by_user_id' => Auth::id(),
                 'workflow_etape_id' => $etapeReception->id,
                 'bureau_actuel_id' => $etapeReception->bureau_id,
@@ -217,7 +216,7 @@ class CourrierController extends Controller
                 'courrier_id' => $courrier->id,
                 'action' => 'created',
                 'from_status' => null,
-                'to_status' => $status,
+                'to_status' => $etapeLabel,
                 'ancienne_etape_id' => null,
                 'nouvelle_etape_id' => $etapeReception->id,
                 'note_metier' => null,
@@ -238,7 +237,7 @@ class CourrierController extends Controller
 
             if ($courrier->assigned_to_user_id) {
                 $assignee = User::find($courrier->assigned_to_user_id);
-                $this->auditService->log($courrier, 'assigned', $status, $status, [
+                $this->auditService->log($courrier, 'assigned', $etapeLabel, $etapeLabel, [
                     'assigned_to' => $assignee?->name,
                 ]);
             }
@@ -310,15 +309,14 @@ class CourrierController extends Controller
             'assigned_to_user_id' => ['required', 'integer', 'exists:users,id'],
         ]);
 
-        $from = $courrier->status;
+        $etapeLabel = $courrier->workflowEtape?->libelle;
         $courrier->update([
             'assigned_to_user_id' => $validated['assigned_to_user_id'],
-            'status' => 'affecte',
         ]);
 
         $assignee = User::find($validated['assigned_to_user_id']);
 
-        $this->auditService->log($courrier, 'assigned', $from, 'affecte', [
+        $this->auditService->log($courrier, 'assigned', $etapeLabel, $etapeLabel, [
             'assigned_to' => $assignee?->name,
         ]);
 
@@ -337,12 +335,16 @@ class CourrierController extends Controller
     public function startProcessing(Courrier $courrier): RedirectResponse
     {
         $this->authorize('process', $courrier);
-        abort_unless($courrier->status === 'affecte', 422);
+        abort_unless($courrier->isAtOrdre(Courrier::ETAPE_ANALYSE), 422);
 
-        $from = $courrier->status;
-        $courrier->update(['status' => 'en_traitement']);
-
-        $this->auditService->log($courrier, 'processing_started', $from, 'en_traitement');
+        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_TRAITEMENT)->firstOrFail();
+        $this->workflowService->transfererCourrier(
+            $courrier,
+            (int) $cible->id,
+            null,
+            Auth::user(),
+            WorkflowService::ACTION_FORWARD
+        );
 
         return back()->with('status', 'courrier-processing-started');
     }
@@ -350,12 +352,16 @@ class CourrierController extends Controller
     public function submitForValidation(Courrier $courrier): RedirectResponse
     {
         $this->authorize('process', $courrier);
-        abort_unless(in_array($courrier->status, ['affecte', 'en_traitement']), 422);
+        abort_unless($courrier->isAtOrdre(Courrier::ETAPE_TRAITEMENT), 422);
 
-        $from = $courrier->status;
-        $courrier->update(['status' => 'en_validation']);
-
-        $this->auditService->log($courrier, 'submitted_for_validation', $from, 'en_validation');
+        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_VALIDATION)->firstOrFail();
+        $this->workflowService->transfererCourrier(
+            $courrier,
+            (int) $cible->id,
+            null,
+            Auth::user(),
+            WorkflowService::ACTION_FORWARD
+        );
 
         $validators = User::role('validateur')->get();
         $this->notifyUsers(
@@ -371,16 +377,21 @@ class CourrierController extends Controller
     public function validateCourrier(Courrier $courrier): RedirectResponse
     {
         $this->authorize('validate', $courrier);
-        abort_unless($courrier->status === 'en_validation', 422);
+        abort_unless($courrier->isEnValidation(), 422);
 
-        $from = $courrier->status;
-        $courrier->update([
-            'status' => 'valide',
+        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_SORTIE)->firstOrFail();
+        $this->workflowService->transfererCourrier(
+            $courrier,
+            (int) $cible->id,
+            null,
+            Auth::user(),
+            WorkflowService::ACTION_FORWARD
+        );
+
+        $courrier->forceFill([
             'validated_by_user_id' => Auth::id(),
             'validated_at' => now(),
-        ]);
-
-        $this->auditService->log($courrier, 'validated', $from, 'valide');
+        ])->save();
 
         return back()->with('status', 'courrier-validated');
     }
@@ -388,14 +399,18 @@ class CourrierController extends Controller
     public function rejectCourrier(Courrier $courrier, Request $request): RedirectResponse
     {
         $this->authorize('validate', $courrier);
-        abort_unless($courrier->status === 'en_validation', 422);
+        abort_unless($courrier->isEnValidation(), 422);
 
         $validated = $request->validate(['reason' => ['required', 'string', 'max:500']]);
-        $from = $courrier->status;
 
-        $courrier->update(['status' => 'rejete']);
-
-        $this->auditService->log($courrier, 'rejected', $from, 'rejete', $validated);
+        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_TRAITEMENT)->firstOrFail();
+        $this->workflowService->transfererCourrier(
+            $courrier,
+            (int) $cible->id,
+            $validated['reason'],
+            Auth::user(),
+            WorkflowService::ACTION_REJECT
+        );
 
         return back()->with('status', 'courrier-rejected');
     }
@@ -403,12 +418,16 @@ class CourrierController extends Controller
     public function archive(Courrier $courrier): RedirectResponse
     {
         $this->authorize('archive', $courrier);
-        abort_unless(in_array($courrier->status, ['valide', 'rejete']), 422);
+        abort_unless($courrier->isAtOrdre(Courrier::ETAPE_SORTIE), 422);
 
-        $from = $courrier->status;
-        $courrier->update(['status' => 'archive', 'archived_at' => now()]);
-
-        $this->auditService->log($courrier, 'archived', $from, 'archive');
+        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_ARCHIVAGE)->firstOrFail();
+        $this->workflowService->transfererCourrier(
+            $courrier,
+            (int) $cible->id,
+            null,
+            Auth::user(),
+            WorkflowService::ACTION_FORWARD
+        );
 
         return back()->with('status', 'courrier-archived');
     }
@@ -477,7 +496,9 @@ class CourrierController extends Controller
 
         $attachment->delete();
 
-        $this->auditService->log($courrier, 'attachment_deleted', $courrier->status, $courrier->status, [
+        $etapeLabel = $courrier->workflowEtape?->libelle;
+
+        $this->auditService->log($courrier, 'attachment_deleted', $etapeLabel, $etapeLabel, [
             'file' => $attachment->original_name,
         ]);
 
@@ -504,7 +525,9 @@ class CourrierController extends Controller
             'path' => $path,
         ]);
 
-        $this->auditService->log($courrier, 'attachment_uploaded', $courrier->status, $courrier->status, [
+        $etapeLabel = $courrier->workflowEtape?->libelle;
+
+        $this->auditService->log($courrier, 'attachment_uploaded', $etapeLabel, $etapeLabel, [
             'file' => $file->getClientOriginalName(),
         ]);
     }

@@ -47,7 +47,7 @@ class WorkflowController extends Controller
                 'bureauActuel:id,nom,code,color,icon',
             ])
             ->whereNotNull('workflow_etape_id')
-            ->where('status', '!=', 'archive');
+            ->notArchived();
 
         if ($bureauId) {
             $query->where('bureau_actuel_id', $bureauId);
@@ -141,7 +141,6 @@ class WorkflowController extends Controller
             'history_id' => $history->id,
             'courrier' => [
                 'id' => $courrier->id,
-                'status' => $courrier->status,
                 'workflow_etape_id' => $courrier->workflow_etape_id,
                 'bureau_actuel_id' => $courrier->bureau_actuel_id,
                 'etape' => $courrier->workflowEtape?->only(['id', 'libelle', 'ordre', 'ui_color', 'ui_icon']),

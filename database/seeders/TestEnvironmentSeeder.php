@@ -89,13 +89,6 @@ class TestEnvironmentSeeder extends Seeder
             4 => 3, // Validation (Visas)
         ];
 
-        $statusByOrdre = [
-            1 => 'recu',
-            2 => 'affecte',
-            3 => 'en_traitement',
-            4 => 'en_validation',
-        ];
-
         $assigneeByOrdre = [
             1 => $usersByBureau['accueil']->id,
             2 => $usersByBureau['visas_controles']->id,
@@ -146,11 +139,11 @@ class TestEnvironmentSeeder extends Seeder
                         'destinataire' => 'GUTF / BACL',
                         'date_courrier' => now()->subDays(rand(1, 20))->toDateString(),
                         'date_reception' => now()->subDays(rand(0, 10))->toDateString(),
-                        'status' => $statusByOrdre[$ordre],
                         'created_by_user_id' => $creator->id,
                         'assigned_to_user_id' => $assigneeByOrdre[$ordre],
                         'bureau_actuel_id' => $etape->bureau_id,
                         'workflow_etape_id' => $etape->id,
+                        'is_late' => false,
                     ]
                 );
             }

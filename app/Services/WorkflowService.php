@@ -62,15 +62,16 @@ class WorkflowService
 
             $this->assertActionValide($ancienneEtape, $nouvelleEtape, $actionType);
 
-            $fromStatus = $courrier->status;
-            $toStatus = $this->statusPourEtape($nouvelleEtape, $actionType);
+            $fromLabel = $ancienneEtape?->libelle;
+            $toLabel = $actionType === self::ACTION_REJECT
+                ? ($nouvelleEtape->libelle.' (rejet)')
+                : $nouvelleEtape->libelle;
 
             $dateLimite = $this->calculerDateLimite($nouvelleEtape);
 
             $courrier->forceFill([
                 'workflow_etape_id' => $nouvelleEtape->id,
                 'bureau_actuel_id' => $nouvelleEtape->bureau_id,
-                'status' => $toStatus,
                 'date_limite' => $dateLimite,
                 'is_late' => false,
                 'archived_at' => (int) $nouvelleEtape->ordre === 6 ? now() : null,
@@ -79,8 +80,8 @@ class WorkflowService
             $history = CourrierHistory::create([
                 'courrier_id' => $courrier->id,
                 'action' => 'workflow_transfer',
-                'from_status' => $fromStatus,
-                'to_status' => $toStatus,
+                'from_status' => $fromLabel,
+                'to_status' => $toLabel,
                 'ancienne_etape_id' => $ancienneEtape?->id,
                 'nouvelle_etape_id' => $nouvelleEtape->id,
                 'note_metier' => $note,
@@ -193,23 +194,15 @@ class WorkflowService
     }
 
     /**
-     * Compatibilité avec les statuts V1 / policies existantes.
+     * Compatibilité historique : libellés d’étape pour from_status / to_status.
      */
-    private function statusPourEtape(WorkflowEtape $etape, string $actionType): string
+    public function labelPourEtape(WorkflowEtape $etape, string $actionType = self::ACTION_FORWARD): string
     {
         if ($actionType === self::ACTION_REJECT) {
-            return 'rejete';
+            return $etape->libelle.' (rejet)';
         }
 
-        return match ((int) $etape->ordre) {
-            1 => 'recu',
-            2 => 'affecte',
-            3 => 'en_traitement',
-            4 => 'en_validation',
-            5 => 'valide',
-            6 => 'archive',
-            default => 'recu',
-        };
+        return $etape->libelle;
     }
 
     /**

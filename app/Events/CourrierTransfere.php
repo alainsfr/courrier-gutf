@@ -67,7 +67,7 @@ class CourrierTransfere implements ShouldBroadcast
             'courrier_id' => $this->courrier->id,
             'reference_interne' => $this->courrier->reference_interne,
             'action_type' => $this->actionType,
-            'status' => $this->courrier->status,
+            'etape_libelle' => $this->nouvelleEtape->libelle,
             'history_id' => $this->history->id,
             'note_metier' => $this->history->note_metier,
             'acteur' => [

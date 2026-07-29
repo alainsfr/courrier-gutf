@@ -21,7 +21,6 @@ class CheckDelaisCommand extends Command
 
         $query = Courrier::query()
             ->with(['workflowEtape:id,libelle', 'bureauActuel:id,nom'])
-            ->where('status', '!=', 'archive')
             ->whereNull('archived_at')
             ->where('is_late', false)
             ->whereNotNull('date_limite')

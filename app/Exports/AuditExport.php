@@ -82,8 +82,8 @@ class AuditExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSiz
             $date,
             $ref,
             __('audit.actions.' . $history->action) ?? $history->action,
-            $history->from_status ? __('courrier.status_label.' . $history->from_status) : '—',
-            $history->to_status ? __('courrier.status_label.' . $history->to_status) : '—',
+            $history->from_status ?: '—',
+            $history->to_status ?: '—',
             $actor,
             $metadataStr ?: '—',
         ];

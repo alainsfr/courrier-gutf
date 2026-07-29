@@ -54,14 +54,14 @@
                         </select>
                     </div>
 
-                    {{-- Filtrer par Statut --}}
+                    {{-- Filtrer par étape workflow --}}
                     <div class="col-lg-2 col-md-6">
-                        <label class="form-label fw-semibold text-muted small">{{ __('courrier.filters.status') }}</label>
-                        <select name="status" class="form-select border-slate-200">
+                        <label class="form-label fw-semibold text-muted small">{{ __('courrier.filters.etape') }}</label>
+                        <select name="workflow_etape_id" class="form-select border-slate-200">
                             <option value="">{{ __('courrier.filters.all') }}</option>
-                            @foreach($allowedStatuses as $st)
-                                <option value="{{ $st }}" @selected(($filters['status'] ?? '') === $st)>
-                                    {{ __('courrier.status_label.' . $st) }}
+                            @foreach($etapes as $etape)
+                                <option value="{{ $etape->id }}" @selected(($filters['workflow_etape_id'] ?? '') == $etape->id)>
+                                    {{ $etape->libelle }}
                                 </option>
                             @endforeach
                         </select>
@@ -143,15 +143,12 @@
                             <th class="py-3">{{ __('courrier.type') }}</th>
                             <th class="py-3">{{ __('courrier.subject') }}</th>
                             <th class="py-3">{{ __('courrier.assigned_to') }}</th>
-                            <th class="py-3">{{ __('courrier.status') }}</th>
+                            <th class="py-3">{{ __('courrier.filters.etape') }}</th>
                             <th class="pe-4 py-3 text-end">{{ __('courrier.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($courriers as $c)
-                            @php
-                                $statusClass = 'status-' . str_replace('-', '_', $c->status);
-                            @endphp
                             <tr style="cursor: pointer;" onclick="window.location='{{ route('courriers.show', $c) }}'">
                                 <td class="ps-4 fw-bold text-dark py-3">
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -164,6 +161,8 @@
                                 <td>
                                     @if($c->type === 'entrant')
                                         <span class="badge text-bg-light text-primary border">📥 ENTRANT</span>
+                                    @elseif($c->type === 'interne')
+                                        <span class="badge text-bg-light text-secondary border">🔁 INTERNE</span>
                                     @else
                                         <span class="badge text-bg-light text-warning border">📤 SORTANT</span>
                                     @endif
@@ -178,8 +177,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="status-badge {{ $statusClass }}">
-                                        {{ __('courrier.status_label.' . $c->status) }}
+                                    <span class="status-badge" style="{{ $c->workflowEtape?->ui_color ? 'border-color:'.$c->workflowEtape->ui_color.';color:'.$c->workflowEtape->ui_color : '' }}">
+                                        {{ $c->workflowEtape?->libelle ?? '—' }}
                                     </span>
                                 </td>
                                 <td class="pe-4 text-end" onclick="event.stopPropagation();">

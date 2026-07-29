@@ -33,8 +33,8 @@
                     <td>{{ optional($history->created_at)->format('d/m/Y H:i') }}</td>
                     <td>{{ $history->courrier->reference_interne ?? '—' }}</td>
                     <td>{{ __('audit.actions.' . $history->action) }}</td>
-                    <td>{{ $history->from_status ? __('courrier.status_label.' . $history->from_status) : '—' }}</td>
-                    <td>{{ $history->to_status ? __('courrier.status_label.' . $history->to_status) : '—' }}</td>
+                    <td>{{ $history->from_status ?: '—' }}</td>
+                    <td>{{ $history->to_status ?: '—' }}</td>
                     <td>{{ $history->actor->name ?? 'Système' }}</td>
                 </tr>
             @endforeach

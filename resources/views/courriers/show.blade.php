@@ -146,7 +146,7 @@
                     <h2 class="m-0 text-sm font-bold text-slate-900">{{ __('courrier.show_meta_title') }}</h2>
                     <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
                           style="color: {{ $etapeColor }}; background: {{ $etapeColor }}18;">
-                        {{ __('courrier.status_label.'.$courrier->status) }}
+                        {{ $courrier->workflowEtape?->libelle ?? '—' }}
                     </span>
                 </div>
 
@@ -186,7 +186,7 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <h2 class="mb-3 text-sm font-bold text-slate-900">{{ __('courrier.show_actions_title') }}</h2>
 
-                @if($canActOnBureau && $courrier->status !== 'archive')
+                @if($canActOnBureau && ! $courrier->isArchived())
                     <div class="space-y-2">
                         @if($nextEtape)
                             <form method="POST" action="{{ route('courriers.transfer', $courrier) }}">
@@ -235,7 +235,7 @@
                             <p class="mb-0 text-xs text-slate-500">{{ __('courrier.show_actions_none') }}</p>
                         @endif
                     </div>
-                @elseif($courrier->status === 'archive')
+                @elseif($courrier->isArchived())
                     <div class="rounded-xl bg-slate-50 px-3 py-4 text-center text-xs text-slate-500">
                         {{ __('courrier.show_archived') }}
                     </div>
@@ -247,7 +247,7 @@
 
                 {{-- Affectation (permission séparée, hors actions bureau) --}}
                 @can('courrier.assign')
-                    @if($courrier->status !== 'archive')
+                    @if(! $courrier->isArchived())
                         <form method="POST" action="{{ route('courriers.assign', $courrier) }}" class="mt-3 border-t border-slate-100 pt-3">
                             @csrf
                             <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-400">{{ __('courrier.assign_to') }}</label>

@@ -21,7 +21,7 @@ class CourriersSummarySheetExport implements FromArray, ShouldAutoSize, WithEven
         $total = $this->rows->count();
         $withAttachments = $this->rows->filter(fn ($c) => (int)($c->attachments_count ?? 0) > 0)->count();
 
-        $byStatus = $this->rows->groupBy('status')->map->count()->sortKeys();
+        $byEtape = $this->rows->groupBy(fn ($c) => $c->workflowEtape?->libelle ?? '—')->map->count()->sortKeys();
         $byType = $this->rows->groupBy('type')->map->count()->sortKeys();
 
         $byAssignee = $this->rows->groupBy(function ($c) {
@@ -52,11 +52,11 @@ class CourriersSummarySheetExport implements FromArray, ShouldAutoSize, WithEven
         $data[] = [__('courrier.export_summary_with_attachments'), $withAttachments];
         $data[] = [''];
 
-        // By status
-        $data[] = [__('courrier.export_summary_by_status')];
-        $data[] = [__('courrier.status'), __('courrier.export_summary_count')];
-        foreach ($byStatus as $st => $count) {
-            $data[] = [__('courrier.status_label.' . $st), $count];
+        // By étape
+        $data[] = [__('courrier.export_summary_by_etape')];
+        $data[] = [__('courrier.filters.etape'), __('courrier.export_summary_count')];
+        foreach ($byEtape as $label => $count) {
+            $data[] = [$label, $count];
         }
         $data[] = [''];
 
@@ -64,7 +64,12 @@ class CourriersSummarySheetExport implements FromArray, ShouldAutoSize, WithEven
         $data[] = [__('courrier.export_summary_by_type')];
         $data[] = [__('courrier.type'), __('courrier.export_summary_count')];
         foreach ($byType as $type => $count) {
-            $label = $type === 'entrant' ? __('courrier.type_in') : __('courrier.type_out');
+            $label = match ($type) {
+                'entrant' => __('courrier.type_in'),
+                'sortant' => __('courrier.type_out'),
+                'interne' => __('courrier.type_internal'),
+                default => $type,
+            };
             $data[] = [$label, $count];
         }
         $data[] = [''];

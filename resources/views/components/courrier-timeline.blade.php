@@ -44,9 +44,9 @@
                     </div>
                 @elseif($h->from_status || $h->to_status)
                     <div class="mt-1 text-xs text-slate-500">
-                        {{ $h->from_status ? __('courrier.status_label.'.$h->from_status) : '—' }}
+                        {{ $h->from_status ?: '—' }}
                         →
-                        <strong>{{ $h->to_status ? __('courrier.status_label.'.$h->to_status) : '—' }}</strong>
+                        <strong>{{ $h->to_status ?: '—' }}</strong>
                     </div>
                 @endif
 

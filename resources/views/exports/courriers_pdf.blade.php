@@ -260,7 +260,7 @@
                     @php
                         $date = $c->date_reception ?: $c->date_courrier;
                         $dateStr = $date ? $date->format('d/m/Y') : '—';
-                        $statusLabel = __('courrier.status_label.' . $c->status);
+                        $statusLabel = $c->workflowEtape?->libelle ?? '—';
                     @endphp
                     <tr>
                         <td style="font-weight: bold; color: #0f172a;">{{ $c->reference_interne }}</td>

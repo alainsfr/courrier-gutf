@@ -26,7 +26,6 @@ class MigrateCourrierFilesCommandTest extends TestCase
             'seq' => 10,
             'reference_interne' => 'GUTF-ENT-' . now()->year . '-000010',
             'objet' => 'Migration fichiers',
-            'status' => 'recu',
             'created_by_user_id' => $user->id,
         ]);
 
@@ -65,7 +64,6 @@ class MigrateCourrierFilesCommandTest extends TestCase
             'seq' => 11,
             'reference_interne' => 'GUTF-ENT-' . now()->year . '-000011',
             'objet' => 'Dry run',
-            'status' => 'recu',
             'created_by_user_id' => $user->id,
         ]);
 

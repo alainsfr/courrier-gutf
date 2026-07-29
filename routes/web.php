@@ -38,19 +38,26 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
                     ->orWhere('assigned_to_user_id', $user->id);
 
                 if ($user->can('courrier.validate')) {
-                    $sub->orWhere('status', 'en_validation');
+                    $sub->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', \App\Models\Courrier::ETAPE_VALIDATION));
                 }
             });
         }
 
-        // Calcul des KPI réels
+        // Calcul des KPI réels (étapes workflow)
         $kpiIncoming = (clone $query)->where('type', 'entrant')->count();
-        $kpiInProgress = (clone $query)->whereIn('status', ['affecte', 'en_traitement', 'en_validation'])->count();
-        $kpiArchived = (clone $query)->where('status', 'archive')->count();
+        $kpiInProgress = (clone $query)->whereEtapeOrdreIn([
+            \App\Models\Courrier::ETAPE_ANALYSE,
+            \App\Models\Courrier::ETAPE_TRAITEMENT,
+            \App\Models\Courrier::ETAPE_VALIDATION,
+        ])->count();
+        $kpiArchived = (clone $query)->where(function ($q) {
+            $q->whereNotNull('archived_at')
+                ->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', \App\Models\Courrier::ETAPE_ARCHIVAGE));
+        })->count();
 
         // Liste des 5 derniers courriers nécessitant une attention
         $recentCourriers = (clone $query)
-            ->with(['assignedTo:id,name'])
+            ->with(['assignedTo:id,name', 'workflowEtape:id,libelle,ordre'])
             ->latest('id')
             ->limit(5)
             ->get();

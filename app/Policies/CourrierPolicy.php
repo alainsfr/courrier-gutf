@@ -35,8 +35,8 @@ class CourrierPolicy
             return true;
         }
 
-        // Validateur : accès aux plis en attente de validation
-        if ($user->can('courrier.validate') && $courrier->status === 'en_validation') {
+        // Validateur : accès aux plis en attente de validation (étape 4)
+        if ($user->can('courrier.validate') && $courrier->isEnValidation()) {
             return true;
         }
 

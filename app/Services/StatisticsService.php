@@ -24,7 +24,10 @@ class StatisticsService
         $monthEnd = now()->endOfMonth()->toDateString();
 
         $treatedThisMonth = Courrier::query()
-            ->where('status', 'archive')
+            ->where(function ($q) {
+                $q->whereNotNull('archived_at')
+                    ->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_ARCHIVAGE));
+            })
             ->where(function ($q) use ($monthStart, $monthEnd) {
                 $q->whereBetween('archived_at', [$monthStart.' 00:00:00', $monthEnd.' 23:59:59'])
                     ->orWhere(function ($fallback) use ($monthStart, $monthEnd) {
@@ -36,7 +39,7 @@ class StatisticsService
 
         $lateCount = Courrier::query()
             ->where('is_late', true)
-            ->where('status', '!=', 'archive')
+            ->notArchived()
             ->count();
 
         $countsByBureau = Courrier::query()

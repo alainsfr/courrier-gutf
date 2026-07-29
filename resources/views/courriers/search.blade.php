@@ -112,7 +112,7 @@
                             <th class="px-4 py-3 font-bold">{{ __('courrier.subject') }}</th>
                             <th class="px-4 py-3 font-bold">{{ __('courrier.filters.type') }}</th>
                             <th class="px-4 py-3 font-bold">{{ __('courrier.show_bureau') }}</th>
-                            <th class="px-4 py-3 font-bold">{{ __('courrier.status') }}</th>
+                            <th class="px-4 py-3 font-bold">{{ __('courrier.filters.etape') }}</th>
                             <th class="px-4 py-3 font-bold">{{ __('courrier.filters.date_from') }}</th>
                             <th class="px-4 py-3 text-end font-bold">{{ __('courrier.actions') }}</th>
                         </tr>
@@ -136,7 +136,7 @@
                                 <td class="px-4 py-3">
                                     <span class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
                                           style="color: {{ $c->workflowEtape?->ui_color ?? '#64748B' }}; background: {{ ($c->workflowEtape?->ui_color ?? '#64748B') }}18;">
-                                        {{ __('courrier.status_label.'.$c->status) }}
+                                        {{ $c->workflowEtape?->libelle ?? '—' }}
                                     </span>
                                     @if($c->is_late)
                                         <span class="ms-1 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">
