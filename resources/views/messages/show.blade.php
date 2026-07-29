@@ -89,13 +89,11 @@
                                    required
                                    maxlength="2000"
                                    autocomplete="off">
-                            <button type="submit"
-                                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#17384b] text-white shadow-sm transition hover:bg-[#122c3b] focus:outline-none focus:ring-4 focus:ring-[#17384b]/20"
-                                    aria-label="Envoyer">
+                            <x-buttons.primary type="submit" class="h-11 w-11 shrink-0 rounded-full px-0" aria-label="Envoyer">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
                                     <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
                                 </svg>
-                            </button>
+                            </x-buttons.primary>
                         </form>
                     </div>
                 @endcan

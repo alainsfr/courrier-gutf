@@ -15,7 +15,7 @@
             @csrf
             <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-400">Nouveau message</label>
             <select name="user_id" required
-                    class="mb-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                    class="mb-2 w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1">
                 <option value="" disabled selected>Choisir un collaborateur</option>
                 @foreach($users as $u)
                     @if($u->id !== auth()->id())
@@ -23,30 +23,28 @@
                     @endif
                 @endforeach
             </select>
-            <button type="submit"
-                    class="w-full rounded-lg bg-[#17384b] px-3 py-2 text-xs font-semibold text-white hover:bg-[#122c3b]">
+            <x-buttons.primary type="submit" class="w-full">
                 Démarrer
-            </button>
+            </x-buttons.primary>
         </form>
 
         @can('chat.group.create')
             <form method="POST" action="{{ route('messages.group.create') }}" class="rounded-lg border border-gray-100 bg-gray-50 p-3">
                 @csrf
                 <label class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-400">Nouveau groupe</label>
-                <input class="mb-2 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                <input class="mb-2 w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1"
                        name="title" placeholder="Nom du groupe" required>
                 <select name="members[]" multiple required
-                        class="mb-2 h-24 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
+                        class="mb-2 h-24 w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1">
                     @foreach($users as $u)
                         @if($u->id !== auth()->id())
                             <option value="{{ $u->id }}">{{ $u->name }}</option>
                         @endif
                     @endforeach
                 </select>
-                <button type="submit"
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                <x-buttons.secondary type="submit" class="w-full">
                     Créer le groupe
-                </button>
+                </x-buttons.secondary>
             </form>
         @endcan
 

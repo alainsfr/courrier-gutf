@@ -1,5 +1,5 @@
 @php
-    $input = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30';
+    $field = 'w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-1';
     $label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
 @endphp
 
@@ -36,7 +36,7 @@
         <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div class="min-w-0 flex-1">
                 <label class="{{ $label }}">{{ __('users.search') }}</label>
-                <input name="q" value="{{ $q }}" class="{{ $input }}" placeholder="{{ __('users.search_placeholder') }}">
+                <input name="q" value="{{ $q }}" class="{{ $field }}" placeholder="{{ __('users.search_placeholder') }}">
             </div>
             <div class="flex gap-2">
                 <x-buttons.primary type="submit">

@@ -108,6 +108,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->parameters(['bureaux' => 'bureau']);
     });
 
+    // Alias public demandé pour la recherche avancée
+    Route::get('/search', [SearchController::class, 'index'])
+        ->middleware('permission:courrier.view')
+        ->name('search');
+
     // --- Courriers ---
     Route::prefix('courriers')->name('courriers.')->group(function () {
         Route::get('/', [CourrierController::class, 'index'])

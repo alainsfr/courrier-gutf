@@ -141,14 +141,16 @@
         <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <h3 class="mb-1 text-lg font-bold text-slate-800">{{ __('courrier.kanban_reject_title') }}</h3>
             <p class="mb-3 text-sm text-slate-500">{{ __('courrier.kanban_reject_help') }}</p>
-            <textarea id="reject-note" rows="3" class="mb-4 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300" placeholder="{{ __('courrier.reject_reason') }}"></textarea>
+            <textarea id="reject-note" rows="3"
+                      class="mb-4 w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1"
+                      placeholder="{{ __('courrier.reject_reason') }}"></textarea>
             <div class="flex justify-end gap-2">
-                <button type="button" id="reject-cancel" class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                <x-buttons.secondary type="button" id="reject-cancel">
                     {{ __('courrier.cancel') }}
-                </button>
-                <button type="button" id="reject-confirm" class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">
+                </x-buttons.secondary>
+                <x-buttons.danger type="button" id="reject-confirm">
                     {{ __('courrier.kanban_reject_confirm') }}
-                </button>
+                </x-buttons.danger>
             </div>
         </div>
     </div>
