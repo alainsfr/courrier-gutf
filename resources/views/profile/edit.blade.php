@@ -1,33 +1,38 @@
+@php
+    $input = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30';
+    $label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
+    $currentLocale = old('locale', $user->locale ?? app()->getLocale());
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="h4 mb-1 text-dark fw-bold">{{ __('profile.title') }}</h1>
-                <p class="text-muted small mb-0">{{ __('profile.subtitle') }}</p>
+                <h1 class="text-lg font-bold text-gray-900">{{ __('profile.title') }}</h1>
+                <p class="mb-0 text-sm text-gray-500">{{ __('profile.subtitle') }}</p>
             </div>
-            <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary px-4 rounded-3 fw-semibold">
-                ← {{ __('profile.back_dashboard') }}
-            </a>
+            <x-buttons.secondary :href="route('dashboard')">
+                {{ __('profile.back_dashboard') }}
+            </x-buttons.secondary>
         </div>
     </x-slot>
 
-    {{-- Messages de confirmation --}}
     @if (session('status') === 'profile-updated')
-        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center gap-2">
-            <span>✅</span> <div>{{ __('profile.updated') }}</div>
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ __('profile.updated') }}
         </div>
     @endif
 
     @if (session('status') === 'password-updated')
-        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center gap-2">
-            <span>🔐</span> <div>Votre mot de passe a été mis à jour avec succès.</div>
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ __('profile.password_updated') }}
         </div>
     @endif
 
     @if ($errors->any() || $errors->updatePassword->any())
-        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">
-            <div class="fw-bold mb-2">{{ __('profile.form_error_title') }}</div>
-            <ul class="mb-0 small">
+        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <div class="mb-1 font-semibold">{{ __('profile.form_error_title') }}</div>
+            <ul class="mb-0 list-disc pl-4">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -38,187 +43,139 @@
         </div>
     @endif
 
-    <div class="row g-4">
-        
-        {{-- COLONNE PRINCIPALE : FORMULAIRES DE CONFIGURATION (8/12) --}}
-        <div class="col-lg-8">
-            
-            {{-- CARTE 1 : INFORMATIONS PERSONNELLES --}}
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-white border-bottom p-4">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fs-4">👤</span>
-                        <h5 class="card-title fw-bold text-dark mb-0">{{ __('profile.information') }}</h5>
-                    </div>
-                </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ route('profile.update') }}">
-                        @csrf
-                        @method('PATCH')
-
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small" for="name">{{ __('profile.name') }} <span class="text-danger">*</span></label>
-                                <input
-                                    id="name"
-                                    name="name"
-                                    type="text"
-                                    class="form-control border-slate-200 rounded-3"
-                                    value="{{ old('name', $user->name) }}"
-                                    required
-                                    autocomplete="name"
-                                >
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small" for="email">{{ __('profile.email') }} <span class="text-danger">*</span></label>
-                                <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    class="form-control border-slate-200 rounded-3"
-                                    value="{{ old('email', $user->email) }}"
-                                    required
-                                    autocomplete="username"
-                                >
-                            </div>
-
-                            <hr class="my-4 border-slate-100">
-
-                            {{-- Menu déroulant professionnel pour le bilinguisme --}}
-                            <div class="col-12">
-                                <label class="form-label fw-semibold text-muted small mb-2">{{ __('profile.language') }}</label>
-                                @php
-                                    $currentLocale = old('locale', $user->locale ?? app()->getLocale());
-                                @endphp
-                                <div class="row align-items-center g-3">
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light border-slate-200 text-muted">🌐</span>
-                                            <select name="locale" class="form-select border-slate-200 rounded-end-3" required>
-                                                <option value="fr" @selected($currentLocale === 'fr')>Français (French)</option>
-                                                <option value="en" @selected($currentLocale === 'en')>English (English)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 text-muted small">
-                                        {{ __('profile.language_help') }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 mt-4 pt-2">
-                            <button type="submit" class="btn btn-gutf px-4 py-2.5 rounded-3 shadow-sm font-semibold">
-                                💾 {{ __('profile.save') }}
-                            </button>
-                            <a href="{{ route('dashboard') }}" class="btn btn-light border border-slate-200 px-4 py-2.5 rounded-3 font-semibold text-muted">
-                                {{ __('profile.back_dashboard') }}
-                            </a>
-                        </div>
-                    </form>
-                </div>
+    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-wrap items-center gap-4">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#dc633a] text-sm font-bold text-white">
+                {{ strtoupper(substr($user->name, 0, 1)) }}
+            </span>
+            <div class="min-w-0 flex-1">
+                <div class="truncate text-base font-bold text-gray-900">{{ $user->name }}</div>
+                <div class="truncate text-sm text-gray-500">{{ $user->email }}</div>
             </div>
-
-            {{-- CARTE 2 : SÉCURITÉ & CHANGEMENT DE MOT DE PASSE --}}
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white border-bottom p-4">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fs-4">🔒</span>
-                        <h5 class="card-title fw-bold text-dark mb-0">Sécurité du compte</h5>
-                    </div>
-                </div>
-                <div class="card-body p-4">
-                    <form method="POST" action="{{ route('password.update') }}">
-                        @csrf
-                        @method('PUT')
-
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label fw-semibold text-muted small">Mot de passe actuel <span class="text-danger">*</span></label>
-                                <input type="password" name="current_password" class="form-control border-slate-200 rounded-3" required autocomplete="current-password" placeholder="Saisissez votre mot de passe actuel">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">Nouveau mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password" class="form-control border-slate-200 rounded-3" required autocomplete="new-password" placeholder="Minimum 8 caractères">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold text-muted small">Confirmer le nouveau mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password_confirmation" class="form-control border-slate-200 rounded-3" required autocomplete="new-password" placeholder="Ressaisissez le nouveau mot de passe">
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 mt-4 pt-2">
-                            <button type="submit" class="btn btn-outline-secondary px-4 py-2.5 rounded-3 shadow-sm font-semibold">
-                                🔒 Mettre à jour le mot de passe
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {{-- COLONNE LATÉRALE : RÉSUMÉ & ZONE DE SÉCURITÉ DANGER (4/12) --}}
-        <div class="col-lg-4">
-            
-            {{-- Résumé --}}
-            <div class="card border-0 shadow-sm rounded-4 mb-4">
-                <div class="card-header bg-white border-bottom p-4">
-                    <h5 class="fw-bold text-dark mb-0">{{ __('profile.summary') }}</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="mb-3">
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">{{ __('profile.current_language') }}</div>
-                        <div class="fw-bold text-dark mt-1" style="font-size: 1.1rem;">
-                            {{ strtoupper(app()->getLocale()) === 'FR' ? '🇫🇷 Français' : '🇬🇧 English' }}
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem;">{{ __('profile.account_email') }}</div>
-                        <div class="fw-bold text-dark mt-1 small">{{ $user->email }}</div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Zone de suppression de compte --}}
-            <div class="card border border-danger-subtle shadow-sm rounded-4">
-                <div class="card-header bg-danger-subtle border-0 text-danger p-4">
-                    <h5 class="fw-bold mb-0">🚨 {{ __('profile.delete_account') }}</h5>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted small mb-3">
-                        {{ __('profile.delete_help') }}
-                    </p>
-
-                    <form method="POST" action="{{ route('profile.destroy') }}">
-                        @csrf
-                        @method('DELETE')
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold text-muted small" for="password">{{ __('profile.password') }} <span class="text-danger">*</span></label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                class="form-control border-slate-200 rounded-3 @error('password') is-invalid @enderror"
-                                required
-                                autocomplete="current-password"
-                                placeholder="Confirmez avec votre mot de passe"
-                            >
-                            @error('password')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <button type="submit" class="btn btn-outline-danger w-100 py-2.5 rounded-3 fw-bold small">
-                            🗑️ {{ __('profile.delete') }}
-                        </button>
-                    </form>
-                </div>
+            <div class="text-sm text-gray-500">
+                <span class="font-medium text-gray-700">{{ __('profile.current_language') }} :</span>
+                {{ strtoupper($currentLocale) === 'FR' ? 'Français' : 'English' }}
             </div>
         </div>
     </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {{-- Informations du profil --}}
+        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="mb-5 border-b border-gray-100 pb-4">
+                <h2 class="m-0 text-base font-bold text-gray-900">{{ __('profile.information') }}</h2>
+                <p class="mb-0 mt-1 text-sm text-gray-500">{{ __('profile.information_help') }}</p>
+            </div>
+
+            <form method="POST" action="{{ route('profile.update') }}" class="space-y-4">
+                @csrf
+                @method('PATCH')
+
+                <div>
+                    <label class="{{ $label }}" for="name">{{ __('profile.name') }}</label>
+                    <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        class="{{ $input }}"
+                        value="{{ old('name', $user->name) }}"
+                        required
+                        autocomplete="name"
+                    >
+                </div>
+
+                <div>
+                    <label class="{{ $label }}" for="email">{{ __('profile.email') }}</label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        class="{{ $input }}"
+                        value="{{ old('email', $user->email) }}"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+
+                <div>
+                    <label class="{{ $label }}" for="locale">{{ __('profile.language') }}</label>
+                    <select id="locale" name="locale" class="{{ $input }}" required>
+                        <option value="fr" @selected($currentLocale === 'fr')>Français</option>
+                        <option value="en" @selected($currentLocale === 'en')>English</option>
+                    </select>
+                    <p class="mb-0 mt-1.5 text-xs text-gray-400">{{ __('profile.language_help') }}</p>
+                </div>
+
+                <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-5">
+                    <x-buttons.primary type="submit">
+                        {{ __('profile.save') }}
+                    </x-buttons.primary>
+                    <x-buttons.secondary :href="route('dashboard')">
+                        {{ __('profile.back_dashboard') }}
+                    </x-buttons.secondary>
+                </div>
+            </form>
+        </div>
+
+        {{-- Mot de passe --}}
+        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="mb-5 border-b border-gray-100 pb-4">
+                <h2 class="m-0 text-base font-bold text-gray-900">{{ __('profile.password_title') }}</h2>
+                <p class="mb-0 mt-1 text-sm text-gray-500">{{ __('profile.password_help') }}</p>
+            </div>
+
+            <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <label class="{{ $label }}" for="current_password">{{ __('profile.current_password') }}</label>
+                    <input
+                        id="current_password"
+                        type="password"
+                        name="current_password"
+                        class="{{ $input }}"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <div>
+                    <label class="{{ $label }}" for="password">{{ __('profile.new_password') }}</label>
+                    <input
+                        id="password"
+                        type="password"
+                        name="password"
+                        class="{{ $input }}"
+                        required
+                        autocomplete="new-password"
+                    >
+                </div>
+
+                <div>
+                    <label class="{{ $label }}" for="password_confirmation">{{ __('profile.password_confirm') }}</label>
+                    <input
+                        id="password_confirmation"
+                        type="password"
+                        name="password_confirmation"
+                        class="{{ $input }}"
+                        required
+                        autocomplete="new-password"
+                    >
+                </div>
+
+                <div class="border-t border-gray-100 pt-5">
+                    <x-buttons.primary type="submit">
+                        {{ __('profile.password_save') }}
+                    </x-buttons.primary>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{--
+        Suppression de compte désactivée (application institutionnelle).
+        Un agent ne peut pas supprimer son propre compte : gestion réservée à l’Administration.
+        Ancienne section DeleteUserForm retirée volontairement.
+    --}}
 </x-app-layout>

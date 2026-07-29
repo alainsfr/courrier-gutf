@@ -2,7 +2,7 @@
 
 return [
     'courriers' => 'Registre des Courriers',
-    'profile' => 'Profil',
+    'profile' => 'Mon Profil',
     'logout' => 'Déconnexion',
     'users' => 'Utilisateurs',
     'kanban' => 'Espace de Traitement',

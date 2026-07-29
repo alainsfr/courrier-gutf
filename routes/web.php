@@ -192,7 +192,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Suppression de compte désactivée (application institutionnelle).
+    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Messaging
     Route::middleware('permission:chat.view')->group(function () {

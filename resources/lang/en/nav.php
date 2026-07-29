@@ -2,7 +2,7 @@
 
 return [
     'courriers' => 'Mail Registry',
-    'profile' => 'Profile',
+    'profile' => 'My Profile',
     'logout' => 'Log out',
     'users' => 'Users',
     'kanban' => 'Processing Workspace',
