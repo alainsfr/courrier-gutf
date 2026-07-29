@@ -26,6 +26,7 @@ return [
 
     'form_section_class' => 'Classification',
     'form_section_parties' => 'Parties & identification',
+    'form_section_foncier' => 'Land information',
     'form_section_acte' => 'Deed & property',
     'form_section_dates' => 'Tracking dates',
     'form_section_assign' => 'Assignment (optional)',

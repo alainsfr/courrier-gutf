@@ -26,6 +26,7 @@ return [
 
     'form_section_class' => 'Classification',
     'form_section_parties' => 'Parties & identification',
+    'form_section_foncier' => 'Informations foncières',
     'form_section_acte' => 'Acte & bien immobilier',
     'form_section_dates' => 'Dates de suivi',
     'form_section_assign' => 'Affectation (optionnel)',

@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="h4 mb-1 text-dark fw-bold">{{ __('courrier.kanban_title') }}</h1>
-                <p class="text-muted small mb-0">
+                <h1 class="mb-1 text-lg font-bold text-gray-900">{{ __('courrier.kanban_title') }}</h1>
+                <p class="mb-0 text-sm text-gray-500">
                     @if($bureau)
                         {{ __('courrier.kanban_bureau', ['bureau' => $bureau->nom]) }}
                     @else
@@ -11,10 +11,12 @@
                     @endif
                 </p>
             </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="flex flex-wrap items-center gap-2">
                 @if($isAdmin && $bureaux->isNotEmpty())
-                    <form method="GET" action="{{ route('courriers.kanban') }}" class="d-flex align-items-center gap-2">
-                        <select name="bureau_id" class="form-select form-select-sm border-slate-200 rounded-3" onchange="this.form.submit()">
+                    <form method="GET" action="{{ route('courriers.kanban') }}" class="m-0">
+                        <select name="bureau_id"
+                                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#17384b] focus:outline-none focus:ring-4 focus:ring-[#17384b]/10"
+                                onchange="this.form.submit()">
                             <option value="">{{ __('courrier.kanban_all_bureaux') }}</option>
                             @foreach($bureaux as $b)
                                 <option value="{{ $b->id }}" @selected(optional($bureau)->id === $b->id)>{{ $b->nom }}</option>
@@ -22,7 +24,8 @@
                         </select>
                     </form>
                 @endif
-                <a href="{{ route('courriers.index') }}" class="btn btn-light border border-slate-200 rounded-3 btn-sm fw-semibold">
+                <a href="{{ route('courriers.index') }}"
+                   class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-600 no-underline hover:bg-gray-50">
                     {{ __('courrier.kanban_list_view') }}
                 </a>
             </div>
@@ -31,10 +34,10 @@
 
     <div id="kanban-toast" class="fixed top-4 right-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-medium shadow-lg text-white"></div>
 
-    <div class="kanban-shell -mx-2 md:-mx-0">
+    <div class="kanban-shell w-full">
         <div id="kanban-board"
-             class="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory"
-             style="min-height: 70vh;"
+             class="flex w-full gap-4 overflow-x-auto pb-2 pt-1 snap-x snap-mandatory"
+             style="min-height: calc(100vh - 11rem);"
              data-transfer-template="{{ $transferUrlTemplate }}"
              data-csrf="{{ csrf_token() }}">
 
@@ -44,27 +47,27 @@
                     $color = $etape->ui_color ?: '#64748B';
                 @endphp
 
-                <section class="kanban-column snap-start flex w-[300px] min-w-[300px] flex-col rounded-2xl bg-slate-100/80 border border-slate-200/80 shadow-sm"
+                <section class="kanban-column snap-start flex w-[300px] min-w-[300px] flex-1 flex-col rounded-xl border border-gray-200 bg-gray-100/50"
                          data-etape-id="{{ $etape->id }}"
                          data-etape-ordre="{{ $etape->ordre }}"
                          data-rejectable="{{ $etape->is_rejectable ? '1' : '0' }}">
 
-                    <header class="sticky top-0 z-10 rounded-t-2xl px-3 py-3 border-b border-black/5"
-                            style="background: linear-gradient(135deg, {{ $color }}22, {{ $color }}0A); border-top: 3px solid {{ $color }};">
+                    <header class="sticky top-0 z-10 rounded-t-xl border-b border-gray-200/80 bg-white/80 px-3 py-3 backdrop-blur"
+                            style="border-top: 3px solid {{ $color }};">
                         <div class="flex items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-sm"
+                            <div class="flex min-w-0 items-center gap-2">
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-white"
                                       style="background: {{ $color }};">
                                     <i data-lucide="{{ $etape->ui_icon ?: 'circle' }}" class="h-4 w-4"></i>
                                 </span>
                                 <div class="min-w-0">
-                                    <div class="truncate text-sm font-bold text-slate-800">{{ $etape->libelle }}</div>
-                                    <div class="truncate text-[11px] text-slate-500">
+                                    <div class="truncate text-sm font-bold text-gray-800">{{ $etape->libelle }}</div>
+                                    <div class="truncate text-[11px] text-gray-500">
                                         {{ $etape->bureau?->nom }} · {{ $etape->delai_jours }}j
                                     </div>
                                 </div>
                             </div>
-                            <span class="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-white px-2 text-xs font-bold text-slate-600 border border-slate-200 column-count">
+                            <span class="column-count inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full border border-gray-200 bg-white px-2 text-xs font-bold text-gray-600">
                                 {{ $cards->count() }}
                             </span>
                         </div>
@@ -73,22 +76,22 @@
                     <div class="kanban-list flex-1 space-y-2.5 overflow-y-auto p-2.5"
                          data-etape-id="{{ $etape->id }}"
                          data-etape-ordre="{{ $etape->ordre }}"
-                         style="max-height: calc(70vh - 64px);">
+                         style="max-height: calc(100vh - 14rem);">
 
                         @forelse($cards as $c)
-                            <article class="kanban-card group cursor-grab active:cursor-grabbing rounded-xl border bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md {{ $c->is_late ? 'border-rose-300 ring-1 ring-rose-100' : 'border-slate-200' }}"
+                            <article class="kanban-card group cursor-grab rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md active:cursor-grabbing {{ $c->is_late ? 'border-rose-300 ring-1 ring-rose-100' : 'border-gray-200' }}"
                                      data-courrier-id="{{ $c->id }}"
                                      data-etape-id="{{ $etape->id }}"
                                      data-etape-ordre="{{ $etape->ordre }}"
                                      data-rejectable="{{ $etape->is_rejectable ? '1' : '0' }}">
                                 <div class="mb-2 flex items-start justify-between gap-2">
                                     <a href="{{ route('courriers.show', $c) }}"
-                                       class="text-[11px] font-bold tracking-wide text-slate-500 hover:text-slate-800 no-underline">
+                                       class="text-[11px] font-bold tracking-wide text-gray-500 no-underline hover:text-gray-800">
                                         {{ $c->reference_interne }}
                                     </a>
                                     <div class="flex shrink-0 flex-col items-end gap-1">
                                         @if($c->is_late)
-                                            <span class="rounded-md bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+                                            <span class="rounded-md bg-rose-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                                                 {{ __('courrier.kanban_late') }}
                                             </span>
                                         @endif
@@ -98,25 +101,25 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="mb-2 line-clamp-2 text-sm font-semibold text-slate-800 leading-snug">
+                                <div class="mb-2 line-clamp-2 text-sm font-semibold leading-snug text-gray-800">
                                     {{ $c->objet }}
                                 </div>
-                                <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                                <div class="flex items-center justify-between gap-2 text-[11px] text-gray-500">
                                     <span class="truncate">
                                         {{ $c->assignedTo?->name ?? '—' }}
                                     </span>
-                                    <span class="shrink-0 rounded-full bg-slate-50 px-2 py-0.5 border border-slate-100">
+                                    <span class="shrink-0 rounded-full border border-gray-100 bg-gray-50 px-2 py-0.5">
                                         {{ $c->workflowEtape?->libelle ?? '—' }}
                                     </span>
                                 </div>
                                 @if($c->date_limite)
-                                    <div class="mt-2 text-[10px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-slate-400' }}">
+                                    <div class="mt-2 text-[10px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-gray-400' }}">
                                         SLA : {{ $c->date_limite->format('d/m/Y') }}
                                     </div>
                                 @endif
                             </article>
                         @empty
-                            <div class="kanban-empty pointer-events-none rounded-xl border border-dashed border-slate-300 bg-white/40 px-3 py-8 text-center text-xs text-slate-400">
+                            <div class="kanban-empty pointer-events-none rounded-lg border border-dashed border-gray-300 bg-white/60 px-3 py-8 text-center text-xs text-gray-400">
                                 {{ __('courrier.kanban_empty') }}
                             </div>
                         @endforelse
