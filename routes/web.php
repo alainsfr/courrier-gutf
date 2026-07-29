@@ -25,7 +25,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     // Dashboard (Dynamique et connecté à la base de données)
     Route::get('/dashboard', function (Request $request) {
         $user = $request->user();
-        $isAdmin = $user->hasRole('admin');
+        $isAdmin = $user->hasRole(['admin', 'super-admin']);
 
         // Requête de base pour les statistiques
         $query = \App\Models\Courrier::query();

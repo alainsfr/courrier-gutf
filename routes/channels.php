@@ -16,7 +16,7 @@ Broadcast::channel('courriers.{courrierId}', function ($user, $courrierId) {
         return false;
     }
 
-    if ($user->hasRole('admin')) {
+    if ($user->hasRole(['admin', 'super-admin'])) {
         return true;
     }
 

@@ -30,5 +30,10 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Courrier::class, CourrierPolicy::class);
         Gate::policy(Conversation::class, ConversationPolicy::class);
+
+        // Spatie : le rôle super-admin contourne toutes les autorisations Gate/Policy
+        Gate::before(function ($user, string $ability) {
+            return method_exists($user, 'hasRole') && $user->hasRole('super-admin') ? true : null;
+        });
     }
 }

@@ -24,7 +24,7 @@ class CourrierQueryService
             ])
             ->latest('id');
 
-        $isAdmin = $request->user()->hasRole('admin');
+        $isAdmin = $request->user()->hasRole(['admin', 'super-admin']);
 
         // scope=all|mine (admin choisit, non-admin => mine)
         $scope = (string) $request->query('scope', $isAdmin ? 'all' : 'mine');
@@ -166,7 +166,7 @@ class CourrierQueryService
     private function applyVisibilityScope(Builder $q, Request $request): void
     {
         $user = $request->user();
-        if (! $user || $user->hasRole('admin')) {
+        if (! $user || $user->hasRole(['admin', 'super-admin'])) {
             return;
         }
 

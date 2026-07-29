@@ -51,7 +51,7 @@ class CourrierController extends Controller
     {
         $this->authorize('viewAny', Courrier::class);
 
-        $isAdmin = $request->user()->hasRole('admin');
+        $isAdmin = $request->user()->hasRole(['admin', 'super-admin']);
 
         $filters = [
             'q' => trim((string) $request->query('q', '')),

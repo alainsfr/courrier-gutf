@@ -25,7 +25,7 @@ class WorkflowController extends Controller
         $this->authorize('viewAny', Courrier::class);
 
         $user = $request->user();
-        $isAdmin = $user->hasRole('admin');
+        $isAdmin = $user->hasRole(['admin', 'super-admin']);
 
         $etapes = WorkflowEtape::query()
             ->with('bureau:id,nom,code,icon,color')
