@@ -2,55 +2,69 @@
     'initialUnread' => 0,
 ])
 
+@unless(request()->routeIs('messages.*'))
 <div class="chat-fab no-print">
-    <button type="button" class="chat-fab-btn" id="chatFabBtn" aria-label="Chat">
-        💬
+    <button type="button" class="chat-fab-btn" id="chatFabBtn" aria-label="{{ __('chat.title') }}">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-6 w-6" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75c0-4.556 4.253-8.25 9.75-8.25s9.75 3.694 9.75 8.25-4.253 8.25-9.75 8.25a10.9 10.9 0 0 1-3.84-.69L4.5 20.25l.86-2.72A7.8 7.8 0 0 1 2.25 12.75Z" />
+        </svg>
         <span class="chat-badge" id="chatUnreadBadge" style="{{ $initialUnread > 0 ? '' : 'display:none;' }}">
             {{ $initialUnread }}
         </span>
     </button>
 </div>
 
-<div class="chat-panel no-print" id="chatPanel" aria-hidden="true" style="width: 360px; height: 500px;">
-    
-    {{-- VUE 1 : LISTE DES DISCUSSIONS --}}
-    <div id="widgetListView" class="h-100 d-flex flex-column">
+<div class="chat-panel no-print" id="chatPanel" aria-hidden="true">
+    {{-- Liste --}}
+    <div id="widgetListView" class="flex h-full flex-col">
         <div class="chat-panel-header">
-            <div class="chat-panel-title">💬 {{ __('chat.title') }}</div>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-1" id="chatCloseBtn">✕</button>
+            <div>
+                <div class="chat-panel-title">{{ __('chat.title') }}</div>
+                <div class="text-[11px] font-medium text-slate-400">{{ __('nav.messages') }}</div>
+            </div>
+            <button type="button" class="chat-icon-btn" id="chatCloseBtn" aria-label="{{ __('chat.close') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
         </div>
 
-        <div class="chat-panel-body flex-grow-1 overflow-y-auto p-3" id="chatListContainer">
-            <div class="text-muted small">{{ __('chat.loading') }}</div>
+        <div class="chat-panel-body flex-1 overflow-y-auto" id="chatListContainer">
+            <div class="px-3 py-6 text-center text-xs text-slate-400">{{ __('chat.loading') }}</div>
         </div>
 
-        <div class="chat-panel-footer border-top p-3 bg-white">
-            <a class="btn btn-gutf btn-sm w-100 rounded-3 py-2 fw-semibold" href="{{ route('messages.index') }}">
+        <div class="chat-panel-footer">
+            <a class="chat-full-link" href="{{ route('messages.index') }}">
                 {{ __('chat.open_full') }}
             </a>
         </div>
     </div>
 
-    {{-- VUE 2 : SALON DE CHAT ACTIF --}}
-    <div id="widgetChatView" class="h-100 flex-column" style="display: none !important;">
-        <div class="chat-panel-header d-flex align-items-center justify-content-between p-3 border-bottom">
-            <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-light border-0 py-1" id="widgetBackBtn">←</button>
-                <div class="fw-bold text-dark text-truncate small" id="widgetChatTitle" style="max-width: 180px;">—</div>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary py-1" id="widgetChatCloseBtn">✕</button>
-        </div>
-
-        <div class="chat-panel-body flex-grow-1 overflow-y-auto p-3 bg-light" id="widgetMessagesContainer" style="height: calc(100% - 120px);">
-            {{-- Les bulles de messages se chargeront ici --}}
-        </div>
-
-        <div class="chat-panel-footer border-top p-3 bg-white">
-            <form id="widgetSendForm">
-                <div class="input-group">
-                    <input class="form-control border-slate-200 py-2 small" id="widgetMsgInput" placeholder="Écrire un message..." required maxlength="1000" autocomplete="off">
-                    <button class="btn btn-gutf btn-sm px-3" type="submit">➔</button>
+    {{-- Conversation --}}
+    <div id="widgetChatView" class="hidden h-full flex-col">
+        <div class="chat-panel-header">
+            <div class="flex min-w-0 items-center gap-2">
+                <button type="button" class="chat-icon-btn" id="widgetBackBtn" aria-label="{{ __('chat.back') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+                </button>
+                <div class="min-w-0">
+                    <div class="truncate text-sm font-bold text-[#17384b]" id="widgetChatTitle">—</div>
                 </div>
+            </div>
+            <button type="button" class="chat-icon-btn" id="widgetChatCloseBtn" aria-label="{{ __('chat.close') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+
+        <div class="chat-panel-body flex-1 overflow-y-auto bg-slate-50" id="widgetMessagesContainer"></div>
+
+        <div class="chat-panel-footer">
+            <form id="widgetSendForm" class="flex items-center gap-2">
+                <input class="chat-input" id="widgetMsgInput" placeholder="{{ __('chat.write_placeholder') }}" required maxlength="1000" autocomplete="off">
+                <button class="chat-send-btn" type="submit" aria-label="{{ __('chat.send') }}" title="{{ __('chat.send') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+                        <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                    </svg>
+                </button>
             </form>
         </div>
     </div>
@@ -63,8 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('chatCloseBtn');
     const listContainer = document.getElementById('chatListContainer');
     const badge = document.getElementById('chatUnreadBadge');
-
-    // Éléments de la vue Chat actif
     const listView = document.getElementById('widgetListView');
     const chatView = document.getElementById('widgetChatView');
     const backBtn = document.getElementById('widgetBackBtn');
@@ -73,16 +85,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const messagesContainer = document.getElementById('widgetMessagesContainer');
     const sendForm = document.getElementById('widgetSendForm');
     const msgInput = document.getElementById('widgetMsgInput');
-
-    // Cible de l'en-tête de navigation
     const headerChatBadge = document.getElementById('headerChatBadge');
+
+    if (!btn || !panel) return;
 
     let activeConversationId = null;
     let echoChannelInstance = null;
     let lastWidgetMessageCount = 0;
+    const userId = {{ (int) auth()->id() }};
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
 
     function setUnread(n) {
-        // 1. Pastille du widget flottant
         if (badge) {
             if (n > 0) {
                 badge.style.display = 'flex';
@@ -91,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 badge.style.display = 'none';
             }
         }
-        // 2. Pastille de l'en-tête de navigation
         if (headerChatBadge) {
             if (n > 0) {
                 headerChatBadge.style.display = 'inline-block';
@@ -103,14 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggle(open) {
-        if (open) {
-            panel.classList.add('open');
-            panel.setAttribute('aria-hidden', 'false');
-        } else {
-            panel.classList.remove('open');
-            panel.setAttribute('aria-hidden', 'true');
-            unsubscribeActiveChannel();
-        }
+        panel.classList.toggle('open', open);
+        panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        if (!open) unsubscribeActiveChannel();
     }
 
     function unsubscribeActiveChannel() {
@@ -120,89 +134,87 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Chargement de la liste des conversations
+    function showList() {
+        chatView.classList.add('hidden');
+        chatView.classList.remove('flex');
+        listView.classList.remove('hidden');
+        listView.classList.add('flex');
+    }
+
+    function showChat() {
+        listView.classList.add('hidden');
+        listView.classList.remove('flex');
+        chatView.classList.remove('hidden');
+        chatView.classList.add('flex');
+    }
+
+    function renderConversationList(conversations) {
+        if (!conversations || conversations.length === 0) {
+            listContainer.innerHTML = `<div class="px-3 py-8 text-center text-xs text-slate-400">{{ __('chat.empty') }}</div>`;
+            return;
+        }
+
+        listContainer.innerHTML = conversations.map(c => `
+            <button type="button" class="chat-conv" data-id="${c.id}" data-title="${escapeHtml(c.title)}">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="truncate text-sm font-semibold text-slate-800">${escapeHtml(c.title)}</div>
+                    ${c.unread > 0 ? `<span class="chat-unread-pill">${c.unread}</span>` : ''}
+                </div>
+                <div class="mt-1 truncate text-xs text-slate-400">${escapeHtml(c.last || '—')}</div>
+            </button>
+        `).join('');
+
+        listContainer.querySelectorAll('.chat-conv').forEach(el => {
+            el.addEventListener('click', () => openConversation(el.dataset.id, el.dataset.title));
+        });
+    }
+
     async function loadMiniInbox() {
-        listContainer.innerHTML = `<div class="text-muted small text-center mt-3">{{ __('chat.loading') }}</div>`;
+        listContainer.innerHTML = `<div class="px-3 py-6 text-center text-xs text-slate-400">{{ __('chat.loading') }}</div>`;
         try {
             const res = await fetch(`{{ route('chat.mini') }}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
             const data = await res.json();
             setUnread(data.unread_total || 0);
-
-            if (!data.conversations || data.conversations.length === 0) {
-                listContainer.innerHTML = `<div class="text-muted small text-center mt-3">{{ __('chat.empty') }}</div>`;
-                return;
-            }
-
-            listContainer.innerHTML = data.conversations.map(c => `
-                <div class="chat-conv p-3 border rounded-3 mb-2 hover:bg-light" style="cursor:pointer;" data-id="${c.id}" data-title="${c.title}">
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <div class="fw-bold text-dark small text-truncate" style="max-width: 220px;">${c.title}</div>
-                        ${c.unread > 0 ? `<span class="badge text-bg-danger rounded-pill">${c.unread}</span>` : ``}
-                    </div>
-                    <div class="chat-conv-last text-muted small text-truncate mt-1" style="font-size:0.8rem;">${c.last || '—'}</div>
-                </div>
-            `).join('');
-
-            listContainer.querySelectorAll('.chat-conv').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = el.getAttribute('data-id');
-                    const title = el.getAttribute('data-title');
-                    openConversation(id, title);
-                });
-            });
-        } catch(e) {
-            listContainer.innerHTML = `<div class="text-danger small text-center">Erreur de chargement.</div>`;
-        }
-    }
-
-    // Ouverture d'une conversation à l'intérieur du widget
-    async function openConversation(convId, title) {
-        unsubscribeActiveChannel();
-        activeConversationId = convId;
-        chatTitle.textContent = title;
-
-        listView.style.setProperty('display', 'none', 'important');
-        chatView.style.setProperty('display', 'flex', 'important');
-
-        messagesContainer.innerHTML = `<div class="text-muted small text-center mt-3">Chargement des messages...</div>`;
-        
-        try {
-            const res = await fetch(`/chat/mini/${convId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
-            const messages = await res.json();
-            lastWidgetMessageCount = messages.length;
-            renderMessages(messages);
-
-            loadMiniInbox();
-            subscribeToChannel(convId);
-
+            renderConversationList(data.conversations || []);
         } catch (e) {
-            messagesContainer.innerHTML = `<div class="text-danger small text-center">Impossible de charger la conversation.</div>`;
+            listContainer.innerHTML = `<div class="px-3 py-6 text-center text-xs text-rose-500">{{ __('chat.load_error') }}</div>`;
         }
     }
 
-    // Rendu des messages sous forme de bulles
+    function bubbleHtml(body, isMe, senderName) {
+        return `
+            <div class="mb-2 flex ${isMe ? 'justify-end' : 'justify-start'}">
+                <div class="max-w-[85%]">
+                    ${!isMe && senderName ? `<div class="mb-0.5 px-1 text-[10px] font-semibold text-slate-400">${escapeHtml(senderName)}</div>` : ''}
+                    <div class="rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm ${isMe
+                        ? 'rounded-br-md bg-[#17384b] text-white'
+                        : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}">
+                        <div style="white-space:pre-line">${escapeHtml(body)}</div>
+                    </div>
+                </div>
+            </div>`;
+    }
+
     function renderMessages(messages) {
-        const userId = {{ (int) auth()->id() }};
-        if (messages.length === 0) {
-            messagesContainer.innerHTML = `<div class="text-muted small text-center mt-3">Aucun message dans ce salon.</div>`;
+        if (!messages.length) {
+            messagesContainer.innerHTML = `<div class="px-3 py-8 text-center text-xs text-slate-400">{{ __('chat.no_messages') }}</div>`;
             return;
         }
-
         messagesContainer.innerHTML = messages.map(m => {
-            const isMe = (m.sender_user_id === userId || m.sender.id === userId);
-            return `
-                <div class="d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-2">
-                    <div style="max-width: 85%;">
-                        ${!isMe ? `<div class="text-muted small fw-semibold" style="font-size:0.75rem;">${m.sender.name}</div>` : ''}
-                        <div class="p-2 rounded-3 shadow-sm mt-1 ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border'}" style="font-size:0.85rem; white-space:pre-line;">${m.body}</div>
-                    </div>
-                </div>
-            `;
+            const isMe = (m.sender_user_id === userId || m.sender?.id === userId);
+            return bubbleHtml(m.body, isMe, m.sender?.name);
         }).join('');
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // S'inscrire à l'écoute en temps réel pour le salon actif
+    function appendSingleMessage(e) {
+        const isMe = (e.sender.id === userId);
+        const wrap = document.createElement('div');
+        wrap.innerHTML = bubbleHtml(e.body, isMe, e.sender.name);
+        messagesContainer.appendChild(wrap.firstElementChild);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
     function subscribeToChannel(convId) {
         if (window.Echo) {
             echoChannelInstance = window.Echo.private(`conversations.${convId}`)
@@ -215,29 +227,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Ajouter un message reçu en temps réel
-    function appendSingleMessage(e) {
-        const userId = {{ (int) auth()->id() }};
-        const isMe = (e.sender.id === userId);
-        const wrap = document.createElement('div');
-        
-        wrap.className = `d-flex ${isMe ? 'justify-content-end' : 'justify-content-start'} mb-2`;
-        wrap.innerHTML = `
-            <div style="max-width: 85%;">
-                ${!isMe ? `<div class="text-muted small fw-semibold" style="font-size:0.75rem;">${e.sender.name}</div>` : ''}
-                <div class="p-2 rounded-3 shadow-sm mt-1 ${isMe ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-dark rounded-tl-none border'}" style="font-size:0.85rem; white-space:pre-line;">${e.body}</div>
-            </div>
-        `;
-        messagesContainer.appendChild(wrap);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    async function openConversation(convId, title) {
+        unsubscribeActiveChannel();
+        activeConversationId = convId;
+        chatTitle.textContent = title;
+        showChat();
+        messagesContainer.innerHTML = `<div class="px-3 py-6 text-center text-xs text-slate-400">{{ __('chat.loading') }}</div>`;
+
+        try {
+            const res = await fetch(`/chat/mini/${convId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+            const messages = await res.json();
+            lastWidgetMessageCount = messages.length;
+            renderMessages(messages);
+            loadMiniInbox();
+            subscribeToChannel(convId);
+        } catch (e) {
+            messagesContainer.innerHTML = `<div class="px-3 py-6 text-center text-xs text-rose-500">{{ __('chat.load_error') }}</div>`;
+        }
     }
 
-    // Soumission du formulaire d'envoi rapide
-    sendForm.addEventListener('submit', async (e) => {
+    sendForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = msgInput.value.trim();
         if (!text || !activeConversationId) return;
-
         msgInput.value = '';
 
         try {
@@ -256,26 +268,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastWidgetMessageCount++;
             }
         } catch (err) {
-            alert('Erreur lors de l\'envoi du message.');
+            alert(@json(__('chat.send_error')));
         }
     });
 
-    // Retour à la liste des discussions
-    backBtn.addEventListener('click', () => {
+    backBtn?.addEventListener('click', () => {
         unsubscribeActiveChannel();
         activeConversationId = null;
-        chatView.style.setProperty('display', 'none', 'important');
-        listView.style.setProperty('display', 'flex', 'important');
+        showList();
         loadMiniInbox();
     });
 
-    // Ouverture/Fermeture globale du widget
-    btn?.addEventListener('click', async () => {
+    btn.addEventListener('click', async () => {
         const isOpen = panel.classList.contains('open');
         toggle(!isOpen);
         if (!isOpen) {
-            chatView.style.setProperty('display', 'none', 'important');
-            listView.style.setProperty('display', 'flex', 'important');
+            showList();
             await loadMiniInbox();
         }
     });
@@ -283,24 +291,17 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn?.addEventListener('click', () => toggle(false));
     chatCloseBtn?.addEventListener('click', () => toggle(false));
 
-    // Écoute globale des notifications non-lues (WebSockets)
-    const userId = {{ (int) auth()->id() }};
     if (window.Echo && userId) {
         window.Echo.private(`users.${userId}`)
             .listen('.chat.unread', (e) => {
-                if (typeof e.unread_total === 'number') {
-                    setUnread(e.unread_total);
-                }
-                if (panel.classList.contains('open') && !activeConversationId) {
-                    loadMiniInbox();
-                }
+                if (typeof e.unread_total === 'number') setUnread(e.unread_total);
+                if (panel.classList.contains('open') && !activeConversationId) loadMiniInbox();
             });
     }
 
-    // SYSTÈME DE SECOURS INSTANTANÉ (Long-polling à 3,5s pour l'espace actif du widget et l'en-tête) [a]
     setInterval(async () => {
-        // 1. Rafraîchir les messages du mini-chat actif
-        if (activeConversationId && (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected')) {
+        const echoDown = !window.Echo || window.Echo.connector?.pusher?.connection?.state !== 'connected';
+        if (activeConversationId && echoDown) {
             try {
                 const res = await fetch(`/chat/mini/${activeConversationId}/messages`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
                 const messages = await res.json();
@@ -310,35 +311,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (e) {}
         }
-
-        // 2. Rafraîchir également la liste et le compteur global du header si le WebSocket est coupé
-        if (!window.Echo || window.Echo.connector.pusher.connection.state !== 'connected') {
+        if (echoDown) {
             try {
                 const res = await fetch(`{{ route('chat.mini') }}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
                 const data = await res.json();
                 setUnread(data.unread_total || 0);
                 if (panel.classList.contains('open') && !activeConversationId) {
-                    // Mettre à jour la liste des conversations du widget si ouvert
-                    listContainer.innerHTML = data.conversations.map(c => `
-                        <div class="chat-conv p-3 border rounded-3 mb-2 hover:bg-light" style="cursor:pointer;" data-id="${c.id}" data-title="${c.title}">
-                            <div class="d-flex align-items-center justify-content-between gap-2">
-                                <div class="fw-bold text-dark small text-truncate" style="max-width: 220px;">${c.title}</div>
-                                ${c.unread > 0 ? `<span class="badge text-bg-danger rounded-pill">${c.unread}</span>` : ``}
-                            </div>
-                            <div class="chat-conv-last text-muted small text-truncate mt-1" style="font-size:0.8rem;">${c.last || '—'}</div>
-                        </div>
-                    `).join('');
-
-                    listContainer.querySelectorAll('.chat-conv').forEach(el => {
-                        el.addEventListener('click', () => {
-                            const id = el.getAttribute('data-id');
-                            const title = el.getAttribute('data-title');
-                            openConversation(id, title);
-                        });
-                    });
+                    renderConversationList(data.conversations || []);
                 }
             } catch (e) {}
         }
     }, 3500);
 });
 </script>
+@endunless

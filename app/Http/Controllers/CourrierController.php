@@ -287,7 +287,7 @@ class CourrierController extends Controller
         return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-created');
     }
 
-    public function show(Courrier $courrier): View
+    public function show(Request $request, Courrier $courrier): View
     {
         $this->authorize('view', $courrier);
 
@@ -316,8 +316,13 @@ class CourrierController extends Controller
                 ->first();
         }
 
-        $previewAttachment = $courrier->attachments
-            ->first(fn ($a) => str_contains(strtolower((string) $a->mime), 'pdf'))
+        $requestedAttId = (int) $request->query('att', 0);
+        $previewAttachment = $requestedAttId > 0
+            ? $courrier->attachments->firstWhere('id', $requestedAttId)
+            : null;
+        $previewAttachment ??= $courrier->attachments
+            ->first(fn ($a) => str_contains(strtolower((string) $a->mime), 'pdf')
+                || str_ends_with(strtolower((string) $a->original_name), '.pdf'))
             ?? $courrier->attachments->first();
 
         $user = Auth::user();
@@ -537,12 +542,16 @@ class CourrierController extends Controller
             abort(404);
         }
 
+        $fullPath = Storage::disk('local')->path($path);
         $safeName = str_replace(['"', "\r", "\n"], '', $attachment->original_name);
+        $mime = $this->resolveAttachmentMime($attachment, $fullPath);
 
-        return response()->file(Storage::disk('local')->path($path), [
-            'Content-Type' => $attachment->mime,
+        return response()->file($fullPath, [
+            'Content-Type' => $mime,
             'Content-Disposition' => 'inline; filename="'.$safeName.'"',
-        ]);
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=0, must-revalidate',
+        ])->setContentDisposition('inline', $safeName);
     }
 
     public function downloadAttachment(Courrier $courrier, CourrierAttachment $attachment)
@@ -606,5 +615,31 @@ class CourrierController extends Controller
         $this->auditService->log($courrier, 'attachment_uploaded', $etapeLabel, $etapeLabel, [
             'file' => $file->getClientOriginalName(),
         ]);
+    }
+
+    private function resolveAttachmentMime(CourrierAttachment $attachment, string $fullPath): string
+    {
+        $mime = strtolower(trim((string) $attachment->mime));
+        $name = strtolower((string) $attachment->original_name);
+
+        if (str_ends_with($name, '.pdf') || str_contains($mime, 'pdf')) {
+            return 'application/pdf';
+        }
+        if (str_ends_with($name, '.png') || $mime === 'image/png') {
+            return 'image/png';
+        }
+        if (str_ends_with($name, '.jpg') || str_ends_with($name, '.jpeg') || str_contains($mime, 'jpeg')) {
+            return 'image/jpeg';
+        }
+        if (str_starts_with($mime, 'image/')) {
+            return $mime;
+        }
+
+        $detected = @mime_content_type($fullPath);
+        if (is_string($detected) && $detected !== '' && $detected !== 'application/octet-stream') {
+            return $detected;
+        }
+
+        return $mime !== '' ? $mime : 'application/octet-stream';
     }
 }

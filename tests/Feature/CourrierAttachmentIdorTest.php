@@ -109,6 +109,7 @@ class CourrierAttachmentIdorTest extends TestCase
 
         $response->assertOk();
         $this->assertStringContainsString('application/pdf', (string) $response->headers->get('content-type'));
+        $this->assertStringContainsString('inline', (string) $response->headers->get('content-disposition'));
     }
 
     public function test_attachment_bound_to_another_courrier_returns_404(): void
