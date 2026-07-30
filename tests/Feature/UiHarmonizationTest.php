@@ -49,5 +49,9 @@ class UiHarmonizationTest extends TestCase
 
             $response->assertOk();
         }
+
+        $this->actingAs($this->user)
+            ->get('/notifications')
+            ->assertOk();
     }
 }

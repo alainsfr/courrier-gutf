@@ -156,6 +156,28 @@
                 profileDropdown?.classList.add('hidden');
                 profileToggle?.setAttribute('aria-expanded', 'false');
             });
+
+            const notifBadge = document.getElementById('headerNotificationBadge');
+            const unreadCountUrl = @json(auth()->check() ? route('notifications.unread_count') : null);
+            if (notifBadge && unreadCountUrl) {
+                const syncNotifBadge = async () => {
+                    try {
+                        const res = await fetch(unreadCountUrl, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                            credentials: 'same-origin',
+                        });
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        const count = Number(data.count || 0);
+                        notifBadge.textContent = String(count);
+                        notifBadge.classList.toggle('hidden', count < 1);
+                    } catch (e) {}
+                };
+                setInterval(syncNotifBadge, 45000);
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') syncNotifBadge();
+                });
+            }
         });
     </script>
 </body>

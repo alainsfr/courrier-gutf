@@ -64,6 +64,19 @@ class CheckDelaisCommand extends Command
                 })
                 ->get();
 
+            if ($courrier->assigned_to_user_id) {
+                $assignee = User::query()
+                    ->whereKey($courrier->assigned_to_user_id)
+                    ->where(function ($q) {
+                        $q->whereNull('is_active')->orWhere('is_active', true);
+                    })
+                    ->first();
+
+                if ($assignee && ! $agents->contains('id', $assignee->id)) {
+                    $agents->push($assignee);
+                }
+            }
+
             if ($agents->isEmpty()) {
                 $this->warn("   → aucun agent actif pour le bureau #{$courrier->bureau_actuel_id}");
                 continue;

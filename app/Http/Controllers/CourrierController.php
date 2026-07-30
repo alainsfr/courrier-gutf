@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\CourriersWorkbookExport;
+use App\Models\Bureau;
 use App\Models\Courrier;
 use App\Models\CourrierAttachment;
 use App\Models\CourrierHistory;
@@ -51,33 +52,67 @@ class CourrierController extends Controller
     {
         $this->authorize('viewAny', Courrier::class);
 
-        $isAdmin = $request->user()->hasRole(['admin', 'super-admin']);
+        $user = $request->user();
+        $isAdmin = $user->hasRole(['admin', 'super-admin']);
+
+        $perPage = (int) $request->query('per_page', 20);
+        if (! in_array($perPage, [10, 20, 50], true)) {
+            $perPage = 20;
+        }
 
         $filters = [
             'q' => trim((string) $request->query('q', '')),
             'type' => (string) $request->query('type', ''),
             'workflow_etape_id' => (string) $request->query('workflow_etape_id', ''),
+            'bureau_actuel_id' => (string) $request->query('bureau_actuel_id', ''),
             'has_attachments' => (string) $request->query('has_attachments', ''),
             'assigned_to' => (string) $request->query('assigned_to', ''),
             'date_from' => (string) $request->query('date_from', ''),
             'date_to' => (string) $request->query('date_to', ''),
+            'is_late' => (string) $request->query('is_late', ''),
+            'archived' => (string) $request->query('archived', 'active'),
+            'sort' => (string) $request->query('sort', 'recent'),
             'scope' => (string) $request->query('scope', $isAdmin ? 'all' : 'mine'),
+            'per_page' => $perPage,
         ];
+
+        if (! in_array($filters['archived'], ['active', 'archived', 'all'], true)) {
+            $filters['archived'] = 'active';
+        }
+        if (! in_array($filters['sort'], ['recent', 'oldest', 'deadline', 'ref', 'updated'], true)) {
+            $filters['sort'] = 'recent';
+        }
+        if (! $isAdmin) {
+            $filters['scope'] = 'mine';
+        }
 
         $courriers = $this->queryService
             ->buildFilteredQuery($request)
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
 
-        $agentsList = User::orderBy('name')->get(['id', 'name', 'email']);
-        $etapes = WorkflowEtape::query()->orderBy('ordre')->get(['id', 'libelle', 'ordre']);
+        $agentsList = User::query()->orderBy('name')->get(['id', 'name', 'email']);
+        $etapes = WorkflowEtape::query()->orderBy('ordre')->get(['id', 'libelle', 'ordre', 'ui_color']);
+        $bureaux = Bureau::query()->orderBy('ordre')->get(['id', 'nom', 'code', 'color']);
+        $chips = $this->queryService->registerChipCounts($request);
+
+        $activeFilterCount = collect($filters)
+            ->except(['scope', 'sort', 'per_page', 'archived'])
+            ->filter(fn ($v) => $v !== null && $v !== '')
+            ->count();
+        if ($filters['archived'] !== 'active') {
+            $activeFilterCount++;
+        }
 
         return view('courriers.index', compact(
             'courriers',
             'filters',
             'etapes',
+            'bureaux',
             'isAdmin',
-            'agentsList'
+            'agentsList',
+            'chips',
+            'activeFilterCount'
         ));
     }
 
@@ -320,12 +355,13 @@ class CourrierController extends Controller
             'assigned_to' => $assignee?->name,
         ]);
 
-        if ($assignee) {
+        if ($assignee && (int) $assignee->id !== (int) Auth::id()) {
             $this->notifyUsers(
                 [$assignee],
                 __('notifications.courrier_assigned_title'),
                 __('notifications.courrier_assigned_msg', ['ref' => $courrier->reference_interne]),
-                route('courriers.show', $courrier)
+                route('courriers.show', $courrier),
+                ['type' => 'assigned', 'courrier_id' => $courrier->id]
             );
         }
 
@@ -363,12 +399,15 @@ class CourrierController extends Controller
             WorkflowService::ACTION_FORWARD
         );
 
-        $validators = User::role('validateur')->get();
+        $validators = User::role('validateur')->get()
+            ->reject(fn (User $u) => (int) $u->id === (int) Auth::id());
+
         $this->notifyUsers(
             $validators->all(),
             __('notifications.courrier_validation_title'),
             __('notifications.courrier_validation_msg', ['ref' => $courrier->reference_interne]),
-            route('courriers.show', $courrier)
+            route('courriers.show', $courrier),
+            ['type' => 'validation', 'courrier_id' => $courrier->id]
         );
 
         return back()->with('status', 'courrier-submitted');
@@ -378,6 +417,8 @@ class CourrierController extends Controller
     {
         $this->authorize('validate', $courrier);
         abort_unless($courrier->isEnValidation(), 422);
+
+        $courrier->loadMissing(['assignedTo', 'createdBy']);
 
         $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_SORTIE)->firstOrFail();
         $this->workflowService->transfererCourrier(
@@ -393,6 +434,21 @@ class CourrierController extends Controller
             'validated_at' => now(),
         ])->save();
 
+        $recipients = collect([$courrier->assignedTo, $courrier->createdBy])
+            ->filter()
+            ->unique('id')
+            ->reject(fn (User $u) => (int) $u->id === (int) Auth::id())
+            ->values()
+            ->all();
+
+        $this->notifyUsers(
+            $recipients,
+            __('notifications.courrier_validated_title'),
+            __('notifications.courrier_validated_msg', ['ref' => $courrier->reference_interne]),
+            route('courriers.show', $courrier),
+            ['type' => 'validated', 'courrier_id' => $courrier->id]
+        );
+
         return back()->with('status', 'courrier-validated');
     }
 
@@ -403,6 +459,8 @@ class CourrierController extends Controller
 
         $validated = $request->validate(['reason' => ['required', 'string', 'max:500']]);
 
+        $courrier->loadMissing(['assignedTo', 'createdBy']);
+
         $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_TRAITEMENT)->firstOrFail();
         $this->workflowService->transfererCourrier(
             $courrier,
@@ -410,6 +468,24 @@ class CourrierController extends Controller
             $validated['reason'],
             Auth::user(),
             WorkflowService::ACTION_REJECT
+        );
+
+        $recipients = collect([$courrier->assignedTo, $courrier->createdBy])
+            ->filter()
+            ->unique('id')
+            ->reject(fn (User $u) => (int) $u->id === (int) Auth::id())
+            ->values()
+            ->all();
+
+        $this->notifyUsers(
+            $recipients,
+            __('notifications.courrier_rejected_title'),
+            __('notifications.courrier_rejected_msg', [
+                'ref' => $courrier->reference_interne,
+                'reason' => $validated['reason'],
+            ]),
+            route('courriers.show', $courrier),
+            ['type' => 'rejected', 'courrier_id' => $courrier->id]
         );
 
         return back()->with('status', 'courrier-rejected');

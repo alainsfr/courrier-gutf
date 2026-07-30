@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CourrierController;
 use App\Http\Controllers\NotificationController;
@@ -25,53 +26,14 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
 
 
-    // Dashboard (Dynamique et connecté à la base de données)
-    Route::get('/dashboard', function (Request $request) {
-        $user = $request->user();
-        $isAdmin = $user->hasRole(['admin', 'super-admin']);
-
-        // Requête de base pour les statistiques
-        $query = \App\Models\Courrier::query();
-
-        // Si l'utilisateur n'est pas Admin, on restreint à ses courriers (créés ou assignés)
-        // + plis en validation pour les validateurs
-        if (!$isAdmin) {
-            $query->where(function ($sub) use ($user) {
-                $sub->where('created_by_user_id', $user->id)
-                    ->orWhere('assigned_to_user_id', $user->id);
-
-                if ($user->can('courrier.validate')) {
-                    $sub->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', \App\Models\Courrier::ETAPE_VALIDATION));
-                }
-            });
-        }
-
-        // Calcul des KPI réels (étapes workflow)
-        $kpiIncoming = (clone $query)->where('type', 'entrant')->count();
-        $kpiInProgress = (clone $query)->whereEtapeOrdreIn([
-            \App\Models\Courrier::ETAPE_ANALYSE,
-            \App\Models\Courrier::ETAPE_TRAITEMENT,
-            \App\Models\Courrier::ETAPE_VALIDATION,
-        ])->count();
-        $kpiArchived = (clone $query)->where(function ($q) {
-            $q->whereNotNull('archived_at')
-                ->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', \App\Models\Courrier::ETAPE_ARCHIVAGE));
-        })->count();
-
-        // Liste des 5 derniers courriers nécessitant une attention
-        $recentCourriers = (clone $query)
-            ->with(['assignedTo:id,name', 'workflowEtape:id,libelle,ordre'])
-            ->latest('id')
-            ->limit(5)
-            ->get();
-
-        return view('dashboard', compact('kpiIncoming', 'kpiInProgress', 'kpiArchived', 'recentCourriers', 'isAdmin'));
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Notifications (in-app)
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread_count');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+    Route::get('/notifications/{id}/open', [NotificationController::class, 'open'])->name('notifications.open');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     // Statistiques & Rapports — réservé super-admin / directeur
     Route::middleware(['role:super-admin|directeur', 'permission:courrier.view'])->group(function () {

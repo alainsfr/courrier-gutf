@@ -10,7 +10,7 @@ class CourrierQueryService
 {
     /**
      * Construit la query filtrée (source de vérité) utilisée par :
-     * - l'index
+     * - l'index (Registre)
      * - l'export Excel
      * - l'export PDF
      */
@@ -20,45 +20,44 @@ class CourrierQueryService
             ->withCount('attachments')
             ->with([
                 'assignedTo:id,name,email',
+                'bureauActuel:id,nom,code,color',
                 'workflowEtape:id,libelle,ordre,ui_color',
-            ])
-            ->latest('id');
+            ]);
 
-        $isAdmin = $request->user()->hasRole(['admin', 'super-admin']);
+        $this->applyRegisterFilters($q, $request);
+        $this->applyRegisterSort($q, $request);
 
-        // scope=all|mine (admin choisit, non-admin => mine)
-        $scope = (string) $request->query('scope', $isAdmin ? 'all' : 'mine');
-        if (! in_array($scope, ['all', 'mine'], true)) {
-            $scope = $isAdmin ? 'all' : 'mine';
-        }
+        return $q;
+    }
 
-        if (! $isAdmin || $scope === 'mine') {
-            $q->where(function ($sub) use ($request) {
-                $sub->where('created_by_user_id', $request->user()->id)
-                    ->orWhere('assigned_to_user_id', $request->user()->id);
-
-                // Validateurs : voir aussi les plis en attente de validation (étape 4)
-                if ($request->user()->can('courrier.validate')) {
-                    $sub->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_VALIDATION));
-                }
-            });
-        }
+    /**
+     * Filtres + périmètre du Registre (sans with/sort).
+     */
+    public function applyRegisterFilters(Builder $q, Request $request): void
+    {
+        $this->applyVisibilityScope($q, $request, forRegister: true);
 
         $search = trim((string) $request->query('q', ''));
         $type = (string) $request->query('type', '');
         $etapeId = (string) $request->query('workflow_etape_id', '');
+        $bureauId = (string) $request->query('bureau_actuel_id', '');
         $hasAttachments = (string) $request->query('has_attachments', '');
         $assignedTo = (string) $request->query('assigned_to', '');
         $dateFrom = (string) $request->query('date_from', '');
         $dateTo = (string) $request->query('date_to', '');
+        $isLate = (string) $request->query('is_late', '');
+        $archived = (string) $request->query('archived', 'active');
 
         if ($search !== '') {
-            $q->where(function ($sub) use ($search) {
+            $q->where(function (Builder $sub) use ($search) {
                 $sub->where('reference_interne', 'like', "%{$search}%")
                     ->orWhere('objet', 'like', "%{$search}%")
                     ->orWhere('reference_externe', 'like', "%{$search}%")
+                    ->orWhere('tf', 'like', "%{$search}%")
                     ->orWhere('expediteur', 'like', "%{$search}%")
-                    ->orWhere('destinataire', 'like', "%{$search}%");
+                    ->orWhere('destinataire', 'like', "%{$search}%")
+                    ->orWhere('proprietaire', 'like', "%{$search}%")
+                    ->orWhere('requerant', 'like', "%{$search}%");
             });
         }
 
@@ -70,17 +69,22 @@ class CourrierQueryService
             $q->where('workflow_etape_id', (int) $etapeId);
         }
 
-        if ($hasAttachments === 'yes') {
-            $q->having('attachments_count', '>', 0);
-        } elseif ($hasAttachments === 'no') {
-            $q->having('attachments_count', '=', 0);
+        if ($bureauId !== '' && ctype_digit($bureauId)) {
+            $q->where('bureau_actuel_id', (int) $bureauId);
         }
 
-        if ($assignedTo !== '' && ctype_digit($assignedTo)) {
+        if ($hasAttachments === 'yes') {
+            $q->whereHas('attachments');
+        } elseif ($hasAttachments === 'no') {
+            $q->whereDoesntHave('attachments');
+        }
+
+        if ($assignedTo === 'unassigned') {
+            $q->whereNull('assigned_to_user_id');
+        } elseif ($assignedTo !== '' && ctype_digit($assignedTo)) {
             $q->where('assigned_to_user_id', (int) $assignedTo);
         }
 
-        // période : COALESCE(date_reception, date_courrier)
         if ($dateFrom !== '') {
             $q->whereRaw('COALESCE(date_reception, date_courrier) >= ?', [$dateFrom]);
         }
@@ -88,7 +92,40 @@ class CourrierQueryService
             $q->whereRaw('COALESCE(date_reception, date_courrier) <= ?', [$dateTo]);
         }
 
-        return $q;
+        if ($isLate === '1' || $isLate === 'yes') {
+            $q->where('is_late', true)->notArchived();
+        }
+
+        if ($archived === 'archived') {
+            $q->where(function (Builder $sub) {
+                $sub->whereNotNull('archived_at')
+                    ->orWhereHas('workflowEtape', fn (Builder $e) => $e->where('ordre', Courrier::ETAPE_ARCHIVAGE));
+            });
+        } elseif ($archived === 'all') {
+            // no archive constraint
+        } else {
+            $q->notArchived();
+        }
+    }
+
+    /**
+     * Compteurs pour les raccourcis du Registre (périmètre visible, hors filtres fins).
+     *
+     * @return array{active:int,late:int,unassigned:int,validation:int,entrant:int,sortant:int}
+     */
+    public function registerChipCounts(Request $request): array
+    {
+        $base = Courrier::query();
+        $this->applyVisibilityScope($base, $request, forRegister: true);
+
+        return [
+            'active' => (clone $base)->notArchived()->count(),
+            'late' => (clone $base)->where('is_late', true)->notArchived()->count(),
+            'unassigned' => (clone $base)->notArchived()->whereNull('assigned_to_user_id')->count(),
+            'validation' => (clone $base)->notArchived()->whereEtapeOrdre(Courrier::ETAPE_VALIDATION)->count(),
+            'entrant' => (clone $base)->notArchived()->where('type', 'entrant')->count(),
+            'sortant' => (clone $base)->notArchived()->where('type', 'sortant')->count(),
+        ];
     }
 
     /**
@@ -105,7 +142,7 @@ class CourrierQueryService
             ->withCount('attachments')
             ->latest('id');
 
-        $this->applyVisibilityScope($q, $request);
+        $this->applyVisibilityScope($q, $request, forRegister: false);
 
         $tf = trim((string) $request->query('tf', ''));
         $type = (string) $request->query('type', '');
@@ -140,7 +177,6 @@ class CourrierQueryService
             $query->where('bureau_actuel_id', (int) $bureauId);
         });
 
-        // Texte global : propriétaire / requérant / vendeur / étude (+ champs classiques)
         $q->when($global !== '', function (Builder $query) use ($global) {
             $query->where(function (Builder $sub) use ($global) {
                 $sub->where('proprietaire', 'like', "%{$global}%")
@@ -160,13 +196,44 @@ class CourrierQueryService
         return $q;
     }
 
+    private function applyRegisterSort(Builder $q, Request $request): void
+    {
+        $sort = (string) $request->query('sort', 'recent');
+
+        match ($sort) {
+            'oldest' => $q->orderBy('id'),
+            'deadline' => $q->orderByRaw('date_limite is null')->orderBy('date_limite')->orderByDesc('id'),
+            'ref' => $q->orderByDesc('reference_interne'),
+            'updated' => $q->orderByDesc('updated_at'),
+            default => $q->latest('id'),
+        };
+    }
+
     /**
-     * Périmètre de visibilité (admin / stakeholder / validateur).
+     * Périmètre de visibilité.
+     *
+     * @param  bool  $forRegister  Si true, honore scope=mine|all pour admin/super-admin.
      */
-    private function applyVisibilityScope(Builder $q, Request $request): void
+    private function applyVisibilityScope(Builder $q, Request $request, bool $forRegister = false): void
     {
         $user = $request->user();
-        if (! $user || $user->hasRole(['admin', 'super-admin'])) {
+        if (! $user) {
+            $q->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $isAdmin = $user->hasRole(['admin', 'super-admin']);
+
+        if ($forRegister && $isAdmin) {
+            $scope = (string) $request->query('scope', 'all');
+            if (! in_array($scope, ['all', 'mine'], true)) {
+                $scope = 'all';
+            }
+            if ($scope === 'all') {
+                return;
+            }
+        } elseif ($isAdmin && ! $forRegister) {
             return;
         }
 
@@ -175,7 +242,7 @@ class CourrierQueryService
                 ->orWhere('assigned_to_user_id', $user->id);
 
             if ($user->can('courrier.validate')) {
-                $sub->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_VALIDATION));
+                $sub->orWhereHas('workflowEtape', fn (Builder $e) => $e->where('ordre', Courrier::ETAPE_VALIDATION));
             }
 
             if ($user->bureau_id) {
