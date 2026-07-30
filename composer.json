@@ -53,6 +53,14 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "test:e2e": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --testsuite=E2E"
+        ],
+        "test:feature": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --testsuite=Feature"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

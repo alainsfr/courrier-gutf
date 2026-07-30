@@ -48,13 +48,19 @@
         $previewName = strtolower((string) ($previewAttachment?->original_name ?? ''));
         $previewMime = strtolower((string) ($previewAttachment?->mime ?? ''));
         $isPdf = $previewAttachment && (
-            str_contains($previewMime, 'pdf') || str_ends_with($previewName, '.pdf')
+            method_exists($previewAttachment, 'isPdf')
+                ? $previewAttachment->isPdf()
+                : (str_contains($previewMime, 'pdf') || str_ends_with($previewName, '.pdf'))
         );
         $isImage = $previewAttachment && (
-            str_starts_with($previewMime, 'image/')
-            || str_ends_with($previewName, '.png')
-            || str_ends_with($previewName, '.jpg')
-            || str_ends_with($previewName, '.jpeg')
+            method_exists($previewAttachment, 'isImage')
+                ? $previewAttachment->isImage()
+                : (
+                    str_starts_with($previewMime, 'image/')
+                    || str_ends_with($previewName, '.png')
+                    || str_ends_with($previewName, '.jpg')
+                    || str_ends_with($previewName, '.jpeg')
+                )
         );
         $proprietaire = $courrier->proprietaire
             ?: ($courrier->type === 'entrant' ? ($courrier->expediteur ?: '—') : ($courrier->destinataire ?: '—'));
@@ -69,7 +75,7 @@
     <div class="grid grid-cols-1 gap-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3 lg:gap-5 lg:overflow-hidden">
 
         {{-- GAUCHE : VISIONNEUSE --}}
-        <section id="document-viewer" class="order-2 flex min-h-[55vh] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:order-1 lg:col-span-2 lg:min-h-0 lg:h-full">
+        <section id="document-viewer" class="order-2 flex h-[70vh] min-h-[420px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:order-1 lg:col-span-2 lg:h-full lg:min-h-0">
             <div class="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-4 py-3">
                 <div class="min-w-0">
                     <div class="text-sm font-bold text-gray-800">{{ __('courrier.show_viewer_title') }}</div>
@@ -79,11 +85,10 @@
                 </div>
                 @if($previewAttachment)
                     <div class="flex shrink-0 items-center gap-2">
-                        <button type="button"
-                                data-open-preview
-                                class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                        <a href="#document-viewer"
+                           class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 no-underline hover:bg-gray-50">
                             {{ __('courrier.preview') }}
-                        </button>
+                        </a>
                         <a href="{{ route('courriers.attachments.download', [$courrier, $previewAttachment]) }}"
                            class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 no-underline hover:bg-gray-50">
                             {{ __('courrier.download') }}
@@ -92,26 +97,38 @@
                 @endif
             </div>
 
-            <div class="relative min-h-0 flex-1 overflow-hidden rounded-b-xl bg-slate-900">
+            <div class="relative min-h-0 flex-1 overflow-hidden bg-slate-100">
                 @if($previewAttachment && $isPdf && $previewUrl)
-                    <iframe
-                        title="{{ $previewAttachment->original_name }}"
-                        src="{{ $previewUrl }}#toolbar=1&navpanes=0&view=FitH"
-                        class="absolute inset-0 h-full w-full border-0 bg-white"
-                    ></iframe>
+                    <div
+                        data-pdf-viewer
+                        data-url="{{ $previewUrl }}"
+                        class="absolute inset-0 overflow-auto p-3"
+                        aria-label="{{ $previewAttachment->original_name }}"
+                    >
+                        <p
+                            data-pdf-status
+                            data-loading-label="{{ __('courrier.show_viewer_loading') }}"
+                            data-error-label="{{ __('courrier.show_viewer_error') }}"
+                            class="mb-3 text-center text-sm text-slate-500"
+                        >
+                            {{ __('courrier.show_viewer_loading') }}
+                        </p>
+                        <div data-pdf-pages class="mx-auto w-full max-w-4xl"></div>
+                    </div>
+                    @vite('resources/js/pdf-viewer.js')
                 @elseif($previewAttachment && $isImage && $previewUrl)
-                    <div class="flex h-full items-center justify-center p-4">
+                    <div class="flex h-full items-center justify-center overflow-auto bg-slate-900 p-4">
                         <img
                             src="{{ $previewUrl }}"
                             alt="{{ $previewAttachment->original_name }}"
-                            class="max-h-full max-w-full rounded-lg object-contain"
+                            class="max-h-full max-w-full rounded-lg object-contain shadow-lg"
                         >
                     </div>
                 @elseif($previewAttachment)
-                    <div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-gray-300">
+                    <div class="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-gray-500">
                         <div class="text-sm">{{ __('courrier.show_viewer_unsupported') }}</div>
                         <a href="{{ route('courriers.attachments.download', [$courrier, $previewAttachment]) }}"
-                           class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-800 no-underline">
+                           class="rounded-xl bg-[#17384b] px-4 py-2 text-sm font-semibold text-white no-underline">
                             {{ __('courrier.download') }}
                         </a>
                     </div>
@@ -260,54 +277,4 @@
             <x-courrier-timeline :histories="$courrier->histories" />
         </aside>
     </div>
-
-    @if($previewAttachment && $previewUrl)
-        <div id="previewModal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/70 p-3 sm:p-6" aria-hidden="true">
-            <div class="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-                <div class="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
-                    <div class="min-w-0 truncate text-sm font-semibold text-gray-800">{{ $previewAttachment->original_name }}</div>
-                    <button type="button" data-close-preview class="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-                        {{ __('courrier.back') }}
-                    </button>
-                </div>
-                <div class="min-h-0 flex-1 bg-slate-900">
-                    @if($isPdf)
-                        <iframe src="{{ $previewUrl }}#toolbar=1&navpanes=0" class="h-full w-full border-0 bg-white" title="{{ $previewAttachment->original_name }}"></iframe>
-                    @elseif($isImage)
-                        <div class="flex h-full items-center justify-center p-4">
-                            <img src="{{ $previewUrl }}" alt="{{ $previewAttachment->original_name }}" class="max-h-full max-w-full object-contain">
-                        </div>
-                    @else
-                        <div class="flex h-full items-center justify-center p-6 text-sm text-white">{{ __('courrier.show_viewer_unsupported') }}</div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        @push('scripts')
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const modal = document.getElementById('previewModal');
-                    const openBtn = document.querySelector('[data-open-preview]');
-                    const closeBtn = document.querySelector('[data-close-preview]');
-                    const open = () => {
-                        modal?.classList.remove('hidden');
-                        modal?.classList.add('flex');
-                        modal?.setAttribute('aria-hidden', 'false');
-                        document.body.classList.add('overflow-hidden');
-                    };
-                    const close = () => {
-                        modal?.classList.add('hidden');
-                        modal?.classList.remove('flex');
-                        modal?.setAttribute('aria-hidden', 'true');
-                        document.body.classList.remove('overflow-hidden');
-                    };
-                    openBtn?.addEventListener('click', open);
-                    closeBtn?.addEventListener('click', close);
-                    modal?.addEventListener('click', (e) => { if (e.target === modal) close(); });
-                    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
-                });
-            </script>
-        @endpush
-    @endif
 </x-app-layout>

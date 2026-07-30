@@ -114,9 +114,11 @@
                 @endif
 
                 @if ($errors->any())
-                    <div class="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                        <p class="mb-1 font-semibold">{{ __('auth_ui.form_error_title') }}</p>
-                        <ul class="mb-0 list-disc ps-4">
+                    <div role="alert"
+                         class="auth-error mt-6 rounded-xl border px-4 py-3 text-sm"
+                         style="border-color:#fecdd3;background:#fff1f2;color:#9f1239;">
+                        <p class="mb-1 font-semibold" style="color:#9f1239;">{{ __('auth_ui.form_error_title') }}</p>
+                        <ul class="mb-0 list-disc ps-4" style="color:#9f1239;">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach

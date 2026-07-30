@@ -31,8 +31,9 @@ class WorkflowTest extends TestCase
 
         $this->agent = User::factory()->create([
             'email_verified_at' => now(),
+            'is_active' => true,
+            'bureau_id' => WorkflowEtape::query()->where('ordre', 1)->value('bureau_id'),
         ]);
-        $this->agent->forceFill(['is_active' => true])->save();
         $this->agent->assignRole('agent_courrier');
     }
 

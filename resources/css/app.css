@@ -115,6 +115,16 @@ body{
     border-radius:12px;
 }
 
+/* Bootstrap reboot can mute list styles / alert contrast when mixed with Tailwind */
+.auth-error ul{
+    list-style: disc;
+    padding-left: 1.1rem;
+    margin: 0;
+}
+.auth-error li{
+    color: inherit;
+}
+
 /* Navbar active */
 .navbar .nav-link.active{
     color: var(--gutf-primary);

@@ -230,6 +230,8 @@ return [
     'show_viewer_title' => 'Document numérisé',
     'show_viewer_unsupported' => 'Aperçu non disponible pour ce format.',
     'show_viewer_empty_hint' => 'Ajoutez une pièce jointe pour activer le visualiseur.',
+    'show_viewer_loading' => 'Chargement de l’aperçu…',
+    'show_viewer_error' => 'Impossible d’afficher l’aperçu. Utilisez Télécharger.',
     'show_meta_title' => 'Fiche du dossier',
     'show_tf' => 'Réf. TF / externe',
     'show_owner' => 'Propriétaire / partie',

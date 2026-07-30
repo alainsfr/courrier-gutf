@@ -228,6 +228,8 @@ return [
     'show_viewer_title' => 'Scanned document',
     'show_viewer_unsupported' => 'Preview unavailable for this format.',
     'show_viewer_empty_hint' => 'Add an attachment to enable the viewer.',
+    'show_viewer_loading' => 'Loading preview…',
+    'show_viewer_error' => 'Unable to display the preview. Use Download instead.',
     'show_meta_title' => 'File sheet',
     'show_tf' => 'TF / external ref.',
     'show_owner' => 'Owner / party',

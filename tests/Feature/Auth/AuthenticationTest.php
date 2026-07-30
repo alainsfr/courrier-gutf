@@ -34,12 +34,18 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $response = $this->from('/login')->post('/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
+        $response->assertRedirect('/login')
+            ->assertSessionHasErrors('email');
+
+        $this->followRedirects($response)
+            ->assertSee(__('auth.failed'), false)
+            ->assertDontSee('auth.failed', false);
     }
 
     public function test_users_can_logout(): void

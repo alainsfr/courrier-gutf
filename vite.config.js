@@ -5,9 +5,10 @@ export default defineConfig({
     plugins: [
         laravel({
             input: [
-                'resources/css/app.css', 
-                'resources/js/app.js', 
-                'resources/js/chat.js'
+                'resources/css/app.css',
+                'resources/js/app.js',
+                'resources/js/chat.js',
+                'resources/js/pdf-viewer.js',
             ],
             refresh: true,
         }),

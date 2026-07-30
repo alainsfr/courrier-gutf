@@ -216,7 +216,7 @@ class CourrierController extends Controller
             'date_reception' => ['nullable', 'date'],
             'date_envoi' => ['nullable', 'date'],
             'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
-            'document_file' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png'],
+            'document_file' => ['nullable', 'file', 'max:10240', 'extensions:pdf,jpg,jpeg,png'],
         ]);
 
         unset($validated['document_file']);
@@ -538,7 +538,7 @@ class CourrierController extends Controller
         $this->authorize('attach', $courrier);
 
         $request->validate([
-            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png'],
+            'file' => ['required', 'file', 'max:10240', 'extensions:pdf,jpg,jpeg,png'],
         ]);
 
         if ($file = $request->file('file')) {
@@ -548,51 +548,74 @@ class CourrierController extends Controller
         return back()->with('status', 'attachment-uploaded');
     }
 
-    public function previewAttachment(Courrier $courrier, CourrierAttachment $attachment)
+    public function previewAttachment(Request $request, Courrier $courrier, CourrierAttachment $attachment)
     {
         $this->authorize('downloadAttachment', $courrier);
-        abort_unless($attachment->courrier_id === $courrier->id, 404);
+        abort_unless((int) $attachment->courrier_id === (int) $courrier->id, 404);
 
-        $path = $attachment->path;
-        if (! Storage::disk('local')->exists($path)) {
-            abort(404);
-        }
+        $fullPath = $attachment->absolutePath();
+        abort_unless($fullPath, 404);
 
-        $fullPath = Storage::disk('local')->path($path);
-        $safeName = str_replace(['"', "\r", "\n"], '', $attachment->original_name);
         $mime = $this->resolveAttachmentMime($attachment, $fullPath);
+        $asciiName = $this->asciiDownloadName($attachment->original_name);
+
+        // JSON embed: évite les gestionnaires de téléchargement (IDM, etc.) qui
+        // interceptent Content-Type: application/pdf et cassent PDF.js.
+        if ($request->boolean('embed')
+            || $request->header('X-PDF-Embed') === '1'
+            || $request->wantsJson()) {
+            $bytes = is_readable($fullPath) ? file_get_contents($fullPath) : false;
+            if ($bytes === false || $bytes === '') {
+                $relative = $attachment->resolvedStoragePath();
+                $bytes = $relative ? Storage::disk('local')->get($relative) : '';
+            }
+            abort_unless(is_string($bytes) && $bytes !== '', 404);
+
+            return response()->json([
+                'mime' => $mime,
+                'name' => $attachment->original_name ?: $asciiName,
+                'data' => base64_encode($bytes),
+            ], 200, [
+                'Cache-Control' => 'private, max-age=0, must-revalidate',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        }
 
         return response()->file($fullPath, [
             'Content-Type' => $mime,
-            'Content-Disposition' => 'inline; filename="'.$safeName.'"',
+            'Content-Disposition' => 'inline; filename="'.$asciiName.'"',
+            'Content-Transfer-Encoding' => 'binary',
             'X-Content-Type-Options' => 'nosniff',
+            'Accept-Ranges' => 'bytes',
             'Cache-Control' => 'private, max-age=0, must-revalidate',
-        ])->setContentDisposition('inline', $safeName);
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
     }
 
     public function downloadAttachment(Courrier $courrier, CourrierAttachment $attachment)
     {
         $this->authorize('downloadAttachment', $courrier);
-        abort_unless($attachment->courrier_id === $courrier->id, 404);
+        abort_unless((int) $attachment->courrier_id === (int) $courrier->id, 404);
 
-        $path = $attachment->path;
-        if (! Storage::disk('local')->exists($path)) {
-            abort(404);
-        }
+        $fullPath = $attachment->absolutePath();
+        abort_unless($fullPath, 404);
 
-        $safeName = str_replace(['"', "\r", "\n"], '', $attachment->original_name);
+        $asciiName = $this->asciiDownloadName($attachment->original_name);
 
-        return response()->download(Storage::disk('local')->path($path), $safeName);
+        return response()->download($fullPath, $attachment->original_name ?: $asciiName, [
+            'Content-Type' => $this->resolveAttachmentMime($attachment, $fullPath),
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function deleteAttachment(Courrier $courrier, CourrierAttachment $attachment): RedirectResponse
     {
         $this->authorize('detach', $courrier);
-        abort_unless($attachment->courrier_id === $courrier->id, 404);
+        abort_unless((int) $attachment->courrier_id === (int) $courrier->id, 404);
 
-        $path = $attachment->path;
-        if (Storage::disk('local')->exists($path)) {
-            Storage::disk('local')->delete($path);
+        $relative = $attachment->resolvedStoragePath();
+        if ($relative) {
+            Storage::disk('local')->delete($relative);
         }
 
         $attachment->delete();
@@ -609,11 +632,26 @@ class CourrierController extends Controller
     private function storeUploadAttachment(Courrier $courrier, \Illuminate\Http\UploadedFile $file): void
     {
         // Disk "local" root = storage/app/private → ne pas préfixer "private/"
+        $extension = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'bin');
+        $storedName = now()->format('Ymd_His').'_'.Str::random(8).'.'.$extension;
+
         $path = $file->storeAs(
             "courriers/{$courrier->id}",
-            now()->format('Ymd_His') . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension(),
+            $storedName,
             'local'
         );
+
+        $mime = $file->getMimeType()
+            ?: $file->getClientMimeType()
+            ?: 'application/octet-stream';
+
+        if (str_ends_with($extension, 'pdf')) {
+            $mime = 'application/pdf';
+        } elseif (in_array($extension, ['jpg', 'jpeg'], true)) {
+            $mime = 'image/jpeg';
+        } elseif ($extension === 'png') {
+            $mime = 'image/png';
+        }
 
         CourrierAttachment::create([
             'courrier_id' => $courrier->id,
@@ -621,7 +659,7 @@ class CourrierController extends Controller
             'source' => 'upload',
             'original_name' => $file->getClientOriginalName(),
             'stored_name' => basename($path),
-            'mime' => $file->getClientMimeType(),
+            'mime' => $mime,
             'size' => $file->getSize(),
             'path' => $path,
         ]);
@@ -657,5 +695,13 @@ class CourrierController extends Controller
         }
 
         return $mime !== '' ? $mime : 'application/octet-stream';
+    }
+
+    private function asciiDownloadName(?string $original): string
+    {
+        $name = basename((string) $original);
+        $safe = preg_replace('/[^\w.\-]+/u', '_', $name) ?: 'document';
+
+        return trim($safe, '._') ?: 'document';
     }
 }
