@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Application settings',
+    'subtitle' => 'Visual identity, institutional copy and theme.',
+    'saved' => 'Settings saved.',
+    'branding' => 'Identity & branding',
+    'identity' => 'Institutional copy',
+    'theme' => 'Color theme',
+    'app_name' => 'Application name',
+    'app_tagline' => 'Tagline',
+    'country' => 'Country',
+    'motto' => 'Motto',
+    'ministry' => 'Ministry / oversight',
+    'structure' => 'Structure',
+    'support_email' => 'Support email',
+    'primary_color' => 'Primary color',
+    'accent_color' => 'Accent color',
+    'logo' => 'Logo',
+    'logo_help' => 'PNG, JPG, WEBP or SVG — max 2 MB.',
+    'favicon' => 'Favicon',
+    'favicon_help' => 'PNG/ICO — max 1 MB.',
+    'remove_logo' => 'Remove current logo',
+    'remove_favicon' => 'Remove current favicon',
+    'save' => 'Save settings',
+    'preview' => 'Preview',
+    'nav_label' => 'Settings',
+];

@@ -26,8 +26,21 @@
     @endif
 
     <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-5">
+        <form method="POST" action="{{ route('admin.users.store') }}" enctype="multipart/form-data" class="space-y-5">
             @csrf
+
+            <div class="rounded-xl border border-dashed border-gray-300 bg-slate-50 p-4">
+                <label class="{{ $label }}">{{ __('users.avatar') }}</label>
+                <div class="mt-2 flex flex-wrap items-center gap-4">
+                    <span class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--gutf-accent)] text-lg font-bold text-white" id="avatarPreviewFallback">+</span>
+                    <img id="avatarPreview" src="" alt="" class="hidden h-16 w-16 rounded-full object-cover ring-2 ring-white">
+                    <div class="min-w-0 flex-1">
+                        <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="{{ $input }}"
+                               onchange="const f=this.files?.[0]; const img=document.getElementById('avatarPreview'); const fb=document.getElementById('avatarPreviewFallback'); if(f){img.src=URL.createObjectURL(f); img.classList.remove('hidden'); fb.classList.add('hidden');}">
+                        <p class="mt-1 text-xs text-gray-400">{{ __('users.avatar_help') }}</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>

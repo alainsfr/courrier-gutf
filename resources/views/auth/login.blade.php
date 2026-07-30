@@ -1,18 +1,27 @@
 @php
     $isFr = app()->getLocale() === 'fr';
     $inst = config('institution');
+    $brand = $brand ?? [];
+    $appLabel = $brand['app_name'] ?? ($inst['app_label'] ?? 'COURRIER GUTF');
+    $tagline = $brand['app_tagline'] ?? ($brand['ministry'] ?? 'MINDCAF · MINFI');
+    $primary = $brand['primary_color'] ?? '#17384b';
+    $accent = $brand['accent_color'] ?? '#dc633a';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $inst['app_label'] }} — {{ __('auth_ui.sign_in') }}</title>
+    <title>{{ $appLabel }} — {{ __('auth_ui.sign_in') }}</title>
+    @if (! empty($brandFaviconUrl))
+        <link rel="icon" href="{{ $brandFaviconUrl }}">
+    @endif
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
+        :root { --gutf-primary: {{ $primary }}; --gutf-accent: {{ $accent }}; }
         .font-display { font-family: "Fraunces", Georgia, serif; }
         .font-ui { font-family: "Outfit", system-ui, sans-serif; }
     </style>
@@ -21,18 +30,22 @@
     <div class="grid min-h-screen lg:grid-cols-2">
 
         {{-- Panneau institutionnel (desktop uniquement) --}}
-        <aside class="relative hidden flex-col justify-between overflow-hidden bg-[#17384b] px-12 py-12 text-white lg:flex">
+        <aside class="relative hidden flex-col justify-between overflow-hidden px-12 py-12 text-white lg:flex" style="background: {{ $primary }}">
             <div class="pointer-events-none absolute inset-0 opacity-30" aria-hidden="true"
                  style="background-image: radial-gradient(rgba(255,255,255,.14) 1px, transparent 1px); background-size: 22px 22px;"></div>
-            <div class="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-[#dc633a]/30 blur-3xl" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full blur-3xl" style="background: color-mix(in srgb, {{ $accent }} 35%, transparent)" aria-hidden="true"></div>
 
             <div class="relative z-10 flex items-center gap-3">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-bold backdrop-blur">
-                    G
-                </span>
+                @if (! empty($brandLogoUrl))
+                    <img src="{{ $brandLogoUrl }}" alt="{{ $appLabel }}" class="h-10 w-10 rounded-xl bg-white/10 object-contain p-1">
+                @else
+                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-bold backdrop-blur">
+                        {{ strtoupper(substr($appLabel, 0, 1)) }}
+                    </span>
+                @endif
                 <div>
-                    <div class="text-sm font-semibold tracking-wide">{{ $inst['app_label'] }}</div>
-                    <div class="text-xs text-white/65">MINDCAF · MINFI</div>
+                    <div class="text-sm font-semibold tracking-wide">{{ $appLabel }}</div>
+                    <div class="text-xs text-white/65">{{ \Illuminate\Support\Str::limit($tagline, 40) }}</div>
                 </div>
             </div>
 
@@ -48,7 +61,7 @@
             </div>
 
             <p class="relative z-10 text-xs text-white/45">
-                © {{ date('Y') }} · {{ $inst['app_label'] }}
+                © {{ date('Y') }} · {{ $appLabel }}
             </p>
         </aside>
 
@@ -78,8 +91,12 @@
             <div class="mx-auto w-full max-w-md">
                 <div class="mb-8 lg:hidden">
                     <div class="mb-4 flex items-center gap-3">
-                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#17384b] text-sm font-bold text-white">G</span>
-                        <span class="text-sm font-semibold text-[#17384b]">{{ $inst['app_label'] }}</span>
+                        @if (! empty($brandLogoUrl))
+                            <img src="{{ $brandLogoUrl }}" alt="{{ $appLabel }}" class="h-9 w-9 rounded-xl object-contain">
+                        @else
+                            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: {{ $primary }}">{{ strtoupper(substr($appLabel, 0, 1)) }}</span>
+                        @endif
+                        <span class="text-sm font-semibold" style="color: {{ $primary }}">{{ $appLabel }}</span>
                     </div>
                 </div>
 

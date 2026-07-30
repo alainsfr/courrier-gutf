@@ -2,15 +2,10 @@
     $authUser = Auth::user();
     $authName = $authUser ? (string) $authUser->name : '';
     $unreadCount = $authUser ? $authUser->unreadNotifications()->count() : 0;
-
-    $initials = 'U';
-    if ($authUser) {
-        $words = preg_split('/\s+/', trim($authUser->name)) ?: [];
-        $initials = strtoupper(
-            substr($words[0] ?? 'U', 0, 1).
-            (isset($words[1]) ? substr($words[1], 0, 1) : '')
-        );
-    }
+    $brand = $brand ?? [];
+    $primary = $brand['primary_color'] ?? '#17384b';
+    $accent = $brand['accent_color'] ?? '#dc633a';
+    $appLabel = $brand['app_name'] ?? config('app.name', 'COURRIER GUTF');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -18,8 +13,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'COURRIER GUTF') }}</title>
+    <title>{{ $appLabel }}</title>
+    @if (! empty($brandFaviconUrl))
+        <link rel="icon" href="{{ $brandFaviconUrl }}">
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        :root {
+            --gutf-primary: {{ $primary }};
+            --gutf-accent: {{ $accent }};
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-gray-50 text-slate-900 antialiased">
     @include('layouts.navigation')
@@ -43,7 +47,7 @@
                         </div>
                     @else
                         <h1 class="truncate text-base font-bold text-slate-900 sm:text-lg">
-                            {{ config('app.name', 'COURRIER GUTF') }}
+                            {{ $appLabel }}
                         </h1>
                     @endisset
                 </div>
@@ -54,7 +58,7 @@
                     <a href="{{ route('notifications.index') }}"
                        class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 no-underline hover:bg-slate-50"
                        title="Notifications">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5 text-[#17384b]">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5" style="color: var(--gutf-primary)">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
                         </svg>
                         <span id="headerNotificationBadge"
@@ -67,10 +71,8 @@
                         <button type="button"
                                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 text-left hover:bg-slate-50"
                                 data-profile-toggle aria-expanded="false" aria-haspopup="true">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#dc633a] text-xs font-bold text-white">
-                                {{ $initials }}
-                            </span>
-                            <span class="hidden max-w-[9rem] truncate text-sm font-semibold text-[#17384b] sm:inline">
+                            <x-user-avatar :user="$authUser" size="sm" />
+                            <span class="hidden max-w-[9rem] truncate text-sm font-semibold sm:inline" style="color: var(--gutf-primary)">
                                 {{ $authName }}
                             </span>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="hidden h-4 w-4 text-slate-400 sm:block">

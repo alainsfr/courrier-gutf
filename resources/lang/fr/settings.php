@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Paramètres de l’application',
+    'subtitle' => 'Identité visuelle, textes institutionnels et thème.',
+    'saved' => 'Paramètres enregistrés.',
+    'branding' => 'Identité & branding',
+    'identity' => 'Textes institutionnels',
+    'theme' => 'Thème couleurs',
+    'app_name' => 'Nom de l’application',
+    'app_tagline' => 'Sous-titre / signature',
+    'country' => 'Pays',
+    'motto' => 'Devise',
+    'ministry' => 'Tutelle / ministère',
+    'structure' => 'Structure',
+    'support_email' => 'E-mail support',
+    'primary_color' => 'Couleur primaire',
+    'accent_color' => 'Couleur d’accent',
+    'logo' => 'Logo',
+    'logo_help' => 'PNG, JPG, WEBP ou SVG — max 2 Mo.',
+    'favicon' => 'Favicon',
+    'favicon_help' => 'PNG/ICO — max 1 Mo.',
+    'remove_logo' => 'Supprimer le logo actuel',
+    'remove_favicon' => 'Supprimer le favicon actuel',
+    'save' => 'Enregistrer les paramètres',
+    'preview' => 'Aperçu',
+    'nav_label' => 'Paramètres',
+];

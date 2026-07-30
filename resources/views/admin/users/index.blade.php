@@ -66,8 +66,13 @@
                     @forelse($users as $u)
                         <tr class="hover:bg-gray-50/80">
                             <td class="px-4 py-3">
-                                <div class="font-semibold text-gray-900">{{ $u->name }}</div>
-                                <div class="text-xs text-gray-400">#{{ $u->id }}</div>
+                                <div class="flex items-center gap-3">
+                                    <x-user-avatar :user="$u" size="sm" />
+                                    <div>
+                                        <div class="font-semibold text-gray-900">{{ $u->name }}</div>
+                                        <div class="text-xs text-gray-400">#{{ $u->id }}</div>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-4 py-3 text-gray-700">{{ $u->email }}</td>
                             <td class="px-4 py-3">

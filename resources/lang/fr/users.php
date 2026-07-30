@@ -32,6 +32,9 @@ return [
 
     'password' => 'Mot de passe',
     'password_confirm' => 'Confirmation',
+    'avatar' => 'Photo de profil',
+    'avatar_help' => 'JPG, PNG ou WEBP — max 2 Mo. Ajoutée à la création du compte.',
+    'remove_avatar' => 'Supprimer la photo actuelle',
 
     'empty' => 'Aucun utilisateur.',
     'form_error' => 'Veuillez corriger les erreurs ci-dessous.',

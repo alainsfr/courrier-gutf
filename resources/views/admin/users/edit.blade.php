@@ -32,9 +32,25 @@
     @endif
 
     <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <form method="POST" action="{{ route('admin.users.update', $user) }}" class="space-y-5">
+        <form method="POST" action="{{ route('admin.users.update', $user) }}" enctype="multipart/form-data" class="space-y-5">
             @csrf
             @method('PUT')
+
+            <div class="rounded-xl border border-dashed border-gray-300 bg-slate-50 p-4">
+                <label class="{{ $label }}">{{ __('users.avatar') }}</label>
+                <div class="mt-2 flex flex-wrap items-center gap-4">
+                    <x-user-avatar :user="$user" size="lg" />
+                    <div class="min-w-0 flex-1">
+                        <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="{{ $input }}">
+                        <p class="mt-1 text-xs text-gray-400">{{ __('users.avatar_help') }}</p>
+                        @if ($user->avatar_path)
+                            <label class="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                                <input type="checkbox" name="remove_avatar" value="1"> {{ __('users.remove_avatar') }}
+                            </label>
+                        @endif
+                    </div>
+                </div>
+            </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>

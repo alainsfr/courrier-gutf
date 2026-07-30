@@ -10,6 +10,7 @@ use App\Http\Controllers\ChatWidgetController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\BureauController as AdminBureauController;
+use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\WorkflowController;
 use App\Http\Controllers\SearchController;
@@ -64,6 +65,8 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     // --- Administration (gouvernance) ---
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:super-admin'])->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('index');
+        Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
         Route::resource('users', AdminUserController::class)->except(['show']);
         Route::resource('bureaux', AdminBureauController::class)
             ->except(['show'])

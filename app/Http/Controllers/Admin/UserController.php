@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
@@ -54,6 +55,7 @@ class UserController extends Controller
             'bureau_id' => ['nullable', 'integer', 'exists:bureaux,id'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $user = User::create([
@@ -65,6 +67,12 @@ class UserController extends Controller
             'is_active' => (bool) ($validated['is_active'] ?? true),
             'email_verified_at' => now(),
         ]);
+
+        if ($request->hasFile('avatar')) {
+            $user->forceFill([
+                'avatar_path' => $request->file('avatar')->store('avatars', 'public'),
+            ])->save();
+        }
 
         $user->syncRoles([$validated['role']]);
 
@@ -93,6 +101,8 @@ class UserController extends Controller
             'bureau_id' => ['nullable', 'integer', 'exists:bureaux,id'],
             'is_active' => ['nullable', 'boolean'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_avatar' => ['nullable', Rule::in(['1', '0', 1, 0, true, false])],
         ]);
 
         $payload = [
@@ -107,6 +117,18 @@ class UserController extends Controller
             $payload['password'] = Hash::make($validated['password']);
         }
 
+        if ($request->boolean('remove_avatar') && $user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+            $payload['avatar_path'] = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+            $payload['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
         $user->update($payload);
         $user->syncRoles([$validated['role']]);
 
@@ -119,6 +141,10 @@ class UserController extends Controller
     {
         if ((int) $user->id === (int) auth()->id()) {
             return back()->withErrors(['user' => __('users.cannot_delete_self')]);
+        }
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
         }
 
         $user->delete();
