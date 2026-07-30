@@ -31,6 +31,12 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
 
         /**
+         * Invalide les sessions dont le hash mot de passe ne correspond plus
+         * (changement de MDP, révocation implicite des autres appareils).
+         */
+        $middleware->authenticateSessions();
+
+        /**
          * IMPORTANT:
          * SetLocale must run AFTER session is started,
          * therefore it is attached to the "web" group.
