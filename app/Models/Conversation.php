@@ -28,4 +28,21 @@ class Conversation extends Model
     {
         return $this->hasMany(Message::class);
     }
+
+    public function isGroup(): bool
+    {
+        return $this->type === 'group';
+    }
+
+    public function isOwner(User $user): bool
+    {
+        return $this->participants
+            ->contains(fn (ConversationParticipant $p) => (int) $p->user_id === (int) $user->id && $p->role === 'owner');
+    }
+
+    public function hasParticipant(User $user): bool
+    {
+        return $this->participants
+            ->contains(fn (ConversationParticipant $p) => (int) $p->user_id === (int) $user->id);
+    }
 }

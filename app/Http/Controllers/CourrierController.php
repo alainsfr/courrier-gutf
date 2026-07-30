@@ -91,9 +91,20 @@ class CourrierController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        $agentsList = User::query()->orderBy('name')->get(['id', 'name', 'email']);
-        $etapes = WorkflowEtape::query()->orderBy('ordre')->get(['id', 'libelle', 'ordre', 'ui_color']);
-        $bureaux = Bureau::query()->orderBy('ordre')->get(['id', 'nom', 'code', 'color']);
+        $agentsList = User::query()
+            ->when(! $isAdmin && $user->bureau_id, fn ($q) => $q->where('bureau_id', $user->bureau_id))
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        $etapes = WorkflowEtape::query()
+            ->when(! $isAdmin && $user->bureau_id, fn ($q) => $q->where('bureau_id', $user->bureau_id))
+            ->orderBy('ordre')
+            ->get(['id', 'libelle', 'ordre', 'ui_color']);
+
+        $bureaux = Bureau::query()
+            ->when(! $isAdmin && $user->bureau_id, fn ($q) => $q->whereKey($user->bureau_id))
+            ->orderBy('ordre')
+            ->get(['id', 'nom', 'code', 'color']);
         $chips = $this->queryService->registerChipCounts($request);
 
         $activeFilterCount = collect($filters)
@@ -291,6 +302,8 @@ class CourrierController extends Controller
     {
         $this->authorize('view', $courrier);
 
+        $user = $request->user();
+
         $courrier->load([
             'assignedTo:id,name,email',
             'createdBy:id,name,email',
@@ -303,7 +316,13 @@ class CourrierController extends Controller
             'attachments.uploadedBy:id,name,email',
         ]);
 
-        $agents = User::orderBy('name')->get(['id', 'name', 'email']);
+        $agents = User::query()
+            ->when(
+                ! $user?->hasRole(['admin', 'super-admin']) && $courrier->bureau_actuel_id,
+                fn ($q) => $q->where('bureau_id', $courrier->bureau_actuel_id)
+            )
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
 
         $nextEtape = null;
         $prevEtape = null;
@@ -325,11 +344,8 @@ class CourrierController extends Controller
                 || str_ends_with(strtolower((string) $a->original_name), '.pdf'))
             ?? $courrier->attachments->first();
 
-        $user = Auth::user();
         $canActOnBureau = $user
-            && $user->bureau_id
-            && $courrier->bureau_actuel_id
-            && (int) $user->bureau_id === (int) $courrier->bureau_actuel_id;
+            && $user->can('transfer', $courrier);
 
         return view('courriers.show', compact(
             'courrier',

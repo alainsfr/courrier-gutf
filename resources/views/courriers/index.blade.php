@@ -74,7 +74,7 @@
             {{ __('courrier.type_out') }}
             <span class="tabular-nums opacity-80">{{ number_format($chips['sortant']) }}</span>
         </a>
-        @if ($validationEtapeId)
+        @if ($validationEtapeId && auth()->user()?->can('courrier.validate'))
             <a href="{{ route('courriers.index', $qs(['workflow_etape_id' => $validationEtapeId, 'is_late' => '', 'type' => '', 'assigned_to' => '', 'archived' => 'active'])) }}"
                class="{{ $chipBase }} {{ (string) $filters['workflow_etape_id'] === (string) $validationEtapeId ? $chipActive : $chipIdle }}">
                 {{ __('courrier.register_chip_validation') }}

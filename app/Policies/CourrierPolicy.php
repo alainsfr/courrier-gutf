@@ -40,6 +40,11 @@ class CourrierPolicy
             return true;
         }
 
+        // Même bureau que le pli (aligné sur CourrierQueryService / Kanban)
+        if ($this->isInCurrentBureau($user, $courrier)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -50,7 +55,23 @@ class CourrierPolicy
 
     public function assign(User $user, Courrier $courrier): bool
     {
-        return $user->can('courrier.assign');
+        if (! $user->can('courrier.assign')) {
+            return false;
+        }
+
+        return $this->isInCurrentBureau($user, $courrier);
+    }
+
+    /**
+     * Transfert Kanban / fiche : réservé au bureau qui détient le pli.
+     */
+    public function transfer(User $user, Courrier $courrier): bool
+    {
+        if (! $user->can('courrier.view')) {
+            return false;
+        }
+
+        return $this->isInCurrentBureau($user, $courrier);
     }
 
     public function process(User $user, Courrier $courrier): bool
@@ -65,7 +86,20 @@ class CourrierPolicy
 
     public function validate(User $user, Courrier $courrier): bool
     {
-        return $user->can('courrier.validate');
+        if (! $user->can('courrier.validate')) {
+            return false;
+        }
+
+        // Validateur uniquement sur les plis en validation de son bureau (ou sans bureau)
+        if (! $courrier->isEnValidation()) {
+            return false;
+        }
+
+        if ($user->bureau_id && $courrier->bureau_actuel_id) {
+            return (int) $user->bureau_id === (int) $courrier->bureau_actuel_id;
+        }
+
+        return true;
     }
 
     public function archive(User $user, Courrier $courrier): bool
@@ -105,5 +139,12 @@ class CourrierPolicy
     {
         return (int) $courrier->created_by_user_id === (int) $user->id
             || (int) $courrier->assigned_to_user_id === (int) $user->id;
+    }
+
+    private function isInCurrentBureau(User $user, Courrier $courrier): bool
+    {
+        return $user->bureau_id
+            && $courrier->bureau_actuel_id
+            && (int) $user->bureau_id === (int) $courrier->bureau_actuel_id;
     }
 }

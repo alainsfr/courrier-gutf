@@ -27,6 +27,10 @@ class DashboardController extends Controller
                 $sub->where('created_by_user_id', $user->id)
                     ->orWhere('assigned_to_user_id', $user->id);
 
+                if ($user->bureau_id) {
+                    $sub->orWhere('bureau_actuel_id', $user->bureau_id);
+                }
+
                 if ($user->can('courrier.validate')) {
                     $sub->orWhereHas(
                         'workflowEtape',
@@ -57,9 +61,11 @@ class DashboardController extends Controller
         $kpiReception = (clone $query)->whereEtapeOrdre(Courrier::ETAPE_RECEPTION)->count();
         $kpiActive = (clone $query)->notArchived()->count();
 
-        $etapes = WorkflowEtape::query()
-            ->orderBy('ordre')
-            ->get(['id', 'libelle', 'ordre', 'ui_color']);
+        $etapesQuery = WorkflowEtape::query()->orderBy('ordre');
+        if (! $isAdmin && $user->bureau_id) {
+            $etapesQuery->where('bureau_id', $user->bureau_id);
+        }
+        $etapes = $etapesQuery->get(['id', 'libelle', 'ordre', 'ui_color', 'bureau_id']);
 
         $countsByEtape = (clone $query)
             ->selectRaw('workflow_etape_id, COUNT(*) as total')

@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Models\Conversation;
 use App\Models\Courrier;
+use App\Models\Message;
 use App\Policies\ConversationPolicy;
 use App\Policies\CourrierPolicy;
+use App\Policies\MessagePolicy;
 use App\Services\AppSettingsService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Courrier::class, CourrierPolicy::class);
         Gate::policy(Conversation::class, ConversationPolicy::class);
+        Gate::policy(Message::class, MessagePolicy::class);
 
         Gate::before(function ($user, string $ability) {
             return method_exists($user, 'hasRole') && $user->hasRole('super-admin') ? true : null;

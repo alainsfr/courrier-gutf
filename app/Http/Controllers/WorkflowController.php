@@ -7,6 +7,7 @@ use App\Models\Courrier;
 use App\Models\WorkflowEtape;
 use App\Services\WorkflowService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -18,7 +19,7 @@ class WorkflowController extends Controller
     ) {}
 
     /**
-     * Tableau Kanban premium : colonnes = étapes, cartes = courriers du bureau agent.
+     * Tableau Kanban : colonnes = étapes du bureau de l'agent (toutes pour admin).
      */
     public function kanban(Request $request): View
     {
@@ -27,17 +28,26 @@ class WorkflowController extends Controller
         $user = $request->user();
         $isAdmin = $user->hasRole(['admin', 'super-admin']);
 
-        $etapes = WorkflowEtape::query()
-            ->with('bureau:id,nom,code,icon,color')
-            ->orderBy('ordre')
-            ->get();
-
         $bureauId = null;
         if ($isAdmin && $request->filled('bureau_id')) {
             $bureauId = (int) $request->query('bureau_id');
         } elseif ($user->bureau_id) {
             $bureauId = (int) $user->bureau_id;
         }
+
+        $etapesQuery = WorkflowEtape::query()
+            ->with('bureau:id,nom,code,icon,color')
+            ->orderBy('ordre');
+
+        // Agents : uniquement les étapes de leur bureau (ex. Traitement seul)
+        // Admin avec filtre bureau : idem. Admin sans filtre : circuit complet.
+        if ($bureauId) {
+            $etapesQuery->where('bureau_id', $bureauId);
+        } elseif (! $isAdmin) {
+            $etapesQuery->whereRaw('1 = 0');
+        }
+
+        $etapes = $etapesQuery->get();
 
         $query = Courrier::query()
             ->with([
@@ -56,6 +66,13 @@ class WorkflowController extends Controller
                 $sub->where('assigned_to_user_id', $user->id)
                     ->orWhere('created_by_user_id', $user->id);
             });
+        }
+
+        // Ne charger que les plis des étapes visibles
+        if ($etapes->isNotEmpty()) {
+            $query->whereIn('workflow_etape_id', $etapes->pluck('id'));
+        } elseif (! $isAdmin) {
+            $query->whereRaw('1 = 0');
         }
 
         $courriersByEtape = $query
@@ -84,9 +101,9 @@ class WorkflowController extends Controller
     /**
      * Endpoint AJAX SortableJS → WorkflowService.
      */
-    public function transfer(Request $request, Courrier $courrier): JsonResponse
+    public function transfer(Request $request, Courrier $courrier): JsonResponse|RedirectResponse
     {
-        $this->authorize('view', $courrier);
+        $this->authorize('transfer', $courrier);
 
         $validated = $request->validate([
             'nouvelle_etape_id' => ['required', 'integer', 'exists:workflow_etapes,id'],
@@ -131,7 +148,17 @@ class WorkflowController extends Controller
         $courrier->refresh()->load(['workflowEtape', 'bureauActuel']);
 
         if (! $request->expectsJson()) {
-            return back()->with('status', 'workflow-transferred');
+            // Après un transfert hors bureau, l'agent perd souvent le droit "view" :
+            // éviter un 403 sur la fiche en renvoyant vers le Kanban.
+            if ($request->user()?->can('view', $courrier)) {
+                return redirect()
+                    ->route('courriers.show', $courrier)
+                    ->with('status', 'workflow-transferred');
+            }
+
+            return redirect()
+                ->route('courriers.kanban')
+                ->with('status', 'workflow-transferred');
         }
 
         return response()->json([

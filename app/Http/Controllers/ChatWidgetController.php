@@ -2,44 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
+use App\Services\MessagingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class ChatWidgetController extends Controller
 {
+    public function __construct(private MessagingService $messaging)
+    {
+    }
+
     /**
-     * Récupère la liste simplifiée des conversations récentes pour le widget
+     * Liste simplifiée des conversations récentes pour le widget
      */
     public function mini(Request $request)
     {
-        $userId = Auth::id();
+        $user = Auth::user();
+        $userId = (int) $user->id;
 
-        $conversations = Conversation::query()
-            ->whereHas('participants', fn ($q) => $q->where('user_id', $userId))
-            ->with([
-                'messages' => fn ($q) => $q->latest()->limit(1),
-                'participants.user:id,name',
-            ])
-            ->withCount([
-                // Un seul sous-select par conversation (évite le N+1 sur messages()->count())
-                'messages as unread_count' => function ($q) use ($userId) {
-                    $q->whereRaw(
-                        'messages.created_at > COALESCE(
-                            (SELECT last_read_at FROM conversation_participants
-                             WHERE conversation_participants.conversation_id = messages.conversation_id
-                               AND conversation_participants.user_id = ?),
-                            \'1970-01-01\'
-                        )',
-                        [$userId]
-                    );
-                },
-            ])
-            ->latest('updated_at')
-            ->limit(20)
-            ->get();
+        $conversations = $this->messaging->conversationsFor($user)->take(20);
 
         $items = [];
         $unreadTotal = 0;
@@ -48,22 +34,16 @@ class ChatWidgetController extends Controller
             $unread = (int) $c->unread_count;
             $unreadTotal += $unread;
 
-            $title = __('chat.group');
-            if ($c->type === 'group') {
-                $title = $c->title ?: __('chat.group');
-            } else {
-                $partner = $c->participants->first(fn ($part) => $part->user_id !== $userId)?->user;
-                $title = $partner ? $partner->name : __('chat.direct');
-            }
-
+            $title = $this->messaging->titleFor($c, $userId);
             $lastMsg = $c->messages->first();
-            $last = $lastMsg ? \Illuminate\Support\Str::limit($lastMsg->body, 70) : '—';
+            $last = $lastMsg ? Str::limit($lastMsg->body, 70) : '—';
 
             $items[] = [
                 'id' => $c->id,
                 'title' => $title,
                 'last' => $last,
                 'unread' => $unread,
+                'updated_at' => optional($c->updated_at)?->toISOString(),
             ];
         }
 
@@ -74,7 +54,7 @@ class ChatWidgetController extends Controller
     }
 
     /**
-     * API : Récupère les derniers messages d'une discussion pour le mini-chat
+     * API : derniers messages d'une discussion pour le mini-chat
      */
     public function getMessages(Conversation $conversation)
     {
@@ -83,7 +63,7 @@ class ChatWidgetController extends Controller
         $messages = $conversation->messages()
             ->with('sender:id,name')
             ->latest()
-            ->limit(30)
+            ->limit(50)
             ->get()
             ->reverse()
             ->values();
@@ -96,7 +76,7 @@ class ChatWidgetController extends Controller
     }
 
     /**
-     * API : Envoie un message rapide depuis le mini-chat
+     * API : envoi rapide depuis le mini-chat
      */
     public function sendMessage(Request $request, Conversation $conversation)
     {
@@ -109,10 +89,17 @@ class ChatWidgetController extends Controller
         $msg = Message::create([
             'conversation_id' => $conversation->id,
             'sender_user_id' => Auth::id(),
-            'body' => $validated['body'],
+            'body' => trim($validated['body']),
         ]);
 
-        broadcast(new \App\Events\MessageSent($msg))->toOthers();
+        $conversation->touch();
+
+        ConversationParticipant::where('conversation_id', $conversation->id)
+            ->where('user_id', Auth::id())
+            ->update(['last_read_at' => now()]);
+
+        broadcast(new MessageSent($msg))->toOthers();
+        $this->messaging->notifyUnreadForConversation($conversation, (int) Auth::id());
 
         return response()->json([
             'success' => true,

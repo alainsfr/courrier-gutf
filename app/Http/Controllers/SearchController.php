@@ -21,6 +21,9 @@ class SearchController extends Controller
     {
         $this->authorize('viewAny', Courrier::class);
 
+        $user = $request->user();
+        $isAdmin = $user->hasRole(['admin', 'super-admin']);
+
         $filters = [
             'tf' => trim((string) $request->query('tf', '')),
             'type' => (string) $request->query('type', ''),
@@ -42,6 +45,7 @@ class SearchController extends Controller
 
         $bureaux = Bureau::query()
             ->where('is_active', true)
+            ->when(! $isAdmin && $user->bureau_id, fn ($q) => $q->whereKey($user->bureau_id))
             ->orderBy('ordre')
             ->get(['id', 'nom', 'code', 'color']);
 

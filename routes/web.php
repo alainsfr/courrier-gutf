@@ -167,18 +167,31 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Messaging
+    Route::middleware('permission:chat.send')->group(function () {
+        Route::post('/messages/direct', [MessagingController::class, 'startDirect'])->name('messages.direct');
+    });
+
+    Route::middleware('permission:chat.group.create')->group(function () {
+        Route::post('/messages/group', [MessagingController::class, 'createGroup'])->name('messages.group.create');
+    });
+
     Route::middleware('permission:chat.view')->group(function () {
         Route::get('/messages', [MessagingController::class, 'index'])->name('messages.index');
         Route::get('/messages/{conversation}', [MessagingController::class, 'show'])->name('messages.show');
     });
 
     Route::middleware('permission:chat.send')->group(function () {
-        Route::post('/messages/direct', [MessagingController::class, 'startDirect'])->name('messages.direct');
+        Route::post('/messages/{conversation}/members', [MessagingController::class, 'addMembers'])
+            ->name('messages.members.add');
+        Route::delete('/messages/{conversation}/members/{user}', [MessagingController::class, 'removeMember'])
+            ->name('messages.members.remove');
+        Route::post('/messages/{conversation}/leave', [MessagingController::class, 'leave'])
+            ->name('messages.leave');
+        Route::patch('/messages/{conversation}/rename', [MessagingController::class, 'rename'])
+            ->name('messages.rename');
+        Route::delete('/messages/{conversation}/messages/{message}', [MessagingController::class, 'destroyMessage'])
+            ->name('messages.destroy');
         Route::post('/messages/{conversation}', [MessagingController::class, 'send'])->name('messages.send');
-    });
-
-    Route::middleware('permission:chat.group.create')->group(function () {
-        Route::post('/messages/group', [MessagingController::class, 'createGroup'])->name('messages.group.create');
     });
 
     // API complémentaires pour l'interactivité du Chat Widget flottant

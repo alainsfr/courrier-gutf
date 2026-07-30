@@ -210,6 +210,9 @@ return [
 
     'kanban_late' => 'En retard',
 
+    'kanban_no_columns' => 'Aucune colonne disponible',
+    'kanban_no_columns_hint' => 'Votre compte n’est rattaché à aucun bureau, ou aucune étape n’est configurée pour votre bureau.',
+
     'type_internal' => 'Interne',
     'search_title' => 'Recherche multicritère',
     'search_subtitle' => 'Filtrez les dossiers par TF, type, bureau, période ou parties',

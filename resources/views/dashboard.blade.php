@@ -54,44 +54,55 @@
     {{-- KPI --}}
     <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         @php
-            $kpis = [
+            $hasReception = $byEtape->contains(fn ($e) => (int) $e->ordre === 1) || $isAdmin;
+            $hasValidation = $byEtape->contains(fn ($e) => (int) $e->ordre === 4)
+                || $isAdmin
+                || auth()->user()?->can('courrier.validate');
+
+            $kpis = collect([
                 [
                     'label' => __('app.kpi_active'),
                     'value' => $kpiActive,
                     'tone' => 'brand',
                     'href' => route('courriers.kanban'),
+                    'show' => true,
                 ],
                 [
                     'label' => __('app.kpi_late'),
                     'value' => $kpiLate,
                     'tone' => $kpiLate > 0 ? 'danger' : 'muted',
                     'href' => '#late-panel',
+                    'show' => true,
                 ],
                 [
                     'label' => __('app.kpi_validation'),
                     'value' => $kpiValidation,
                     'tone' => 'accent',
                     'href' => route('courriers.index', ['workflow_etape_id' => $byEtape->firstWhere('ordre', 4)?->id]),
+                    'show' => $hasValidation,
                 ],
                 [
                     'label' => __('app.kpi_reception'),
                     'value' => $kpiReception,
                     'tone' => 'muted',
                     'href' => route('courriers.index', ['workflow_etape_id' => $byEtape->firstWhere('ordre', 1)?->id]),
+                    'show' => $hasReception,
                 ],
                 [
                     'label' => __('app.kpi_in_progress'),
                     'value' => $kpiInProgress,
                     'tone' => 'accent',
                     'href' => route('courriers.kanban'),
+                    'show' => true,
                 ],
                 [
                     'label' => __('app.kpi_this_month'),
                     'value' => $kpiThisMonth,
                     'tone' => 'brand',
                     'href' => route('courriers.index'),
+                    'show' => true,
                 ],
-            ];
+            ])->filter(fn ($kpi) => $kpi['show'])->values();
         @endphp
 
         @foreach ($kpis as $kpi)
@@ -278,15 +289,17 @@
                         {{ __('app.shortcut_search') }}
                     </x-buttons.secondary>
 
-                    <a href="{{ route('messages.index') }}"
-                       class="relative inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 no-underline transition hover:bg-gray-50">
-                        {{ __('app.shortcut_messages') }}
-                        @if ($unreadChatCount > 0)
-                            <span class="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#dc633a] px-1.5 text-[10px] font-bold leading-5 text-white">
-                                {{ $unreadChatCount }}
-                            </span>
-                        @endif
-                    </a>
+                    @can('chat.view')
+                        <a href="{{ route('messages.index') }}"
+                           class="relative inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-semibold text-gray-700 no-underline transition hover:bg-gray-50">
+                            {{ __('app.shortcut_messages') }}
+                            @if ($unreadChatCount > 0)
+                                <span class="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#dc633a] px-1.5 text-[10px] font-bold leading-5 text-white">
+                                    {{ $unreadChatCount }}
+                                </span>
+                            @endif
+                        </a>
+                    @endcan
 
                     @role('super-admin|directeur')
                         <x-buttons.secondary :href="route('statistics.index')" class="w-full justify-center">

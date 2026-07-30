@@ -208,6 +208,9 @@ return [
 
     'kanban_late' => 'Overdue',
 
+    'kanban_no_columns' => 'No columns available',
+    'kanban_no_columns_hint' => 'Your account is not linked to a bureau, or no workflow steps are configured for your bureau.',
+
     'type_internal' => 'Internal',
     'search_title' => 'Multi-criteria search',
     'search_subtitle' => 'Filter files by TF, type, bureau, period or parties',

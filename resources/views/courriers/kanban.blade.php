@@ -41,7 +41,7 @@
              data-transfer-template="{{ $transferUrlTemplate }}"
              data-csrf="{{ csrf_token() }}">
 
-            @foreach($etapes as $etape)
+            @forelse($etapes as $etape)
                 @php
                     $cards = $courriersByEtape->get($etape->id, collect());
                     $color = $etape->ui_color ?: '#64748B';
@@ -132,7 +132,12 @@
                         @endforelse
                     </div>
                 </section>
-            @endforeach
+            @empty
+                <div class="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
+                    <p class="mb-1 text-sm font-semibold text-gray-800">{{ __('courrier.kanban_no_columns') }}</p>
+                    <p class="mb-0 max-w-md text-xs text-gray-500">{{ __('courrier.kanban_no_columns_hint') }}</p>
+                </div>
+            @endforelse
         </div>
     </div>
 

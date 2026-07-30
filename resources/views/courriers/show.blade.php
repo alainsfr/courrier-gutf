@@ -238,8 +238,8 @@
                     </div>
                 @endif
 
-                @can('courrier.assign')
-                    @if(! $courrier->isArchived())
+                @can('assign', $courrier)
+                    @if(! $courrier->isArchived() && $canActOnBureau)
                         <form method="POST" action="{{ route('courriers.assign', $courrier) }}" class="mt-3 border-t border-gray-100 pt-3">
                             @csrf
                             <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-400">{{ __('courrier.assign_to') }}</label>
