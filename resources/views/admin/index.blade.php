@@ -39,5 +39,15 @@
             <h2 class="mb-1 text-base font-bold text-gray-900">{{ __('settings.title') }}</h2>
             <p class="mb-0 text-sm text-gray-500">Logo, nom, textes institutionnels et couleurs du thème.</p>
         </a>
+        <a href="{{ route('admin.backups.index') }}"
+           class="group block rounded-xl border border-gray-200 bg-white p-6 shadow-sm no-underline transition hover:shadow-md">
+            <div class="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
+                </svg>
+            </div>
+            <h2 class="mb-1 text-base font-bold text-gray-900">{{ __('backups.nav') }}</h2>
+            <p class="mb-0 text-sm text-gray-500">{{ __('backups.subtitle') }}</p>
+        </a>
     </div>
 </x-app-layout>

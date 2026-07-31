@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 
 // SLA CCT : détection quotidienne des dépassements de délai
 Schedule::command('app:check-delais')->dailyAt('07:30');
+
+// Sauvegardes automatisées (Spatie Backup)
+Schedule::command('backup:run')->dailyAt('02:00');
+Schedule::command('backup:clean')->dailyAt('03:00');

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SignaturePinController;
 use App\Http\Controllers\ParapheurController;
 use App\Http\Controllers\CourrierCommentController;
 use App\Http\Controllers\DashboardController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\MessagingController;
 use App\Http\Controllers\ChatWidgetController;
+use App\Http\Controllers\Admin\BackupController as AdminBackupController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\BureauController as AdminBureauController;
@@ -74,6 +76,10 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('index');
         Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+        Route::get('/backups', [AdminBackupController::class, 'index'])->name('backups.index');
+        Route::get('/backups/{fileName}', [AdminBackupController::class, 'download'])
+            ->where('fileName', '[A-Za-z0-9._\-]+\.zip')
+            ->name('backups.download');
         Route::resource('users', AdminUserController::class)->except(['show']);
         Route::resource('bureaux', AdminBureauController::class)
             ->except(['show'])
@@ -119,6 +125,10 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::post('/{courrier}/transfer', [WorkflowController::class, 'transfer'])
             ->middleware('permission:courrier.view')
             ->name('transfer');
+
+        Route::get('/{courrier}/bordereau', [CourrierController::class, 'printBordereau'])
+            ->middleware('permission:courrier.view')
+            ->name('bordereau');
 
         Route::get('/{courrier}', [CourrierController::class, 'show'])
             ->middleware('permission:courrier.view')
@@ -182,6 +192,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/signature-pin', [SignaturePinController::class, 'update'])->name('profile.signature-pin.update');
     // Suppression de compte désactivée (application institutionnelle).
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 

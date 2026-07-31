@@ -332,11 +332,18 @@ class CourrierController extends Controller
         $hasPendingVisa = $courrier->visas
             ->contains(fn ($visa) => $visa->status === ParapheurVisa::STATUS_PENDING);
 
-        $parapheurValidators = User::query()
-            ->role(['directeur', 'super-admin'])
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+        $validatorRoleNames = \Spatie\Permission\Models\Role::query()
+            ->whereIn('name', ['directeur', 'super-admin'])
+            ->pluck('name')
+            ->all();
+
+        $parapheurValidators = $validatorRoleNames === []
+            ? collect()
+            : User::query()
+                ->role($validatorRoleNames)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email']);
 
         $agents = User::query()
             ->when(
@@ -449,6 +456,20 @@ class CourrierController extends Controller
         return redirect()
             ->route('courriers.show', $courrier)
             ->with('status', __('courrier.links_attached'));
+    }
+
+    public function printBordereau(Courrier $courrier): View
+    {
+        $this->authorize('view', $courrier);
+
+        $courrier->loadMissing([
+            'bureauActuel:id,nom',
+            'workflowEtape:id,libelle',
+            'assignedTo:id,name',
+            'createdBy:id,name',
+        ]);
+
+        return view('courriers.bordereau', compact('courrier'));
     }
 
     public function assign(Request $request, Courrier $courrier): RedirectResponse

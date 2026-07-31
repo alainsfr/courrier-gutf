@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 /**
- * Jeu de données pour tester le Kanban (accès strict par bureau).
+ * Jeu de données pour tester le Kanban, l'enregistrement et le parapheur.
  */
 class TestEnvironmentSeeder extends Seeder
 {
@@ -58,6 +58,12 @@ class TestEnvironmentSeeder extends Seeder
                 'role' => 'agent_traitement',
                 'bureau_code' => 'livre_foncier',
             ],
+            [
+                'email' => 'directeur@test.com',
+                'name' => 'Directeur GUTF',
+                'role' => 'directeur',
+                'bureau_code' => null,
+            ],
         ];
 
         $usersByBureau = [];
@@ -71,17 +77,22 @@ class TestEnvironmentSeeder extends Seeder
                     'locale' => 'fr',
                     'email_verified_at' => now(),
                     'is_active' => true,
-                    'bureau_id' => $bureaux[$agent['bureau_code']],
+                    'bureau_id' => $agent['bureau_code']
+                        ? $bureaux[$agent['bureau_code']]
+                        : null,
                 ]
             );
 
             $user->syncRoles([$agent['role']]);
-            $usersByBureau[$agent['bureau_code']] = $user;
+
+            if ($agent['bureau_code']) {
+                $usersByBureau[$agent['bureau_code']] = $user;
+            }
         }
 
         $creator = $usersByBureau['accueil'];
 
-        // Répartition visuelle Kanban : 4 / 4 / 4 / 3 = 15
+        // Répartition visuelle Kanban : 4 / 4 / 4 / 3 = 15 entrants
         $distribution = [
             1 => 4, // Réception (Accueil)
             2 => 4, // Analyse (Visas)
@@ -96,32 +107,120 @@ class TestEnvironmentSeeder extends Seeder
             4 => $usersByBureau['visas_controles']->id,
         ];
 
-        $sujets = [
-            'Demande de certificat de propriété',
-            'Opposition sur titre foncier',
-            'Mutation de droits fonciers',
-            'Demande d\'extrait du livre foncier',
-            'Régularisation cadastrale',
-            'Recours gracieux – formalités',
-            'Transmission dossier conservation',
-            'Demande de visa de conformité',
-            'Saisie d\'acte notarié',
-            'Requête d\'enregistrement fiscal',
-            'Dossier de bornage contradictoire',
-            'Rectification d\'erreur matérielle',
-            'Demande de duplication de titre',
-            'Instruction de publicité foncière',
-            'Contrôle de formalités GUTF',
+        $dossiers = [
+            [
+                'objet' => 'Demande de certificat de propriété',
+                'tf' => 'TF-2026-1001',
+                'proprietaire' => 'Kouassi Jean',
+                'expediteur' => 'Étude Me N\'Guessan',
+                'etude_notariale' => 'Me N\'Guessan & Associés',
+                'numero_acte' => 'ACT-2401',
+                'valeur_immeuble' => 45000000,
+            ],
+            [
+                'objet' => 'Opposition sur titre foncier',
+                'tf' => 'TF-2026-1002',
+                'proprietaire' => 'Société FONCIER SA',
+                'requerant' => 'Bamba Aïcha',
+                'expediteur' => 'Cabinet Legalis',
+            ],
+            [
+                'objet' => 'Mutation de droits fonciers',
+                'tf' => 'TF-2026-1003',
+                'vendeur' => 'Traoré Mamadou',
+                'proprietaire' => 'Koné Fatou',
+                'expediteur' => 'Notaire Central Abidjan',
+                'numero_repertoire' => 'REP-7781',
+                'valeur_immeuble' => 125000000,
+            ],
+            [
+                'objet' => 'Demande d\'extrait du livre foncier',
+                'tf' => 'TF-2026-1004',
+                'proprietaire' => 'Yao Michel',
+                'expediteur' => 'Banque Atlantique',
+            ],
+            [
+                'objet' => 'Régularisation cadastrale',
+                'tf' => 'TF-2026-1005',
+                'proprietaire' => 'Commune de Cocody',
+                'expediteur' => 'Direction du Cadastre',
+            ],
+            [
+                'objet' => 'Recours gracieux – formalités',
+                'tf' => 'TF-2026-1006',
+                'requerant' => 'Diabaté Salif',
+                'expediteur' => 'Cabinet Diabaté',
+            ],
+            [
+                'objet' => 'Transmission dossier conservation',
+                'tf' => 'TF-2026-1007',
+                'proprietaire' => 'SCI Les Palmiers',
+                'expediteur' => 'Conservation foncière',
+            ],
+            [
+                'objet' => 'Demande de visa de conformité',
+                'tf' => 'TF-2026-1008',
+                'etude_notariale' => 'Étude Me Kouamé',
+                'numero_acte' => 'ACT-2512',
+                'expediteur' => 'Étude Me Kouamé',
+            ],
+            [
+                'objet' => 'Saisie d\'acte notarié',
+                'tf' => 'TF-2026-1009',
+                'proprietaire' => 'Ouattara Awa',
+                'vendeur' => 'Touré Ibrahim',
+                'expediteur' => 'Me Ouattara',
+                'valeur_immeuble' => 78000000,
+            ],
+            [
+                'objet' => 'Requête d\'enregistrement fiscal',
+                'tf' => 'TF-2026-1010',
+                'proprietaire' => 'Groupe IMMO CI',
+                'expediteur' => 'DGI – Pôle immobilier',
+            ],
+            [
+                'objet' => 'Dossier de bornage contradictoire',
+                'tf' => 'TF-2026-1011',
+                'proprietaire' => 'N\'Dri Paul',
+                'requerant' => 'Assi Luc',
+                'expediteur' => 'Géomètre Assi',
+            ],
+            [
+                'objet' => 'Rectification d\'erreur matérielle',
+                'tf' => 'TF-2026-1012',
+                'proprietaire' => 'Bakayoko Rokia',
+                'expediteur' => 'Étude Me Bakayoko',
+            ],
+            [
+                'objet' => 'Demande de duplication de titre',
+                'tf' => 'TF-2026-1013',
+                'proprietaire' => 'Société TERRA SARL',
+                'expediteur' => 'TERRA SARL',
+            ],
+            [
+                'objet' => 'Instruction de publicité foncière',
+                'tf' => 'TF-2026-1014',
+                'proprietaire' => 'Coulibaly Seydou',
+                'expediteur' => 'Notaire de Yopougon',
+                'numero_acte' => 'ACT-2603',
+            ],
+            [
+                'objet' => 'Contrôle de formalités GUTF',
+                'tf' => 'TF-2026-1015',
+                'proprietaire' => 'État de Côte d\'Ivoire',
+                'expediteur' => 'Secrétariat GUTF',
+            ],
         ];
 
         $year = (int) now()->year;
-        $seqBase = (int) (Courrier::query()->where('type', 'entrant')->where('year', $year)->max('seq') ?? 0);
+        $seqBase = 0;
 
         $index = 0;
         foreach ($distribution as $ordre => $count) {
             $etape = $etapes[$ordre];
 
             for ($i = 0; $i < $count; $i++) {
+                $dossier = $dossiers[$index] ?? ['objet' => "Courrier test Kanban #".($index + 1)];
                 $index++;
                 $seq = $seqBase + $index;
 
@@ -133,10 +232,19 @@ class TestEnvironmentSeeder extends Seeder
                         'type' => 'entrant',
                         'year' => $year,
                         'seq' => $seq,
-                        'objet' => $sujets[$index - 1] ?? "Courrier test Kanban #{$index}",
-                        'description' => 'Donnée de test générée par TestEnvironmentSeeder pour le tableau Kanban.',
-                        'expediteur' => fake()->company(),
+                        'objet' => $dossier['objet'],
+                        'description' => 'Dossier de démonstration généré pour tester l\'enregistrement et le circuit Kanban.',
+                        'tf' => $dossier['tf'] ?? null,
+                        'expediteur' => $dossier['expediteur'] ?? fake()->company(),
                         'destinataire' => 'GUTF / BACL',
+                        'proprietaire' => $dossier['proprietaire'] ?? null,
+                        'requerant' => $dossier['requerant'] ?? null,
+                        'vendeur' => $dossier['vendeur'] ?? null,
+                        'etude_notariale' => $dossier['etude_notariale'] ?? null,
+                        'valeur_immeuble' => $dossier['valeur_immeuble'] ?? null,
+                        'numero_acte' => $dossier['numero_acte'] ?? null,
+                        'numero_repertoire' => $dossier['numero_repertoire'] ?? null,
+                        'reference_externe' => 'EXT-'.str_pad((string) $index, 4, '0', STR_PAD_LEFT),
                         'date_courrier' => now()->subDays(rand(1, 20))->toDateString(),
                         'date_reception' => now()->subDays(rand(0, 10))->toDateString(),
                         'created_by_user_id' => $creator->id,
@@ -149,13 +257,71 @@ class TestEnvironmentSeeder extends Seeder
             }
         }
 
-        $this->command?->info('TestEnvironmentSeeder : 3 agents + 15 courriers (étapes 1–4).');
-        $this->command?->table(
-            ['Email', 'Bureau', 'Mot de passe'],
+        // Sortants + internes (registre multi-types)
+        $extra = [
             [
-                ['agent_accueil@test.com', 'Accueil', 'password'],
-                ['agent_visas@test.com', 'Visas et Contrôles', 'password'],
-                ['agent_livre_foncier@test.com', 'Livre Foncier', 'password'],
+                'type' => 'sortant',
+                'prefix' => 'SOR',
+                'seq' => 1,
+                'objet' => 'Transmission avis de conformité au notaire',
+                'destinataire' => 'Étude Me N\'Guessan',
+                'tf' => 'TF-2026-1001',
+            ],
+            [
+                'type' => 'sortant',
+                'prefix' => 'SOR',
+                'seq' => 2,
+                'objet' => 'Réponse à opposition – notification',
+                'destinataire' => 'Cabinet Legalis',
+                'tf' => 'TF-2026-1002',
+            ],
+            [
+                'type' => 'interne',
+                'prefix' => 'INT',
+                'seq' => 1,
+                'objet' => 'Note de service – calendrier des visas',
+                'destinataire' => 'Bureau Visas et Contrôles',
+                'tf' => null,
+            ],
+        ];
+
+        $etapeReception = $etapes[1];
+
+        foreach ($extra as $row) {
+            Courrier::query()->updateOrCreate(
+                [
+                    'reference_interne' => sprintf('GUTF-%s-%d-%06d', $row['prefix'], $year, $row['seq']),
+                ],
+                [
+                    'type' => $row['type'],
+                    'year' => $year,
+                    'seq' => $row['seq'],
+                    'objet' => $row['objet'],
+                    'description' => 'Courrier de démonstration (registre multi-types).',
+                    'tf' => $row['tf'],
+                    'expediteur' => 'GUTF',
+                    'destinataire' => $row['destinataire'],
+                    'date_courrier' => now()->toDateString(),
+                    'date_reception' => now()->toDateString(),
+                    'date_envoi' => $row['type'] === 'sortant' ? now()->toDateString() : null,
+                    'created_by_user_id' => $creator->id,
+                    'assigned_to_user_id' => $creator->id,
+                    'bureau_actuel_id' => $etapeReception->bureau_id,
+                    'workflow_etape_id' => $etapeReception->id,
+                    'is_late' => false,
+                ]
+            );
+        }
+
+        $this->command?->info('TestEnvironmentSeeder : 4 utilisateurs + 15 entrants + 2 sortants + 1 interne.');
+        $this->command?->table(
+            ['Email', 'Rôle / Bureau', 'Mot de passe'],
+            [
+                ['agent_accueil@test.com', 'agent_courrier / Accueil', 'password'],
+                ['agent_visas@test.com', 'validateur / Visas', 'password'],
+                ['agent_livre_foncier@test.com', 'agent_traitement / Livre Foncier', 'password'],
+                ['directeur@test.com', 'directeur (tous bureaux)', 'password'],
+                ['admin@test.com', 'super-admin', 'password'],
             ]
         );
     }

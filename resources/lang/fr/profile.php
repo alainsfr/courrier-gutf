@@ -10,10 +10,10 @@ return [
 
     'name' => 'Nom',
     'email' => 'Adresse e-mail',
-    'email_unverified' => "Votre adresse e-mail n'est pas vérifiée.",
+    'email_unverified' => 'Votre adresse e-mail n’est pas vérifiée.',
 
     'language' => 'Langue',
-    'language_help' => "Ce choix est enregistré sur votre compte et appliqué immédiatement.",
+    'language_help' => 'Ce choix est enregistré sur votre compte et appliqué immédiatement.',
     'current_language' => 'Langue actuelle',
 
     'account_email' => 'E-mail du compte',
@@ -32,9 +32,20 @@ return [
     'updated' => 'Profil mis à jour avec succès.',
     'form_error_title' => 'Veuillez corriger les erreurs ci-dessous.',
 
-    // Suppression de compte : non exposée aux agents (gouvernance admin).
-    'delete_account' => 'Suppression du compte',
-    'delete_help' => "Cette action est définitive. Saisissez votre mot de passe pour confirmer.",
+    'delete_account' => 'Supprimer le compte',
+    'delete_help' => 'Cette action est définitive. Saisissez votre mot de passe pour confirmer.',
     'password' => 'Mot de passe',
     'delete' => 'Supprimer mon compte',
+
+    'pin_title' => 'Code PIN de Signature',
+    'pin_subtitle' => 'Ce code à 4 chiffres sécurise vos validations au parapheur électronique.',
+    'pin_label' => 'Nouveau code PIN',
+    'pin_confirm_label' => 'Confirmer le code PIN',
+    'pin_save' => 'Enregistrer le PIN',
+    'pin_configured' => 'Un code PIN de signature est déjà configuré. Vous pouvez le remplacer ci-dessous.',
+    'pin_missing' => 'Aucun PIN configuré. Définissez-en un pour pouvoir valider les visas.',
+    'pin_updated' => 'Code PIN de signature mis à jour.',
+    'pin_required' => 'Le code PIN est obligatoire.',
+    'pin_digits' => 'Le code PIN doit contenir exactement 4 chiffres.',
+    'pin_confirmation' => 'La confirmation du PIN ne correspond pas.',
 ];

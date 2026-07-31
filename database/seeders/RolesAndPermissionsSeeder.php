@@ -50,6 +50,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Admin = tout
             'admin' => $permissions,
 
+            // Super-admin (accès total Spatie ; utilisateur créé par SuperAdminSeeder)
+            'super-admin' => $permissions,
+
             // Auditor = audit uniquement (lecture + export)
             'auditor' => [
                 'auditor.view',

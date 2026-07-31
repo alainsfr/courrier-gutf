@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ParapheurVisa;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class ParapheurController extends Controller
@@ -33,10 +34,25 @@ class ParapheurController extends Controller
     {
         $this->ensureOwnsPendingVisa($request, $visa);
 
+        $validated = $request->validate([
+            'signature_pin' => ['required', 'digits:4'],
+        ]);
+
+        $user = $request->user();
+
+        if (! $user->signature_pin || ! Hash::check($validated['signature_pin'], $user->signature_pin)) {
+            return back()
+                ->withInput()
+                ->withErrors(['signature_pin' => __('parapheur.pin_invalid')]);
+        }
+
+        $digitalHash = hash('sha256', $visa->id.$user->id.now()->toISOString());
+
         $visa->forceFill([
             'status' => ParapheurVisa::STATUS_APPROVED,
             'comment' => $request->input('comment'),
             'signed_at' => now(),
+            'digital_hash' => $digitalHash,
         ])->save();
 
         return redirect()

@@ -29,6 +29,12 @@
         </div>
     @endif
 
+    @if (session('status') === 'signature-pin-updated')
+        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {{ __('profile.pin_updated') }}
+        </div>
+    @endif
+
     @if ($errors->any() || $errors->updatePassword->any())
         <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
             <div class="mb-1 font-semibold">{{ __('Veuillez corriger les erreurs ci-dessous.') }}</div>
@@ -171,6 +177,67 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    {{-- Code PIN de signature --}}
+    <div class="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div class="mb-5 border-b border-gray-100 pb-4">
+            <h2 class="m-0 text-base font-bold text-gray-900">{{ __('profile.pin_title') }}</h2>
+            <p class="mb-0 mt-1 text-sm text-gray-500">{{ __('profile.pin_subtitle') }}</p>
+        </div>
+
+        @if ($user->signature_pin)
+            <div class="mb-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                {{ __('profile.pin_configured') }}
+            </div>
+        @else
+            <div class="mb-4 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                {{ __('profile.pin_missing') }}
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('profile.signature-pin.update') }}" class="mx-auto max-w-md space-y-4">
+            @csrf
+            @method('PUT')
+
+            <div>
+                <label class="{{ $label }}" for="signature_pin">{{ __('profile.pin_label') }}</label>
+                <input
+                    id="signature_pin"
+                    name="signature_pin"
+                    type="password"
+                    inputmode="numeric"
+                    pattern="[0-9]{4}"
+                    maxlength="4"
+                    class="{{ $input }} tracking-[0.35em]"
+                    required
+                    autocomplete="off"
+                    placeholder="••••"
+                >
+            </div>
+
+            <div>
+                <label class="{{ $label }}" for="signature_pin_confirmation">{{ __('profile.pin_confirm_label') }}</label>
+                <input
+                    id="signature_pin_confirmation"
+                    name="signature_pin_confirmation"
+                    type="password"
+                    inputmode="numeric"
+                    pattern="[0-9]{4}"
+                    maxlength="4"
+                    class="{{ $input }} tracking-[0.35em]"
+                    required
+                    autocomplete="off"
+                    placeholder="••••"
+                >
+            </div>
+
+            <div class="border-t border-gray-100 pt-5">
+                <x-buttons.primary type="submit">
+                    {{ __('profile.pin_save') }}
+                </x-buttons.primary>
+            </div>
+        </form>
     </div>
 
     {{--

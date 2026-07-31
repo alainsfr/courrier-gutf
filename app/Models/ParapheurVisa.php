@@ -20,6 +20,7 @@ class ParapheurVisa extends Model
         'status',
         'comment',
         'signed_at',
+        'digital_hash',
     ];
 
     protected $casts = [

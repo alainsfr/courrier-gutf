@@ -16,7 +16,10 @@
                 </div>
                 <p class="mb-0 truncate text-sm text-gray-500">{{ $courrier->objet }}</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <x-buttons.secondary :href="route('courriers.bordereau', $courrier)" target="_blank" rel="noopener">
+                    {{ __('courrier.bordereau_print') }}
+                </x-buttons.secondary>
                 <a href="{{ route('courriers.kanban') }}" class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-600 no-underline hover:bg-gray-50">
                     {{ __('nav.kanban') }}
                 </a>
@@ -173,14 +176,14 @@
                     <h2 class="mb-2 text-base font-bold text-gray-900">{{ __('parapheur.action_title') }}</h2>
                     <p class="mb-4 text-sm text-gray-600">{{ __('parapheur.action_text') }}</p>
 
-                    <form method="POST" action="{{ route('parapheur.approve', $pendingVisa) }}" class="mb-3">
-                        @csrf
-                        <x-buttons.primary type="submit" class="w-full !bg-[#17384b] hover:!bg-[#122c3b] focus:!ring-[#17384b]">
-                            {{ __('parapheur.approve') }}
-                        </x-buttons.primary>
-                    </form>
+                    <button type="button"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-[#17384b] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-[#122c3b] focus:outline-none focus:ring-2 focus:ring-[#17384b] focus:ring-offset-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#visa-pin-modal">
+                        {{ __('parapheur.approve') }}
+                    </button>
 
-                    <form method="POST" action="{{ route('parapheur.reject', $pendingVisa) }}" class="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+                    <form method="POST" action="{{ route('parapheur.reject', $pendingVisa) }}" class="mt-3 rounded-xl border border-rose-100 bg-rose-50/60 p-3">
                         @csrf
                         <label for="visa_reject_comment" class="mb-1 block text-[11px] font-semibold text-rose-700">
                             {{ __('parapheur.reject_comment') }}
@@ -196,6 +199,68 @@
                         </x-buttons.danger>
                     </form>
                 </div>
+
+                {{-- Modale PIN signature --}}
+                <div class="modal fade" id="visa-pin-modal" tabindex="-1" aria-labelledby="visa-pin-modal-label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content rounded-xl border-0 shadow-lg">
+                            <form method="POST" action="{{ route('parapheur.approve', $pendingVisa) }}">
+                                @csrf
+                                <div class="modal-header border-b border-gray-100 px-5 py-4">
+                                    <h3 class="modal-title text-base font-bold text-gray-900" id="visa-pin-modal-label">
+                                        {{ __('parapheur.pin_modal_title') }}
+                                    </h3>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('parapheur.pin_modal_cancel') }}"></button>
+                                </div>
+                                <div class="modal-body px-5 py-4">
+                                    <p class="mb-3 text-sm text-gray-600">{{ __('parapheur.pin_modal_text') }}</p>
+                                    <label for="signature_pin" class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                                        {{ __('parapheur.pin_label') }}
+                                    </label>
+                                    <input id="signature_pin"
+                                           name="signature_pin"
+                                           type="password"
+                                           inputmode="numeric"
+                                           pattern="[0-9]{4}"
+                                           maxlength="4"
+                                           required
+                                           autocomplete="one-time-code"
+                                           class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-center text-lg tracking-[0.4em] focus:border-[#17384b] focus:outline-none focus:ring-2 focus:ring-[#17384b]/20"
+                                           placeholder="••••"
+                                           value="{{ old('signature_pin') }}">
+                                    @error('signature_pin')
+                                        <p class="mt-2 mb-0 text-xs text-rose-600">{{ $message }}</p>
+                                    @enderror
+                                    @unless(auth()->user()?->signature_pin)
+                                        <p class="mt-2 mb-0 text-xs text-amber-700">
+                                            {{ __('parapheur.pin_not_set') }}
+                                            <a href="{{ route('profile.edit') }}" class="font-semibold underline">{{ __('parapheur.pin_configure') }}</a>
+                                        </p>
+                                    @endunless
+                                </div>
+                                <div class="modal-footer border-t border-gray-100 px-5 py-3">
+                                    <button type="button" class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50" data-bs-dismiss="modal">
+                                        {{ __('parapheur.pin_modal_cancel') }}
+                                    </button>
+                                    <x-buttons.primary type="submit">
+                                        {{ __('parapheur.pin_modal_confirm') }}
+                                    </x-buttons.primary>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                @if ($errors->has('signature_pin'))
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            var el = document.getElementById('visa-pin-modal');
+                            if (el && window.bootstrap) {
+                                window.bootstrap.Modal.getOrCreateInstance(el).show();
+                            }
+                        });
+                    </script>
+                @endif
             @endif
 
             @if (empty($pendingVisa) && empty($hasPendingVisa) && ! ($courrier->isArchived() ?? false))

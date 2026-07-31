@@ -37,4 +37,16 @@ return [
     'delete_help' => 'This action is permanent. Enter your password to confirm.',
     'password' => 'Password',
     'delete' => 'Delete my account',
+
+    'pin_title' => 'Signature PIN',
+    'pin_subtitle' => 'This 4-digit code secures your electronic parapheur approvals.',
+    'pin_label' => 'New PIN code',
+    'pin_confirm_label' => 'Confirm PIN code',
+    'pin_save' => 'Save PIN',
+    'pin_configured' => 'A signature PIN is already set. You can replace it below.',
+    'pin_missing' => 'No PIN configured. Set one to approve visas.',
+    'pin_updated' => 'Signature PIN updated.',
+    'pin_required' => 'The PIN code is required.',
+    'pin_digits' => 'The PIN must contain exactly 4 digits.',
+    'pin_confirmation' => 'PIN confirmation does not match.',
 ];

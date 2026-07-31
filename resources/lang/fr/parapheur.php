@@ -32,4 +32,12 @@ return [
     'submit_already_pending' => 'Un visa est déjà en cours pour ce courrier.',
     'submit_invalid_validator' => 'Le validateur doit être directeur ou super-admin.',
     'submitted' => 'Dossier soumis au parapheur.',
+    'pin_modal_title' => 'Signature électronique',
+    'pin_modal_text' => 'Saisissez votre code PIN de signature pour valider ce visa.',
+    'pin_label' => 'Code PIN',
+    'pin_modal_cancel' => 'Annuler',
+    'pin_modal_confirm' => 'Confirmer la signature',
+    'pin_invalid' => 'Code PIN invalide.',
+    'pin_not_set' => 'Aucun PIN configuré sur votre profil.',
+    'pin_configure' => 'Configurer mon PIN',
 ];
