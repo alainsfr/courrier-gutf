@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'title' => 'Statistics & Reports',
-    'subtitle' => 'CCF KPIs and mail activity trends',
+    'title' => 'Statistics',
+    'subtitle' => 'Volumes, deadlines and mail performance.',
     'nav' => 'Reports & Oversight',
 
     'kpis' => 'Key indicators',

@@ -2,10 +2,10 @@
 
 return [
     'nav' => 'Backups',
-    'title' => 'System backups',
-    'subtitle' => 'Automated archives (database + attachments) and disaster recovery plan.',
-    'schedule_hint' => 'Schedule: backup at 02:00 · cleanup at 03:00',
-    'pra_title' => 'ℹ️ System restore guide (Business Continuity Plan)',
+    'title' => 'Backups',
+    'subtitle' => 'Database and attachment archives — disaster recovery.',
+    'schedule_hint' => 'Schedule: backup 02:00 · cleanup 03:00',
+    'pra_title' => 'Restore guide (BCP)',
     'pra_intro' => 'In case of a major incident, follow these steps in order to restore COURRIER GUTF.',
     'pra_a_title' => 'A. Archive contents',
     'pra_a_text' => 'Each .zip file contains a SQL database dump and the stored PDF/image files (courrier folders under storage).',

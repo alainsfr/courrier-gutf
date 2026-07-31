@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Bureaux',
-    'subtitle' => 'Organisation des services du GUTF',
+    'subtitle' => 'Organisation des services.',
     'new' => 'Nouveau bureau',
     'create_title' => 'Créer un bureau',
     'edit_title' => 'Modifier le bureau',

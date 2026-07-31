@@ -37,8 +37,9 @@ class SettingsController extends Controller
             'support_email' => ['nullable', 'email', 'max:255'],
             'primary_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'accent_color' => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'logo' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,svg', 'max:2048'],
-            'favicon' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp,ico', 'max:1024'],
+            // file + extensions : la règle "image" refuse SVG/ICO (getimagesize)
+            'logo' => ['nullable', 'file', 'extensions:png,jpg,jpeg,webp,svg', 'max:2048'],
+            'favicon' => ['nullable', 'file', 'extensions:png,jpg,jpeg,webp,ico', 'max:1024'],
             'remove_logo' => ['nullable', Rule::in(['1', '0', 1, 0, true, false])],
             'remove_favicon' => ['nullable', Rule::in(['1', '0', 1, 0, true, false])],
         ]);
@@ -56,27 +57,28 @@ class SettingsController extends Controller
         ];
 
         $current = $this->settings->all();
+        $disk = Storage::disk('public');
 
         if ($request->boolean('remove_logo') && ! empty($current['logo_path'])) {
-            Storage::disk('public')->delete($current['logo_path']);
+            $disk->delete($current['logo_path']);
             $payload['logo_path'] = null;
         }
 
         if ($request->boolean('remove_favicon') && ! empty($current['favicon_path'])) {
-            Storage::disk('public')->delete($current['favicon_path']);
+            $disk->delete($current['favicon_path']);
             $payload['favicon_path'] = null;
         }
 
         if ($request->hasFile('logo')) {
             if (! empty($current['logo_path'])) {
-                Storage::disk('public')->delete($current['logo_path']);
+                $disk->delete($current['logo_path']);
             }
             $payload['logo_path'] = $request->file('logo')->store('branding', 'public');
         }
 
         if ($request->hasFile('favicon')) {
             if (! empty($current['favicon_path'])) {
-                Storage::disk('public')->delete($current['favicon_path']);
+                $disk->delete($current['favicon_path']);
             }
             $payload['favicon_path'] = $request->file('favicon')->store('branding', 'public');
         }

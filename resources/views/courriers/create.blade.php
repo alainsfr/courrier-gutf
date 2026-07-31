@@ -16,16 +16,7 @@
         </div>
     </x-slot>
 
-    @if ($errors->any())
-        <div class="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            <p class="mb-2 font-bold">{{ __('courrier.form_error_title') }}</p>
-            <ul class="mb-0 list-disc ps-4">
-                @foreach($errors->all() as $e)
-                    <li>{{ $e }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-form-errors class="mb-5" />
 
     <form method="POST" action="{{ route('courriers.store') }}" enctype="multipart/form-data">
         @csrf

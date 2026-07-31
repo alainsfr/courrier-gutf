@@ -49,7 +49,9 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            // URL relative : fonctionne sur localhost:8000, XAMPP et production
+            // sans dépendre d’un APP_URL exact (port / sous-dossier).
+            'url' => rtrim((string) env('FILESYSTEM_PUBLIC_URL', '/storage'), '/'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

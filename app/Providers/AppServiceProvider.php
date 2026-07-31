@@ -53,7 +53,11 @@ class AppServiceProvider extends ServiceProvider
             try {
                 /** @var AppSettingsService $settings */
                 $settings = app(AppSettingsService::class);
-                $view->with('brand', $settings->all());
+                $brand = $settings->all();
+                if (! empty($brand['app_name'])) {
+                    config(['app.name' => $brand['app_name']]);
+                }
+                $view->with('brand', $brand);
                 $view->with('brandLogoUrl', $settings->logoUrl());
                 $view->with('brandFaviconUrl', $settings->faviconUrl());
             } catch (\Throwable $e) {

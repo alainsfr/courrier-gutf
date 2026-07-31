@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'title' => 'Gestion des utilisateurs',
+    'title' => 'Utilisateurs',
+    'subtitle' => 'Comptes, rôles et affectation aux bureaux.',
     'new' => 'Nouvel utilisateur',
     'create_title' => 'Créer un utilisateur',
     'edit_title' => 'Modifier un utilisateur',

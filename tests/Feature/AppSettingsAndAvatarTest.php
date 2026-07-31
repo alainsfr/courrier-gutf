@@ -43,6 +43,7 @@ class AppSettingsAndAvatarTest extends TestCase
     public function test_admin_can_update_branding_settings(): void
     {
         $logo = UploadedFile::fake()->image('logo.png', 120, 120);
+        $favicon = UploadedFile::fake()->create('favicon.ico', 8, 'image/x-icon');
 
         $this->actingAs($this->admin)
             ->put(route('admin.settings.update'), [
@@ -56,6 +57,7 @@ class AppSettingsAndAvatarTest extends TestCase
                 'primary_color' => '#112233',
                 'accent_color' => '#aabbcc',
                 'logo' => $logo,
+                'favicon' => $favicon,
             ])
             ->assertRedirect(route('admin.settings.edit'));
 
@@ -65,7 +67,55 @@ class AppSettingsAndAvatarTest extends TestCase
         $this->assertSame('Courrier Test', $settings->get('app_name'));
         $this->assertSame('#112233', $settings->get('primary_color'));
         $this->assertNotNull($settings->get('logo_path'));
+        $this->assertNotNull($settings->get('favicon_path'));
         Storage::disk('public')->assertExists($settings->get('logo_path'));
+        Storage::disk('public')->assertExists($settings->get('favicon_path'));
+    }
+
+    public function test_admin_can_upload_svg_logo(): void
+    {
+        $svg = UploadedFile::fake()->createWithContent(
+            'brand.svg',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#17384b"/></svg>'
+        );
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.settings.update'), [
+                'app_name' => 'Courrier SVG',
+                'primary_color' => '#17384b',
+                'accent_color' => '#dc633a',
+                'logo' => $svg,
+            ])
+            ->assertRedirect(route('admin.settings.edit'))
+            ->assertSessionDoesntHaveErrors();
+
+        $settings = app(AppSettingsService::class);
+        $settings->forgetCache();
+        $this->assertNotNull($settings->get('logo_path'));
+        Storage::disk('public')->assertExists($settings->get('logo_path'));
+    }
+
+    public function test_settings_rejects_invalid_logo_with_french_message(): void
+    {
+        $this->admin->forceFill(['locale' => 'fr'])->save();
+        app()->setLocale('fr');
+
+        $bad = UploadedFile::fake()->create('malware.exe', 10, 'application/octet-stream');
+
+        $this->actingAs($this->admin)
+            ->from(route('admin.settings.edit'))
+            ->put(route('admin.settings.update'), [
+                'app_name' => 'Courrier Test',
+                'primary_color' => '#17384b',
+                'accent_color' => '#dc633a',
+                'logo' => $bad,
+            ])
+            ->assertRedirect(route('admin.settings.edit'))
+            ->assertSessionHasErrors('logo');
+
+        $errors = session('errors')->get('logo');
+        $this->assertNotEmpty($errors);
+        $this->assertStringNotContainsString('validation.', $errors[0]);
     }
 
     public function test_admin_can_create_user_with_avatar(): void
@@ -91,6 +141,33 @@ class AppSettingsAndAvatarTest extends TestCase
         $this->assertNotNull($user->avatar_path);
         Storage::disk('public')->assertExists($user->avatar_path);
         $this->assertNotNull($user->avatarUrl());
+    }
+
+    public function test_branding_urls_are_host_relative(): void
+    {
+        $logo = UploadedFile::fake()->image('logo.png', 120, 120);
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.settings.update'), [
+                'app_name' => 'Courrier Relative',
+                'primary_color' => '#17384b',
+                'accent_color' => '#dc633a',
+                'logo' => $logo,
+            ])
+            ->assertRedirect(route('admin.settings.edit'));
+
+        $settings = app(AppSettingsService::class);
+        $settings->forgetCache();
+
+        $url = $settings->logoUrl();
+        $this->assertNotNull($url);
+        $this->assertStringStartsWith('/storage/', $url);
+        $this->assertStringNotContainsString('http://localhost/', $url);
+
+        $this->actingAs($this->admin)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee($url, false);
     }
 
     public function test_settings_page_is_reachable(): void

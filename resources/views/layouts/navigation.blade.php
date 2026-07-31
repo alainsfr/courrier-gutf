@@ -37,23 +37,17 @@
 
 <aside id="app-sidebar"
        class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0">
-    <div class="flex h-16 items-center gap-3 border-b border-slate-100 px-5">
-        @if (! empty($brandLogoUrl))
-            <img src="{{ $brandLogoUrl }}" alt="{{ $appLabel }}" class="h-9 w-9 rounded-xl object-contain">
-        @else
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
-                  style="background: {{ $primary }}">
-                {{ strtoupper(substr($appLabel, 0, 1)) }}
-            </span>
-        @endif
-        <div class="min-w-0">
-            <div class="truncate text-sm font-semibold tracking-wide" style="color: {{ $primary }}">
-                {{ $appLabel }}
-            </div>
-            <div class="truncate text-[11px] text-slate-400">{{ \Illuminate\Support\Str::limit($tagline, 36) }}</div>
-        </div>
+    <div class="flex h-16 items-center gap-2 border-b border-slate-100 px-4">
+        <a href="{{ route('dashboard') }}" class="min-w-0 flex-1 no-underline">
+            <x-brand-mark
+                :logo-url="$brandLogoUrl ?? null"
+                :label="$appLabel"
+                :tagline="$tagline"
+                :primary="$primary"
+            />
+        </a>
         <button type="button"
-                class="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden"
+                class="ml-auto inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 lg:hidden"
                 data-sidebar-close aria-label="Fermer">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />

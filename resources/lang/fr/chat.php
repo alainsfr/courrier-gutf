@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Messagerie',
-    'subtitle' => 'Discussions internes GUTF',
+    'subtitle' => 'Discussions internes en temps réel.',
     'loading' => 'Chargement…',
     'empty' => 'Aucune conversation.',
     'open_full' => 'Ouvrir la messagerie',
@@ -51,7 +51,7 @@ return [
     'group_cannot_remove_owner' => 'Le propriétaire ne peut pas être retiré.',
     'group_left' => 'Vous avez quitté le groupe.',
     'group_left_and_deleted' => 'Groupe quitté et supprimé (plus aucun membre).',
-    'page_subtitle' => 'Messagerie interne en temps réel',
+    'page_subtitle' => 'Conversations et groupes internes.',
     'select_conversation' => 'Sélectionnez une discussion',
     'select_conversation_hint' => 'Choisissez un contact à gauche ou démarrez une nouvelle conversation.',
     'search_conversations' => 'Rechercher une discussion…',

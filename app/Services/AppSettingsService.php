@@ -99,12 +99,50 @@ class AppSettingsService
         return $this->publicUrl(is_string($path) ? $path : null);
     }
 
-    public function publicUrl(?string $path): ?string
+    /**
+     * Chemin filesystem absolu (PDF DomPDF, exports).
+     */
+    public function publicPath(?string $path = null): ?string
     {
-        if (! $path) {
+        $path ??= is_string($this->get('logo_path')) ? $this->get('logo_path') : null;
+
+        if (! is_string($path) || $path === '') {
             return null;
         }
 
-        return Storage::disk('public')->url($path);
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->path($path);
+    }
+
+    public function logoPublicPath(): ?string
+    {
+        $path = $this->get('logo_path');
+
+        return $this->publicPath(is_string($path) ? $path : null);
+    }
+
+    public function publicUrl(?string $path): ?string
+    {
+        if (! is_string($path) || $path === '') {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        $url = Storage::disk('public')->url($path);
+
+        // Cache-bust (favicon navigateur surtout)
+        try {
+            $version = Storage::disk('public')->lastModified($path);
+        } catch (\Throwable) {
+            $version = time();
+        }
+
+        return $url.(str_contains($url, '?') ? '&' : '?').'v='.$version;
     }
 }

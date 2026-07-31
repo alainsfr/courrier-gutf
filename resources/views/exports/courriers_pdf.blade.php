@@ -1,21 +1,27 @@
 @php
     $isFr = (app()->getLocale() === 'fr');
     $inst = config('institution');
+    $brand = $brand ?? [];
 
-    $logoPath = $inst['logo_public_path'] ?? null;
+    try {
+        $logoPath = app(\App\Services\AppSettingsService::class)->logoPublicPath();
+    } catch (\Throwable) {
+        $logoPath = $inst['logo_public_path'] ?? null;
+    }
     $hasLogo = $logoPath ? file_exists($logoPath) : false;
 
     $filtersHuman = $filtersHuman ?? [];
 
     // Récupération dynamique et bilingue des entités pour l'en-tête du PDF
-    $ministryName = $isFr ? ($inst['ministry_full_fr'] ?? 'MINDCAF & MINFI') : ($inst['ministry_full_en'] ?? 'MINDCAF & MINFI');
-    $structureName = $isFr ? ($inst['structure'] ?? '') : ($inst['structure_en'] ?? '');
+    $appLabel = $brand['app_name'] ?? ($inst['app_label'] ?? 'COURRIER GUTF');
+    $ministryName = $brand['ministry'] ?: ($isFr ? ($inst['ministry_full_fr'] ?? 'MINDCAF & MINFI') : ($inst['ministry_full_en'] ?? 'MINDCAF & MINFI'));
+    $structureName = $brand['structure'] ?: ($isFr ? ($inst['structure'] ?? '') : ($inst['structure_en'] ?? ''));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_','-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ $inst['app_label'] }} - PDF</title>
+    <title>{{ $appLabel }} - PDF</title>
 
     <style>
         /* Marges réduites et optimisées pour maximiser l'espace du tableau sur une seule page */
@@ -187,15 +193,15 @@
 </head>
 <body>
 
-    <div class="watermark">{{ $inst['app_label'] }}</div>
+    <div class="watermark">{{ $appLabel }}</div>
 
     {{-- EN-TÊTE FIXE --}}
     <header>
         <table class="header-table">
             <tr>
                 <td class="header-left">
-                    <div class="brand-title">{{ $inst['country'] }}</div>
-                    <div class="motto">{{ $inst['motto'] }}</div>
+                    <div class="brand-title">{{ $brand['country'] ?: ($inst['country'] ?? '') }}</div>
+                    <div class="motto">{{ $brand['motto'] ?: ($inst['motto'] ?? '') }}</div>
                     <div class="institution-details">
                         {{ $ministryName }}<br>
                         <strong>{{ $structureName }}</strong>
@@ -213,7 +219,7 @@
                     @if($hasLogo)
                         <img src="{{ $logoPath }}" alt="Logo" style="height:35px;">
                     @else
-                        <div class="brand-title" style="color: var(--gutf-primary);">{{ $inst['app_label'] }}</div>
+                        <div class="brand-title" style="color: var(--gutf-primary);">{{ $appLabel }}</div>
                     @endif
                     <div class="pdf-subtitle" style="margin-top: 3px;">
                         {{ $isFr ? 'Généré le' : 'Generated on' }} {{ now()->format('d/m/Y H:i') }}

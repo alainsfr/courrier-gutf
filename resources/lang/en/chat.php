@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Messages',
-    'subtitle' => 'Internal GUTF discussions',
+    'subtitle' => 'Internal real-time discussions.',
     'loading' => 'Loading…',
     'empty' => 'No conversations.',
     'open_full' => 'Open messages',

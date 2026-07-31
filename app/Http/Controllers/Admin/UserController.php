@@ -55,7 +55,7 @@ class UserController extends Controller
             'bureau_id' => ['nullable', 'integer', 'exists:bureaux,id'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'avatar' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $user = User::create([
@@ -101,7 +101,7 @@ class UserController extends Controller
             'bureau_id' => ['nullable', 'integer', 'exists:bureaux,id'],
             'is_active' => ['nullable', 'boolean'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'avatar' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:2048'],
             'remove_avatar' => ['nullable', Rule::in(['1', '0', 1, 0, true, false])],
         ]);
 

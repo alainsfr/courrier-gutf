@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'title' => 'Profil / Paramètres',
-    'subtitle' => 'Préférences et informations du compte',
+    'title' => 'Mon profil',
+    'subtitle' => 'Compte, langue et sécurité.',
 
     'information' => 'Informations du profil',
     'information_help' => 'Nom, e-mail et langue d’interface de votre compte.',
@@ -15,6 +15,8 @@ return [
     'language' => 'Langue',
     'language_help' => 'Ce choix est enregistré sur votre compte et appliqué immédiatement.',
     'current_language' => 'Langue actuelle',
+    'lang_fr' => 'Français',
+    'lang_en' => 'English',
 
     'account_email' => 'E-mail du compte',
 
@@ -37,8 +39,8 @@ return [
     'password' => 'Mot de passe',
     'delete' => 'Supprimer mon compte',
 
-    'pin_title' => 'Code PIN de Signature',
-    'pin_subtitle' => 'Ce code à 4 chiffres sécurise vos validations au parapheur électronique.',
+    'pin_title' => 'Code PIN de signature',
+    'pin_subtitle' => '4 chiffres pour sécuriser vos visas au parapheur.',
     'pin_label' => 'Nouveau code PIN',
     'pin_confirm_label' => 'Confirmer le code PIN',
     'pin_save' => 'Enregistrer le PIN',

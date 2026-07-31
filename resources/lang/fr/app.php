@@ -3,7 +3,8 @@
 return [
     'dashboard' => 'Tableau de bord',
     'welcome' => 'Bienvenue, :name',
-    'dashboard_subtitle' => 'Vue d’ensemble de votre activité courrier et des actions prioritaires.',
+    'dashboard_subtitle' => 'Activité courrier, priorités SLA et raccourcis.',
+    'form_error_title' => 'Veuillez corriger les erreurs ci-dessous.',
     'my_profile' => 'Mon profil',
 
     'greeting_morning' => 'Bonjour',
@@ -40,8 +41,8 @@ return [
     'shortcut_stats' => 'Rapports & pilotage',
     'shortcut_stats_hint' => 'Indicateurs, volumes et performance.',
     'shortcut_admin' => 'Administration',
-    'hub_title' => 'Modules du tableau de bord',
-    'hub_subtitle' => 'Registre et rapports sont accessibles depuis cet espace.',
+    'hub_title' => 'Modules',
+    'hub_subtitle' => 'Registre et rapports depuis cet espace.',
     'unread_chat' => ':count message non lu|:count messages non lus',
     'deadline' => 'Échéance',
     'bureau' => 'Bureau',

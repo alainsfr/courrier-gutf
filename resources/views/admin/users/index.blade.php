@@ -8,7 +8,7 @@
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <h1 class="text-lg font-bold text-gray-900">{{ __('users.title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('nav.administration') }}</p>
+                <p class="mb-0 text-sm text-gray-500">{{ __('users.subtitle') }}</p>
             </div>
             <x-buttons.primary :href="route('admin.users.create')">
                 <span>+</span> {{ __('users.new') }}
@@ -22,15 +22,7 @@
         </div>
     @endif
 
-    @if ($errors->any())
-        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            <ul class="mb-0 list-disc pl-4">
-                @foreach($errors->all() as $e)
-                    <li>{{ $e }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <x-form-errors />
 
     <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">

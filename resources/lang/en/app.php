@@ -3,7 +3,8 @@
 return [
     'dashboard' => 'Dashboard',
     'welcome' => 'Welcome, :name',
-    'dashboard_subtitle' => 'Overview of your mail activity and priority actions.',
+    'dashboard_subtitle' => 'Mail activity, SLA priorities and shortcuts.',
+    'form_error_title' => 'Please fix the errors below.',
     'my_profile' => 'My profile',
 
     'greeting_morning' => 'Good morning',
@@ -40,8 +41,8 @@ return [
     'shortcut_stats' => 'Reports & insights',
     'shortcut_stats_hint' => 'Indicators, volumes and performance.',
     'shortcut_admin' => 'Administration',
-    'hub_title' => 'Dashboard modules',
-    'hub_subtitle' => 'Register and reports are available from this space.',
+    'hub_title' => 'Modules',
+    'hub_subtitle' => 'Register and reports from this space.',
     'unread_chat' => ':count unread message|:count unread messages',
     'deadline' => 'Deadline',
     'bureau' => 'Office',

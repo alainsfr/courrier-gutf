@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Notifications',
-    'subtitle' => 'Suivez les affectations, validations et alertes SLA.',
+    'subtitle' => 'Affectations, validations et alertes SLA.',
     'unread' => 'Non lues',
     'read' => 'Lues',
     'none' => 'Aucune notification.',

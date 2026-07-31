@@ -60,7 +60,19 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        return Storage::disk('public')->url($this->avatar_path);
+        if (! Storage::disk('public')->exists($this->avatar_path)) {
+            return null;
+        }
+
+        $url = Storage::disk('public')->url($this->avatar_path);
+
+        try {
+            $version = Storage::disk('public')->lastModified($this->avatar_path);
+        } catch (\Throwable) {
+            $version = null;
+        }
+
+        return $version ? $url.(str_contains($url, '?') ? '&' : '?').'v='.$version : $url;
     }
 
     public function initials(): string

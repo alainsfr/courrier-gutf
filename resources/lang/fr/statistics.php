@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'title' => 'Statistiques & Rapports',
-    'subtitle' => 'Indicateurs CCF et évolution de l’activité courrier',
+    'title' => 'Statistiques',
+    'subtitle' => 'Volumes, délais et performance courrier.',
     'nav' => 'Rapports & Pilotage',
 
     'kpis' => 'Indicateurs clés',

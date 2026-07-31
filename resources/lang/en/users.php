@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'title' => 'User management',
+    'title' => 'Users',
+    'subtitle' => 'Accounts, roles and office assignment.',
     'new' => 'New user',
     'create_title' => 'Create user',
     'edit_title' => 'Edit user',

@@ -2,7 +2,7 @@
 
 return [
     'title' => 'Offices',
-    'subtitle' => 'GUTF organizational units',
+    'subtitle' => 'Organizational units.',
     'new' => 'New office',
     'create_title' => 'Create an office',
     'edit_title' => 'Edit office',

@@ -35,18 +35,14 @@
                  style="background-image: radial-gradient(rgba(255,255,255,.14) 1px, transparent 1px); background-size: 22px 22px;"></div>
             <div class="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full blur-3xl" style="background: color-mix(in srgb, {{ $accent }} 35%, transparent)" aria-hidden="true"></div>
 
-            <div class="relative z-10 flex items-center gap-3">
-                @if (! empty($brandLogoUrl))
-                    <img src="{{ $brandLogoUrl }}" alt="{{ $appLabel }}" class="h-10 w-10 rounded-xl bg-white/10 object-contain p-1">
-                @else
-                    <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-sm font-bold backdrop-blur">
-                        {{ strtoupper(substr($appLabel, 0, 1)) }}
-                    </span>
-                @endif
-                <div>
-                    <div class="text-sm font-semibold tracking-wide">{{ $appLabel }}</div>
-                    <div class="text-xs text-white/65">{{ \Illuminate\Support\Str::limit($tagline, 40) }}</div>
-                </div>
+            <div class="relative z-10">
+                <x-brand-mark
+                    :logo-url="$brandLogoUrl ?? null"
+                    :label="$appLabel"
+                    :tagline="$tagline"
+                    :primary="$primary"
+                    inverse
+                />
             </div>
 
             <div class="relative z-10 max-w-md">
@@ -90,13 +86,14 @@
 
             <div class="mx-auto w-full max-w-md">
                 <div class="mb-8 lg:hidden">
-                    <div class="mb-4 flex items-center gap-3">
-                        @if (! empty($brandLogoUrl))
-                            <img src="{{ $brandLogoUrl }}" alt="{{ $appLabel }}" class="h-9 w-9 rounded-xl object-contain">
-                        @else
-                            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: {{ $primary }}">{{ strtoupper(substr($appLabel, 0, 1)) }}</span>
-                        @endif
-                        <span class="text-sm font-semibold" style="color: {{ $primary }}">{{ $appLabel }}</span>
+                    <div class="mb-4">
+                        <x-brand-mark
+                            :logo-url="$brandLogoUrl ?? null"
+                            :label="$appLabel"
+                            :tagline="$tagline"
+                            :primary="$primary"
+                            compact
+                        />
                     </div>
                 </div>
 

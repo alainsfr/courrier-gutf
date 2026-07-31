@@ -22,14 +22,7 @@
         </div>
     @endif
 
-    @if ($errors->any())
-        <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-            <div class="mb-1 font-semibold">{{ __('bureaux.form_error') }}</div>
-            <ul class="mb-0 list-disc pl-4">
-                @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
-            </ul>
-        </div>
-    @endif
+    <x-form-errors />
 
     <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <form method="POST" action="{{ route('admin.bureaux.update', $bureau) }}" class="space-y-5">

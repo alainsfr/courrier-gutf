@@ -38,16 +38,7 @@
     </div>
 
     <div class="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
-        @if ($errors->any())
-            <div class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-800">
-                <div class="mb-1 font-semibold">{{ __('chat.form_error') }}</div>
-                <ul class="mb-0 list-disc pl-4">
-                    @foreach ($errors->all() as $e)
-                        <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        <x-form-errors class="rounded-lg px-3 py-2.5 text-xs" />
 
         @if (session('status') && ! isset($conversation))
             <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">

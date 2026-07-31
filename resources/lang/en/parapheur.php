@@ -3,7 +3,7 @@
 return [
     'nav' => 'Parapheur',
     'title' => 'Electronic signature desk',
-    'subtitle' => 'Mail awaiting your hierarchical visa.',
+    'subtitle' => 'Visas awaiting your signature.',
     'empty' => 'No pending visa.',
     'empty_hint' => 'Dossiers submitted for your signature will appear here.',
     'col_ref' => 'Reference',

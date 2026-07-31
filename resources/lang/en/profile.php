@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'title' => 'Profile / Settings',
-    'subtitle' => 'Account details and preferences',
+    'title' => 'My profile',
+    'subtitle' => 'Account, language and security.',
 
     'information' => 'Profile information',
     'information_help' => 'Name, email and interface language for your account.',
@@ -15,6 +15,8 @@ return [
     'language' => 'Language',
     'language_help' => 'This preference is saved to your account and applied immediately.',
     'current_language' => 'Current language',
+    'lang_fr' => 'Français',
+    'lang_en' => 'English',
 
     'account_email' => 'Account email',
 
@@ -39,7 +41,7 @@ return [
     'delete' => 'Delete my account',
 
     'pin_title' => 'Signature PIN',
-    'pin_subtitle' => 'This 4-digit code secures your electronic parapheur approvals.',
+    'pin_subtitle' => '4 digits to secure your parapheur approvals.',
     'pin_label' => 'New PIN code',
     'pin_confirm_label' => 'Confirm PIN code',
     'pin_save' => 'Save PIN',

@@ -2,10 +2,10 @@
 
 return [
     'nav' => 'Sauvegardes',
-    'title' => 'Sauvegardes système',
-    'subtitle' => 'Archives automatiques (BDD + pièces jointes) et plan de reprise d’activité.',
-    'schedule_hint' => 'Planification : backup à 02:00 · nettoyage à 03:00',
-    'pra_title' => 'ℹ️ Guide de restauration système (Plan de Reprise d’Activité)',
+    'title' => 'Sauvegardes',
+    'subtitle' => 'Archives BDD et pièces jointes — reprise d’activité.',
+    'schedule_hint' => 'Planification : backup 02:00 · nettoyage 03:00',
+    'pra_title' => 'Guide de restauration (PRA)',
     'pra_intro' => 'En cas d’incident majeur, suivez ces étapes dans l’ordre pour restaurer COURRIER GUTF.',
     'pra_a_title' => 'A. Contenu de l’archive',
     'pra_a_text' => 'Chaque fichier .zip contient un dump SQL de la base de données et les fichiers PDF/images stockés (dossiers courriers sous storage).',
