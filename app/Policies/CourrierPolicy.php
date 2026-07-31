@@ -40,6 +40,13 @@ class CourrierPolicy
             return true;
         }
 
+        // Validateur parapheur : accès aux dossiers où un visa lui est assigné
+        if ($courrier->visas()
+            ->where('validator_id', $user->id)
+            ->exists()) {
+            return true;
+        }
+
         // Même bureau que le pli (aligné sur CourrierQueryService / Kanban)
         if ($this->isInCurrentBureau($user, $courrier)) {
             return true;

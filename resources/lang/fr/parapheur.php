@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'nav' => 'Parapheur',
+    'title' => 'Parapheur électronique',
+    'subtitle' => 'Courriers en attente de votre visa hiérarchique.',
+    'empty' => 'Aucun visa en attente.',
+    'empty_hint' => 'Les dossiers soumis à votre signature apparaîtront ici.',
+    'col_ref' => 'Référence',
+    'col_subject' => 'Objet',
+    'col_type' => 'Type',
+    'col_bureau' => 'Bureau',
+    'col_etape' => 'Étape',
+    'col_received' => 'Soumis',
+    'col_actions' => 'Actions',
+    'examine' => 'Examiner',
+    'results' => ':count visa en attente|:count visas en attente',
+    'action_title' => 'Action requise : Visa hiérarchique',
+    'action_text' => 'Ce dossier attend votre signature électronique. Examinez le document puis validez ou rejetez.',
+    'approve' => 'Valider le visa',
+    'reject' => 'Rejeter',
+    'reject_comment' => 'Motif du rejet',
+    'reject_placeholder' => 'Indiquez le motif du rejet…',
+    'approved' => 'Visa approuvé.',
+    'rejected' => 'Visa rejeté.',
+];

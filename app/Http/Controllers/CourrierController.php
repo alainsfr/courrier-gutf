@@ -314,7 +314,15 @@ class CourrierController extends Controller
             'histories.ancienneEtape:id,libelle,ordre,ui_color',
             'histories.nouvelleEtape:id,libelle,ordre,ui_color',
             'attachments.uploadedBy:id,name,email',
+            'comments' => fn ($q) => $q->oldest(),
+            'comments.user:id,name,email,bureau_id,avatar_path',
+            'comments.user.bureau:id,nom',
+            'visas' => fn ($q) => $q->latest('id'),
         ]);
+
+        $pendingVisa = $courrier->visas
+            ->first(fn ($visa) => (int) $visa->validator_id === (int) $user?->id
+                && $visa->status === \App\Models\ParapheurVisa::STATUS_PENDING);
 
         $agents = User::query()
             ->when(
@@ -353,7 +361,8 @@ class CourrierController extends Controller
             'nextEtape',
             'prevEtape',
             'previewAttachment',
-            'canActOnBureau'
+            'canActOnBureau',
+            'pendingVisa'
         ));
     }
 

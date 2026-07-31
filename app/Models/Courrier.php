@@ -94,6 +94,16 @@ class Courrier extends Model
         return $this->hasMany(CourrierAttachment::class);
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(CourrierComment::class)->oldest();
+    }
+
+    public function visas(): HasMany
+    {
+        return $this->hasMany(ParapheurVisa::class);
+    }
+
     public function etapeOrdre(): ?int
     {
         if ($this->relationLoaded('workflowEtape')) {

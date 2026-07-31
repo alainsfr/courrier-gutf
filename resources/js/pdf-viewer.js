@@ -118,4 +118,58 @@ function initPdfViewers(root = document) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => initPdfViewers());
+document.addEventListener('DOMContentLoaded', () => {
+    initPdfViewers();
+    initPreviewExpand();
+});
+
+function initPreviewExpand() {
+    const viewer = document.getElementById('document-viewer');
+    if (!viewer) {
+        return;
+    }
+
+    const openBtn = viewer.querySelector('[data-preview-open]');
+    const closeBtn = viewer.querySelector('[data-preview-close]');
+    if (!openBtn) {
+        return;
+    }
+
+    const expandedClasses = [
+        'fixed', 'inset-0', 'z-[90]', 'm-0', 'h-screen', 'max-h-screen',
+        'rounded-none', 'border-0', 'shadow-2xl',
+    ];
+
+    const setExpanded = (expanded) => {
+        expandedClasses.forEach((cls) => viewer.classList.toggle(cls, expanded));
+        viewer.classList.toggle('lg:col-span-2', !expanded);
+        document.body.classList.toggle('overflow-hidden', expanded);
+        openBtn.hidden = expanded;
+        if (closeBtn) {
+            closeBtn.hidden = !expanded;
+        }
+        viewer.setAttribute('data-preview-expanded', expanded ? '1' : '0');
+
+        if (expanded) {
+            viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const stage = viewer.querySelector('[data-preview-stage], [data-pdf-viewer], img');
+            stage?.focus?.();
+        }
+    };
+
+    openBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        setExpanded(true);
+    });
+
+    closeBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        setExpanded(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && viewer.getAttribute('data-preview-expanded') === '1') {
+            setExpanded(false);
+        }
+    });
+}

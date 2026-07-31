@@ -75,7 +75,9 @@
     <div class="grid grid-cols-1 gap-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3 lg:gap-5 lg:overflow-hidden">
 
         {{-- GAUCHE : VISIONNEUSE --}}
-        <section id="document-viewer" class="order-2 flex h-[70vh] min-h-[420px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:order-1 lg:col-span-2 lg:h-full lg:min-h-0">
+        <section id="document-viewer"
+                 data-preview-expanded="0"
+                 class="order-2 flex h-[70vh] min-h-[420px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition lg:order-1 lg:col-span-2 lg:h-full lg:min-h-0">
             <div class="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-4 py-3">
                 <div class="min-w-0">
                     <div class="text-sm font-bold text-gray-800">{{ __('courrier.show_viewer_title') }}</div>
@@ -85,10 +87,17 @@
                 </div>
                 @if($previewAttachment)
                     <div class="flex shrink-0 items-center gap-2">
-                        <a href="#document-viewer"
-                           class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 no-underline hover:bg-gray-50">
+                        <button type="button"
+                                data-preview-open
+                                class="rounded-lg border border-[#17384b] bg-[#17384b] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#122c3b]">
                             {{ __('courrier.preview') }}
-                        </a>
+                        </button>
+                        <button type="button"
+                                data-preview-close
+                                hidden
+                                class="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50">
+                            {{ __('courrier.preview_close') }}
+                        </button>
                         <a href="{{ route('courriers.attachments.download', [$courrier, $previewAttachment]) }}"
                            class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 no-underline hover:bg-gray-50">
                             {{ __('courrier.download') }}
@@ -97,7 +106,7 @@
                 @endif
             </div>
 
-            <div class="relative min-h-0 flex-1 overflow-hidden bg-slate-100">
+            <div class="relative min-h-0 flex-1 overflow-hidden bg-slate-100" data-preview-stage>
                 @if($previewAttachment && $isPdf && $previewUrl)
                     <div
                         data-pdf-viewer
@@ -155,6 +164,39 @@
 
         {{-- DROITE : CARTES --}}
         <aside class="order-1 flex flex-col gap-4 lg:order-2 lg:col-span-1 lg:min-h-0 lg:overflow-y-auto">
+
+            @if (! empty($pendingVisa))
+                <div class="rounded-xl border border-[#dc633a]/30 bg-gradient-to-br from-[#dc633a]/10 to-white p-5 shadow-sm">
+                    <div class="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#dc633a]">
+                        {{ __('parapheur.nav') }}
+                    </div>
+                    <h2 class="mb-2 text-base font-bold text-gray-900">{{ __('parapheur.action_title') }}</h2>
+                    <p class="mb-4 text-sm text-gray-600">{{ __('parapheur.action_text') }}</p>
+
+                    <form method="POST" action="{{ route('parapheur.approve', $pendingVisa) }}" class="mb-3">
+                        @csrf
+                        <x-buttons.primary type="submit" class="w-full !bg-[#17384b] hover:!bg-[#122c3b] focus:!ring-[#17384b]">
+                            {{ __('parapheur.approve') }}
+                        </x-buttons.primary>
+                    </form>
+
+                    <form method="POST" action="{{ route('parapheur.reject', $pendingVisa) }}" class="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+                        @csrf
+                        <label for="visa_reject_comment" class="mb-1 block text-[11px] font-semibold text-rose-700">
+                            {{ __('parapheur.reject_comment') }}
+                        </label>
+                        <textarea id="visa_reject_comment" name="comment" rows="2" required
+                                  class="mb-2 w-full rounded-md border border-rose-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200"
+                                  placeholder="{{ __('parapheur.reject_placeholder') }}">{{ old('comment') }}</textarea>
+                        @error('comment')
+                            <p class="mb-2 text-xs text-rose-600">{{ $message }}</p>
+                        @enderror
+                        <x-buttons.danger type="submit" class="w-full">
+                            {{ __('parapheur.reject') }}
+                        </x-buttons.danger>
+                    </form>
+                </div>
+            @endif
 
             {{-- Métadonnées --}}
             <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -271,6 +313,64 @@
                         </form>
                     @endif
                 @endcan
+            </div>
+
+            {{-- Notes & Instructions Internes --}}
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h2 class="mb-4 text-sm font-bold text-gray-900">{{ __('courrier.comments_title') }}</h2>
+
+                <div class="mb-4 max-h-72 space-y-3 overflow-y-auto pe-1">
+                    @forelse($courrier->comments as $comment)
+                        <article class="rounded-xl border border-gray-100 bg-slate-50/80 px-3 py-3">
+                            <div class="mb-2 flex items-start gap-2.5">
+                                <x-user-avatar :user="$comment->user" size="sm" class="shrink-0" />
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5">
+                                        <span class="truncate text-sm font-semibold text-gray-900">
+                                            {{ $comment->user?->name ?? '—' }}
+                                        </span>
+                                        <time class="shrink-0 text-[11px] text-gray-400"
+                                              datetime="{{ $comment->created_at?->toIso8601String() }}"
+                                              title="{{ $comment->created_at?->format('d/m/Y H:i') }}">
+                                            {{ $comment->created_at?->diffForHumans() }}
+                                        </time>
+                                    </div>
+                                    <div class="text-[11px] text-gray-500">
+                                        {{ $comment->user?->bureau?->nom ?? __('courrier.comments_no_bureau') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mb-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{{ $comment->body }}</p>
+                        </article>
+                    @empty
+                        <x-empty-state
+                            class="!py-6"
+                            :title="__('courrier.comments_empty')"
+                        />
+                    @endforelse
+                </div>
+
+                <form method="POST" action="{{ route('courriers.comments.store', $courrier) }}" class="border-t border-gray-100 pt-3">
+                    @csrf
+                    <label for="comment_body" class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                        {{ __('courrier.comments_label') }}
+                    </label>
+                    <textarea
+                        id="comment_body"
+                        name="body"
+                        rows="3"
+                        required
+                        maxlength="5000"
+                        class="mb-2 w-full rounded-md border border-gray-300 px-2.5 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#17384b] focus:outline-none focus:ring-2 focus:ring-[#17384b]/20"
+                        placeholder="{{ __('courrier.comments_placeholder') }}"
+                    >{{ old('body') }}</textarea>
+                    @error('body')
+                        <p class="mb-2 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                    <x-buttons.primary type="submit" class="w-full">
+                        {{ __('courrier.comments_submit') }}
+                    </x-buttons.primary>
+                </form>
             </div>
 
             {{-- Timeline --}}

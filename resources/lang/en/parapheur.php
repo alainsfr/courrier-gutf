@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'nav' => 'Parapheur',
+    'title' => 'Electronic signature desk',
+    'subtitle' => 'Mail awaiting your hierarchical visa.',
+    'empty' => 'No pending visa.',
+    'empty_hint' => 'Dossiers submitted for your signature will appear here.',
+    'col_ref' => 'Reference',
+    'col_subject' => 'Subject',
+    'col_type' => 'Type',
+    'col_bureau' => 'Bureau',
+    'col_etape' => 'Stage',
+    'col_received' => 'Submitted',
+    'col_actions' => 'Actions',
+    'examine' => 'Review',
+    'results' => ':count pending visa|:count pending visas',
+    'action_title' => 'Action required: Hierarchical visa',
+    'action_text' => 'This dossier awaits your electronic signature. Review the document then approve or reject.',
+    'approve' => 'Approve visa',
+    'reject' => 'Reject',
+    'reject_comment' => 'Rejection reason',
+    'reject_placeholder' => 'Enter the rejection reason…',
+    'approved' => 'Visa approved.',
+    'rejected' => 'Visa rejected.',
+];

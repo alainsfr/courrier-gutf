@@ -109,7 +109,8 @@ return [
 
     'delete_attachment' => 'Delete',
     'confirm_delete_attachment' => 'Confirm deletion of this attachment?',
-    'preview' => 'Voir',
+    'preview' => 'View',
+    'preview_close' => 'Close',
 
     'history_actions' => [
         'created' => 'Mail created',
@@ -231,6 +232,13 @@ return [
     'show_viewer_loading' => 'Loading preview…',
     'show_viewer_error' => 'Unable to display the preview. Use Download instead.',
     'show_meta_title' => 'File sheet',
+    'comments_title' => 'Internal notes & instructions',
+    'comments_empty' => 'No internal note for this mail',
+    'comments_label' => 'New note',
+    'comments_placeholder' => 'Add an internal instruction or observation…',
+    'comments_submit' => 'Post note',
+    'comments_no_bureau' => 'No bureau set',
+    'comment_created' => 'Internal note saved.',
     'show_tf' => 'TF / external ref.',
     'show_owner' => 'Owner / party',
     'show_bureau' => 'Current bureau',

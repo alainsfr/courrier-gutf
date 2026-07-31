@@ -110,6 +110,7 @@ return [
     'delete_attachment' => 'Supprimer',
     'confirm_delete_attachment' => 'Confirmer la suppression de cette pièce jointe ?',
     'preview' => 'Voir',
+    'preview_close' => 'Fermer',
 
     'history_actions' => [
         'created' => 'Courrier créé',
@@ -233,6 +234,13 @@ return [
     'show_viewer_loading' => 'Chargement de l’aperçu…',
     'show_viewer_error' => 'Impossible d’afficher l’aperçu. Utilisez Télécharger.',
     'show_meta_title' => 'Fiche du dossier',
+    'comments_title' => 'Notes & Instructions Internes',
+    'comments_empty' => 'Aucune note interne pour ce courrier',
+    'comments_label' => 'Nouvelle note',
+    'comments_placeholder' => 'Ajouter une instruction ou une observation interne…',
+    'comments_submit' => 'Publier la note',
+    'comments_no_bureau' => 'Bureau non renseigné',
+    'comment_created' => 'Note interne enregistrée.',
     'show_tf' => 'Réf. TF / externe',
     'show_owner' => 'Propriétaire / partie',
     'show_bureau' => 'Bureau actuel',

@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ParapheurController;
+use App\Http\Controllers\CourrierCommentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CourrierController;
@@ -28,6 +30,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Parapheur électronique
+    Route::get('/parapheur', [ParapheurController::class, 'index'])->name('parapheur.index');
+    Route::post('/parapheur/{visa}/approve', [ParapheurController::class, 'approve'])->name('parapheur.approve');
+    Route::post('/parapheur/{visa}/reject', [ParapheurController::class, 'reject'])->name('parapheur.reject');
 
     // Notifications (in-app)
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -116,6 +123,10 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
         Route::get('/{courrier}', [CourrierController::class, 'show'])
             ->middleware('permission:courrier.view')
             ->name('show');
+
+        Route::post('/{courrier}/comments', [CourrierCommentController::class, 'store'])
+            ->middleware('permission:courrier.view')
+            ->name('comments.store');
 
         Route::post('/{courrier}/assign', [CourrierController::class, 'assign'])
             ->middleware('permission:courrier.assign')
