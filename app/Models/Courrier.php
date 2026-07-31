@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Courrier extends Model
@@ -102,6 +103,32 @@ class Courrier extends Model
     public function visas(): HasMany
     {
         return $this->hasMany(ParapheurVisa::class);
+    }
+
+    /**
+     * Courriers enfants liés (ce dossier = parent).
+     */
+    public function linkedCourriers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'courrier_links',
+            'parent_id',
+            'child_id'
+        )->withTimestamps();
+    }
+
+    /**
+     * Courriers parents liés (ce dossier = enfant).
+     */
+    public function parentCourrier(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            self::class,
+            'courrier_links',
+            'child_id',
+            'parent_id'
+        )->withTimestamps();
     }
 
     public function etapeOrdre(): ?int

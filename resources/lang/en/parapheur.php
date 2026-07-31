@@ -23,4 +23,13 @@ return [
     'reject_placeholder' => 'Enter the rejection reason…',
     'approved' => 'Visa approved.',
     'rejected' => 'Visa rejected.',
+    'submit_title' => 'Submit for visa',
+    'submit_hint' => 'Send this dossier to a director or super-admin parapheur.',
+    'submit_validator' => 'Validator',
+    'submit_validator_placeholder' => 'Choose a validator…',
+    'submit_button' => 'Submit to parapheur',
+    'submit_no_validators' => 'No director / super-admin available.',
+    'submit_already_pending' => 'A visa is already pending for this mail.',
+    'submit_invalid_validator' => 'The validator must be a director or super-admin.',
+    'submitted' => 'Dossier submitted to the parapheur.',
 ];

@@ -198,6 +198,39 @@
                 </div>
             @endif
 
+            @if (empty($pendingVisa) && empty($hasPendingVisa) && ! ($courrier->isArchived() ?? false))
+                <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <h2 class="mb-1 text-sm font-bold text-gray-900">{{ __('parapheur.submit_title') }}</h2>
+                    <p class="mb-3 text-xs text-gray-500">{{ __('parapheur.submit_hint') }}</p>
+
+                    @if (($parapheurValidators ?? collect())->isEmpty())
+                        <p class="mb-0 text-xs text-amber-700">{{ __('parapheur.submit_no_validators') }}</p>
+                    @else
+                        <form method="POST" action="{{ route('courriers.parapheur.submit', $courrier) }}">
+                            @csrf
+                            <label for="validator_id" class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                                {{ __('parapheur.submit_validator') }}
+                            </label>
+                            <select id="validator_id" name="validator_id" required
+                                    class="mb-2 w-full rounded-md border border-gray-300 px-2.5 py-2 text-sm focus:border-[#17384b] focus:outline-none focus:ring-2 focus:ring-[#17384b]/20">
+                                <option value="">{{ __('parapheur.submit_validator_placeholder') }}</option>
+                                @foreach($parapheurValidators as $validator)
+                                    <option value="{{ $validator->id }}" @selected((string) old('validator_id') === (string) $validator->id)>
+                                        {{ $validator->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('validator_id')
+                                <p class="mb-2 text-xs text-rose-600">{{ $message }}</p>
+                            @enderror
+                            <x-buttons.primary type="submit" class="w-full">
+                                {{ __('parapheur.submit_button') }}
+                            </x-buttons.primary>
+                        </form>
+                    @endif
+                </div>
+            @endif
+
             {{-- Métadonnées --}}
             <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div class="mb-4 flex items-center justify-between gap-2">
@@ -313,6 +346,54 @@
                         </form>
                     @endif
                 @endcan
+            </div>
+
+            {{-- Dossier & Courriers Liés --}}
+            @php
+                $linkedChildren = $courrier->linkedCourriers ?? collect();
+                $linkedParents = $courrier->parentCourrier ?? collect();
+                $allLinked = $linkedChildren->merge($linkedParents)->unique('id');
+            @endphp
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h2 class="mb-3 text-sm font-bold text-gray-900">{{ __('courrier.links_title') }}</h2>
+
+                <div class="mb-3 space-y-2">
+                    @forelse($allLinked as $linked)
+                        <a href="{{ route('courriers.show', $linked) }}"
+                           class="flex items-start justify-between gap-2 rounded-lg border border-gray-100 bg-slate-50/80 px-3 py-2.5 no-underline transition hover:border-[#17384b]/30 hover:bg-white">
+                            <div class="min-w-0">
+                                <div class="truncate text-sm font-semibold text-gray-900">{{ $linked->reference_interne }}</div>
+                                <div class="truncate text-xs text-gray-500">{{ \Illuminate\Support\Str::limit($linked->objet, 48) }}</div>
+                            </div>
+                            @if($linked->workflowEtape)
+                                <span class="shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold"
+                                      style="color: {{ $linked->workflowEtape->ui_color ?? '#64748B' }}; background: {{ ($linked->workflowEtape->ui_color ?? '#64748B') }}18;">
+                                    {{ $linked->workflowEtape->libelle }}
+                                </span>
+                            @endif
+                        </a>
+                    @empty
+                        <x-empty-state class="!py-5" :title="__('courrier.links_empty')" />
+                    @endforelse
+                </div>
+
+                <form method="POST" action="{{ route('courriers.links.store', $courrier) }}" class="border-t border-gray-100 pt-3">
+                    @csrf
+                    <label for="link_reference" class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                        {{ __('courrier.links_label') }}
+                    </label>
+                    <div class="flex gap-2">
+                        <input id="link_reference" type="text" name="reference" value="{{ old('reference') }}" required
+                               class="min-w-0 flex-1 rounded-md border border-gray-300 px-2.5 py-2 text-sm focus:border-[#17384b] focus:outline-none focus:ring-2 focus:ring-[#17384b]/20"
+                               placeholder="{{ __('courrier.links_placeholder') }}">
+                        <x-buttons.primary type="submit" class="shrink-0 !px-3">
+                            {{ __('courrier.links_submit') }}
+                        </x-buttons.primary>
+                    </div>
+                    @error('reference')
+                        <p class="mt-1.5 mb-0 text-xs text-rose-600">{{ $message }}</p>
+                    @enderror
+                </form>
             </div>
 
             {{-- Notes & Instructions Internes --}}

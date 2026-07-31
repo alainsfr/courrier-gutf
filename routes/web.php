@@ -128,6 +128,14 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->middleware('permission:courrier.view')
             ->name('comments.store');
 
+        Route::post('/{courrier}/parapheur', [CourrierController::class, 'submitToParapheur'])
+            ->middleware('permission:courrier.view')
+            ->name('parapheur.submit');
+
+        Route::post('/{courrier}/links', [CourrierController::class, 'linkCourrier'])
+            ->middleware('permission:courrier.view')
+            ->name('links.store');
+
         Route::post('/{courrier}/assign', [CourrierController::class, 'assign'])
             ->middleware('permission:courrier.assign')
             ->name('assign');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\CourriersWorkbookExport;
+use App\Models\ParapheurVisa;
 use App\Models\Bureau;
 use App\Models\Courrier;
 use App\Models\CourrierAttachment;
@@ -318,11 +319,24 @@ class CourrierController extends Controller
             'comments.user:id,name,email,bureau_id,avatar_path',
             'comments.user.bureau:id,nom',
             'visas' => fn ($q) => $q->latest('id'),
+            'linkedCourriers:id,reference_interne,objet,type,workflow_etape_id',
+            'linkedCourriers.workflowEtape:id,libelle,ui_color',
+            'parentCourrier:id,reference_interne,objet,type,workflow_etape_id',
+            'parentCourrier.workflowEtape:id,libelle,ui_color',
         ]);
 
         $pendingVisa = $courrier->visas
             ->first(fn ($visa) => (int) $visa->validator_id === (int) $user?->id
-                && $visa->status === \App\Models\ParapheurVisa::STATUS_PENDING);
+                && $visa->status === ParapheurVisa::STATUS_PENDING);
+
+        $hasPendingVisa = $courrier->visas
+            ->contains(fn ($visa) => $visa->status === ParapheurVisa::STATUS_PENDING);
+
+        $parapheurValidators = User::query()
+            ->role(['directeur', 'super-admin'])
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
 
         $agents = User::query()
             ->when(
@@ -362,8 +376,79 @@ class CourrierController extends Controller
             'prevEtape',
             'previewAttachment',
             'canActOnBureau',
-            'pendingVisa'
+            'pendingVisa',
+            'hasPendingVisa',
+            'parapheurValidators'
         ));
+    }
+
+    public function submitToParapheur(Request $request, Courrier $courrier): RedirectResponse
+    {
+        $this->authorize('view', $courrier);
+
+        if ($courrier->visas()->pending()->exists()) {
+            return back()->withErrors([
+                'validator_id' => __('parapheur.submit_already_pending'),
+            ]);
+        }
+
+        $validated = $request->validate([
+            'validator_id' => [
+                'required',
+                'integer',
+                'exists:users,id',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $validator = User::query()->find($value);
+                    if (! $validator || ! $validator->hasAnyRole(['directeur', 'super-admin'])) {
+                        $fail(__('parapheur.submit_invalid_validator'));
+                    }
+                },
+            ],
+        ]);
+
+        ParapheurVisa::query()->create([
+            'courrier_id' => $courrier->id,
+            'validator_id' => (int) $validated['validator_id'],
+            'status' => ParapheurVisa::STATUS_PENDING,
+        ]);
+
+        return redirect()
+            ->route('courriers.show', $courrier)
+            ->with('status', __('parapheur.submitted'));
+    }
+
+    public function linkCourrier(Request $request, Courrier $courrier): RedirectResponse
+    {
+        $this->authorize('view', $courrier);
+
+        $validated = $request->validate([
+            'reference' => ['required', 'string', 'max:100'],
+        ]);
+
+        $reference = trim($validated['reference']);
+        $child = Courrier::query()
+            ->where('reference_interne', $reference)
+            ->first();
+
+        if (! $child) {
+            return back()
+                ->withInput()
+                ->withErrors(['reference' => __('courrier.links_not_found')]);
+        }
+
+        if ((int) $child->id === (int) $courrier->id) {
+            return back()
+                ->withInput()
+                ->withErrors(['reference' => __('courrier.links_self')]);
+        }
+
+        $this->authorize('view', $child);
+
+        $courrier->linkedCourriers()->syncWithoutDetaching([$child->id]);
+
+        return redirect()
+            ->route('courriers.show', $courrier)
+            ->with('status', __('courrier.links_attached'));
     }
 
     public function assign(Request $request, Courrier $courrier): RedirectResponse

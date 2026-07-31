@@ -23,4 +23,13 @@ return [
     'reject_placeholder' => 'Indiquez le motif du rejet…',
     'approved' => 'Visa approuvé.',
     'rejected' => 'Visa rejeté.',
+    'submit_title' => 'Soumettre pour Visa',
+    'submit_hint' => 'Envoyer ce dossier au parapheur d’un directeur ou super-admin.',
+    'submit_validator' => 'Validateur',
+    'submit_validator_placeholder' => 'Choisir un validateur…',
+    'submit_button' => 'Soumettre au parapheur',
+    'submit_no_validators' => 'Aucun directeur / super-admin disponible.',
+    'submit_already_pending' => 'Un visa est déjà en cours pour ce courrier.',
+    'submit_invalid_validator' => 'Le validateur doit être directeur ou super-admin.',
+    'submitted' => 'Dossier soumis au parapheur.',
 ];
