@@ -170,6 +170,41 @@ class AppSettingsAndAvatarTest extends TestCase
             ->assertSee($url, false);
     }
 
+    public function test_branding_applies_on_welcome_and_login(): void
+    {
+        $logo = UploadedFile::fake()->image('home-logo.png', 120, 120);
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.settings.update'), [
+                'app_name' => 'Accueil Brandé',
+                'app_tagline' => 'Tagline accueil',
+                'primary_color' => '#112233',
+                'accent_color' => '#ff6600',
+                'logo' => $logo,
+            ])
+            ->assertRedirect(route('admin.settings.edit'));
+
+        $settings = app(AppSettingsService::class);
+        $settings->forgetCache();
+        $url = $settings->logoUrl();
+        $this->assertNotNull($url);
+
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Guichet Unique du Foncier', false)
+            ->assertSee('Accueil Brandé', false)
+            ->assertSee($url, false)
+            ->assertSee('#112233', false);
+
+        auth()->logout();
+
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('Accueil Brandé', false)
+            ->assertSee($url, false)
+            ->assertSee('#112233', false);
+    }
+
     public function test_settings_page_is_reachable(): void
     {
         $this->actingAs($this->admin)

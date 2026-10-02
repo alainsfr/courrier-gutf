@@ -111,26 +111,11 @@
         @role('super-admin')
             <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{{ __('Gouvernance') }}</p>
             <a href="{{ route('admin.index') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('admin.index') || request()->routeIs('admin.users.*') || request()->routeIs('admin.bureaux.*') ? $linkActive : $linkIdle }}">
+               class="{{ $linkBase }} {{ request()->routeIs('admin.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.174.1.31.245.41.41.112.183.164.39.146.599l-.213 1.281c-.09.542-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.645-.87 1.125 1.125 0 0 1-.41-.41 1.125 1.125 0 0 1-.146-.599l.213-1.281ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
                 </svg>
                 <span>{{ __('Administration') }}</span>
-            </a>
-            <a href="{{ route('admin.settings.edit') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('admin.settings.*') ? $linkActive : $linkIdle }}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.174.1.31.245.41.41.112.183.164.39.146.599l-.213 1.281c-.09.542-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.645-.87 1.125 1.125 0 0 1-.41-.41 1.125 1.125 0 0 1-.146-.599l.213-1.281ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-                </svg>
-                <span>{{ __('settings.nav_label') }}</span>
-            </a>
-            <a href="{{ route('admin.backups.index') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('admin.backups.*') ? $linkActive : $linkIdle }}">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
-                </svg>
-                <span>{{ __('backups.nav') }}</span>
             </a>
         @endrole
 

@@ -69,7 +69,8 @@
                         @csrf
                         <input type="hidden" name="locale" value="fr">
                         <button type="submit"
-                                class="rounded-full px-3 py-1 text-xs font-semibold transition {{ $isFr ? 'bg-[#17384b] text-white' : 'text-slate-500' }}">
+                                class="rounded-full px-3 py-1 text-xs font-semibold transition {{ $isFr ? 'text-white' : 'text-slate-500' }}"
+                                @if ($isFr) style="background: {{ $primary }}" @endif>
                             FR
                         </button>
                     </form>
@@ -77,7 +78,8 @@
                         @csrf
                         <input type="hidden" name="locale" value="en">
                         <button type="submit"
-                                class="rounded-full px-3 py-1 text-xs font-semibold transition {{ ! $isFr ? 'bg-[#17384b] text-white' : 'text-slate-500' }}">
+                                class="rounded-full px-3 py-1 text-xs font-semibold transition {{ ! $isFr ? 'text-white' : 'text-slate-500' }}"
+                                @if (! $isFr) style="background: {{ $primary }}" @endif>
                             EN
                         </button>
                     </form>
@@ -97,7 +99,7 @@
                     </div>
                 </div>
 
-                <h2 class="font-display text-3xl font-medium tracking-tight text-[#17384b]">
+                <h2 class="font-display text-3xl font-medium tracking-tight" style="color: {{ $primary }}">
                     {{ __('auth_ui.sign_in') }}
                 </h2>
                 <p class="mt-2 text-sm text-slate-500">

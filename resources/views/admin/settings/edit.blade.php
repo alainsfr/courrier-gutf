@@ -9,10 +9,7 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h1 class="text-lg font-bold text-gray-900">{{ __('settings.title') }}</h1>
-            <p class="mb-0 text-sm text-gray-500">{{ __('settings.subtitle') }}</p>
-        </div>
+        <x-admin-page-header :title="__('settings.title')" :subtitle="__('settings.subtitle')" />
     </x-slot>
 
     @if (session('status'))

@@ -24,6 +24,8 @@ return [
     'bureau_none' => 'Aucun bureau',
     'locale' => 'Langue',
     'status' => 'Statut',
+    'last_login_ip' => 'Adresse IP',
+    'last_login_never' => 'Jamais connecté',
     'actions' => 'Actions',
     'password_optional' => 'Nouveau mot de passe (optionnel)',
 
@@ -44,5 +46,10 @@ return [
     'updated' => 'Utilisateur mis à jour avec succès.',
     'deleted' => 'Utilisateur supprimé.',
     'cannot_delete_self' => 'Vous ne pouvez pas supprimer votre propre compte.',
+    'cannot_deactivate_self' => 'Vous ne pouvez pas désactiver votre propre compte.',
+    'activated' => 'Utilisateur activé.',
+    'deactivated' => 'Utilisateur désactivé.',
+    'activate' => 'Activer',
+    'deactivate' => 'Désactiver',
     'account_disabled' => 'Votre compte est désactivé. Contactez un administrateur.',
 ];

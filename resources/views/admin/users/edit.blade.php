@@ -5,15 +5,13 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-gray-900">{{ __('users.edit_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ $user->name }}</p>
-            </div>
-            <x-buttons.secondary :href="route('admin.users.index')">
-                {{ __('users.back') }}
-            </x-buttons.secondary>
-        </div>
+        <x-admin-page-header :title="__('users.edit_title')" :subtitle="$user->name">
+            <x-slot:actions>
+                <x-buttons.secondary :href="route('admin.users.index')">
+                    {{ __('users.back') }}
+                </x-buttons.secondary>
+            </x-slot:actions>
+        </x-admin-page-header>
     </x-slot>
 
     @if (session('status'))
@@ -80,10 +78,18 @@
                 </div>
                 <div>
                     <label class="{{ $label }}">{{ __('users.status') }}</label>
-                    <select class="{{ $input }}" name="is_active">
-                        <option value="1" @selected(old('is_active', (string) (int) $user->is_active) === '1')>{{ __('users.active') }}</option>
-                        <option value="0" @selected(old('is_active', (string) (int) $user->is_active) === '0')>{{ __('users.inactive') }}</option>
-                    </select>
+                    @if ((int) $user->id === (int) auth()->id())
+                        <input type="hidden" name="is_active" value="1">
+                        <select class="{{ $input }} bg-gray-50" disabled>
+                            <option value="1" selected>{{ __('users.active') }}</option>
+                        </select>
+                        <p class="mt-1 mb-0 text-xs text-gray-400">{{ __('users.cannot_deactivate_self') }}</p>
+                    @else
+                        <select class="{{ $input }}" name="is_active" required>
+                            <option value="1" @selected(old('is_active', $user->is_active ? '1' : '0') === '1')>{{ __('users.active') }}</option>
+                            <option value="0" @selected(old('is_active', $user->is_active ? '1' : '0') === '0')>{{ __('users.inactive') }}</option>
+                        </select>
+                    @endif
                 </div>
                 <div>
                     <label class="{{ $label }}">{{ __('users.password_optional') }}</label>

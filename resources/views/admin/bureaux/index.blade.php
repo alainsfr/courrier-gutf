@@ -4,15 +4,13 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-gray-900">{{ __('bureaux.title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('bureaux.subtitle') }}</p>
-            </div>
-            <x-buttons.primary :href="route('admin.bureaux.create')">
-                <span>+</span> {{ __('bureaux.new') }}
-            </x-buttons.primary>
-        </div>
+        <x-admin-page-header :title="__('bureaux.title')" :subtitle="__('bureaux.subtitle')">
+            <x-slot:actions>
+                <x-buttons.primary :href="route('admin.bureaux.create')">
+                    <span>+</span> {{ __('bureaux.new') }}
+                </x-buttons.primary>
+            </x-slot:actions>
+        </x-admin-page-header>
     </x-slot>
 
     @if (session('status'))

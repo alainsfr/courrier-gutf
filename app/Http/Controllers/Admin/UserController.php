@@ -54,7 +54,7 @@ class UserController extends Controller
             'role' => ['required', 'string', Rule::exists('roles', 'name')],
             'bureau_id' => ['nullable', 'integer', 'exists:bureaux,id'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'is_active' => ['nullable', 'boolean'],
+            'is_active' => ['required', 'boolean'],
             'avatar' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
@@ -64,7 +64,7 @@ class UserController extends Controller
             'locale' => $validated['locale'],
             'bureau_id' => $validated['bureau_id'] ?? null,
             'password' => Hash::make($validated['password']),
-            'is_active' => (bool) ($validated['is_active'] ?? true),
+            'is_active' => $request->boolean('is_active'),
             'email_verified_at' => now(),
         ]);
 
@@ -99,18 +99,26 @@ class UserController extends Controller
             'locale' => ['required', Rule::in(['fr', 'en'])],
             'role' => ['required', 'string', Rule::exists('roles', 'name')],
             'bureau_id' => ['nullable', 'integer', 'exists:bureaux,id'],
-            'is_active' => ['nullable', 'boolean'],
+            'is_active' => ['required', 'boolean'],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'avatar' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:2048'],
             'remove_avatar' => ['nullable', Rule::in(['1', '0', 1, 0, true, false])],
         ]);
+
+        $isActive = $request->boolean('is_active');
+
+        if ((int) $user->id === (int) $request->user()->id && ! $isActive) {
+            return back()
+                ->withInput()
+                ->withErrors(['is_active' => __('users.cannot_deactivate_self')]);
+        }
 
         $payload = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'locale' => $validated['locale'],
             'bureau_id' => $validated['bureau_id'] ?? null,
-            'is_active' => (bool) ($validated['is_active'] ?? false),
+            'is_active' => $isActive,
         ];
 
         if (! empty($validated['password'])) {
@@ -135,6 +143,22 @@ class UserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('status', __('users.updated'));
+    }
+
+    public function toggleActive(Request $request, User $user): RedirectResponse
+    {
+        if ((int) $user->id === (int) $request->user()->id) {
+            return back()->withErrors(['user' => __('users.cannot_deactivate_self')]);
+        }
+
+        $user->forceFill([
+            'is_active' => ! $user->is_active,
+        ])->save();
+
+        return back()->with(
+            'status',
+            $user->is_active ? __('users.activated') : __('users.deactivated')
+        );
     }
 
     public function destroy(User $user): RedirectResponse

@@ -1,17 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-end justify-between gap-3">
-            <div class="min-w-0">
-                <p class="mb-0.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#dc633a]">
-                    {{ __('Gouvernance') }}
-                </p>
-                <h1 class="truncate text-lg font-bold text-gray-900">{{ __('backups.title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('backups.subtitle') }}</p>
-            </div>
-            <div class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm">
-                {{ __('backups.schedule_hint') }}
-            </div>
-        </div>
+        <x-admin-page-header :title="__('backups.title')" :subtitle="__('backups.subtitle')">
+            <x-slot:actions>
+                <div class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm">
+                    {{ __('backups.schedule_hint') }}
+                </div>
+            </x-slot:actions>
+        </x-admin-page-header>
     </x-slot>
 
     {{-- Plan de Reprise d'Activité --}}

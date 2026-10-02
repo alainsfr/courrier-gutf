@@ -5,15 +5,13 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-gray-900">{{ __('bureaux.create_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('bureaux.title') }}</p>
-            </div>
-            <x-buttons.secondary :href="route('admin.bureaux.index')">
-                {{ __('bureaux.back') }}
-            </x-buttons.secondary>
-        </div>
+        <x-admin-page-header :title="__('bureaux.create_title')" :subtitle="__('bureaux.title')">
+            <x-slot:actions>
+                <x-buttons.secondary :href="route('admin.bureaux.index')">
+                    {{ __('bureaux.back') }}
+                </x-buttons.secondary>
+            </x-slot:actions>
+        </x-admin-page-header>
     </x-slot>
 
     <x-form-errors />

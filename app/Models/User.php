@@ -26,6 +26,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'avatar_path',
         'bureau_id',
         'is_active',
+        'last_login_ip',
+        'last_login_at',
     ];
 
     /**
@@ -44,6 +46,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];

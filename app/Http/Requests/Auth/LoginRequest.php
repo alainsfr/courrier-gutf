@@ -49,6 +49,22 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if ($user && ! $user->is_active) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => __('users.account_disabled'),
+            ]);
+        }
+
+        $user->forceFill([
+            'last_login_ip' => $this->ip(),
+            'last_login_at' => now(),
+        ])->save();
+
         RateLimiter::clear($this->throttleKey());
     }
 

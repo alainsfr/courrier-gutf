@@ -5,15 +5,13 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-gray-900">{{ __('users.title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('users.subtitle') }}</p>
-            </div>
-            <x-buttons.primary :href="route('admin.users.create')">
-                <span>+</span> {{ __('users.new') }}
-            </x-buttons.primary>
-        </div>
+        <x-admin-page-header :title="__('users.title')" :subtitle="__('users.subtitle')">
+            <x-slot:actions>
+                <x-buttons.primary :href="route('admin.users.create')">
+                    <span>+</span> {{ __('users.new') }}
+                </x-buttons.primary>
+            </x-slot:actions>
+        </x-admin-page-header>
     </x-slot>
 
     @if (session('status'))
@@ -50,6 +48,7 @@
                         <th class="px-4 py-3">{{ __('users.email') }}</th>
                         <th class="px-4 py-3">{{ __('users.role') }}</th>
                         <th class="px-4 py-3">{{ __('users.bureau') }}</th>
+                        <th class="px-4 py-3">{{ __('users.last_login_ip') }}</th>
                         <th class="px-4 py-3">{{ __('users.status') }}</th>
                         <th class="px-4 py-3 text-right">{{ __('users.actions') }}</th>
                     </tr>
@@ -73,6 +72,16 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ $u->bureau?->nom ?? '—' }}</td>
+                            <td class="px-4 py-3 text-gray-600">
+                                @if ($u->last_login_ip)
+                                    <div class="font-mono text-xs text-gray-800">{{ $u->last_login_ip }}</div>
+                                    @if ($u->last_login_at)
+                                        <div class="text-xs text-gray-400">{{ $u->last_login_at->format('d/m/Y H:i') }}</div>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-gray-400">{{ __('users.last_login_never') }}</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3">
                                 @if($u->is_active)
                                     <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
@@ -87,15 +96,27 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right">
-                                <a href="{{ route('admin.users.edit', $u) }}"
-                                   class="text-sm font-semibold text-[#17384b] no-underline hover:underline">
-                                    {{ __('users.edit') }}
-                                </a>
+                                <div class="flex flex-wrap items-center justify-end gap-3">
+                                    @if ((int) $u->id !== (int) auth()->id())
+                                        <form method="POST" action="{{ route('admin.users.toggle-active', $u) }}" class="m-0">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit"
+                                                    class="text-sm font-semibold no-underline hover:underline {{ $u->is_active ? 'text-rose-700' : 'text-emerald-700' }}">
+                                                {{ $u->is_active ? __('users.deactivate') : __('users.activate') }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('admin.users.edit', $u) }}"
+                                       class="text-sm font-semibold text-[#17384b] no-underline hover:underline">
+                                        {{ __('users.edit') }}
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-4">
+                            <td colspan="7" class="px-4 py-4">
                                 <x-empty-state
                                     :title="__('users.empty')"
                                     description="Créez un premier compte pour affecter rôles et bureaux."

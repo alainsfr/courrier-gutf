@@ -5,15 +5,13 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="text-lg font-bold text-gray-900">{{ __('users.create_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('users.title') }}</p>
-            </div>
-            <x-buttons.secondary :href="route('admin.users.index')">
-                {{ __('users.back') }}
-            </x-buttons.secondary>
-        </div>
+        <x-admin-page-header :title="__('users.create_title')" :subtitle="__('users.title')">
+            <x-slot:actions>
+                <x-buttons.secondary :href="route('admin.users.index')">
+                    {{ __('users.back') }}
+                </x-buttons.secondary>
+            </x-slot:actions>
+        </x-admin-page-header>
     </x-slot>
 
     <x-form-errors />
@@ -71,7 +69,7 @@
                 </div>
                 <div>
                     <label class="{{ $label }}">{{ __('users.status') }}</label>
-                    <select class="{{ $input }}" name="is_active">
+                    <select class="{{ $input }}" name="is_active" required>
                         <option value="1" @selected(old('is_active', '1') === '1')>{{ __('users.active') }}</option>
                         <option value="0" @selected(old('is_active') === '0')>{{ __('users.inactive') }}</option>
                     </select>
