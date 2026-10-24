@@ -142,6 +142,13 @@ jobs:
           php artisan config:clear || true
           php artisan route:clear || true
 
+          php artisan migrate --force
+
+          php artisan db:seed --force --class=RolesAndPermissionsSeeder
+          php artisan db:seed --force --class=BureauSeeder
+          php artisan db:seed --force --class=WorkflowEtapesSeeder
+          php artisan db:seed --force --class=SuperAdminSeeder
+
           # Cache (these rely on storage/framework existing)
           php artisan config:cache
           php artisan route:cache
