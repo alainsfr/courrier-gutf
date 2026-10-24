@@ -3,10 +3,11 @@ name: Deploy (PlanetHoster - tar.gz)
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
 
 concurrency:
   group: courrier-gutf-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -20,10 +21,11 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
+          extensions: gd, zip, mbstring, pdo_mysql
           tools: composer:v2
 
       - name: Install Composer deps (build)
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -51,11 +53,19 @@ jobs:
           mkdir -p deploy_artifact/app
           mkdir -p deploy_artifact/public
 
-          # App payload: everything except public/ (includes vendor/)
-          rsync -a --delete --exclude "public" ./ deploy_artifact/app/
+          # Keep runtime data, secrets and build inputs out of the release.
+          rsync -a \
+            --include '/.env.example' \
+            --exclude '/.env*' --exclude '/.git' --exclude '/.github' \
+            --exclude '/node_modules' --exclude '/deploy_artifact' \
+            --exclude '/deploy_artifact.tar.gz' --exclude '/public' \
+            --exclude '/storage' --exclude '/bootstrap/cache/*.php' \
+            --exclude '/tests' --exclude '/repopack-output.txt' \
+            ./ deploy_artifact/app/
+          mkdir -p deploy_artifact/app/bootstrap/cache
 
           # Public payload: public/ only
-          rsync -a --delete public/ deploy_artifact/public/
+          rsync -a --exclude '/hot' --exclude '/storage' public/ deploy_artifact/public/
 
           # Safety: never ship env file
           rm -f deploy_artifact/app/.env || true
@@ -67,7 +77,7 @@ jobs:
           scp -P "${{ secrets.PH_SSH_PORT }}" deploy_artifact.tar.gz \
             "${{ secrets.PH_SSH_USER }}@${{ secrets.PH_SSH_HOST }}:${{ secrets.PH_DEPLOY_PATH }}/deploy_artifact.tar.gz"
 
-      - name: Deploy artifact on server (atomic-ish)
+      - name: Back up and deploy artifact on server
         run: |
           ssh -p "${{ secrets.PH_SSH_PORT }}" "${{ secrets.PH_SSH_USER }}@${{ secrets.PH_SSH_HOST }}" << 'EOF'
           set -e
@@ -75,13 +85,50 @@ jobs:
           DEPLOY_PATH="${{ secrets.PH_DEPLOY_PATH }}"
           TMP_DIR="$DEPLOY_PATH/.deploy_tmp"
 
+          case "$DEPLOY_PATH" in
+            /*) ;;
+            *) echo "Deploy path must be absolute" >&2; exit 1 ;;
+          esac
+          test "$DEPLOY_PATH" != / || exit 1
+          test -f "$DEPLOY_PATH/app/.env" || { echo "Existing production .env missing" >&2; exit 1; }
+          DEPLOY_PATH="$(cd "$DEPLOY_PATH" && pwd -P)"
+          test "$DEPLOY_PATH" != / || exit 1
+          TMP_DIR="$DEPLOY_PATH/.deploy_tmp"
+          php -r 'if (PHP_VERSION_ID < 80300) { fwrite(STDERR, "PHP 8.3 or newer is required\n"); exit(1); }'
+
           mkdir -p "$DEPLOY_PATH/app"
           mkdir -p "$DEPLOY_PATH/shared/storage"
+          rm -rf "$TMP_DIR"
           mkdir -p "$TMP_DIR"
+          printf '%s\n' 'Require all denied' > "$DEPLOY_PATH/shared/.htaccess"
+          printf '%s\n' 'Require all denied' > "$TMP_DIR/.htaccess"
+
+          # Preserve files even when upgrading an installation without the shared link.
+          if [ -d "$DEPLOY_PATH/app/storage" ] && [ ! -L "$DEPLOY_PATH/app/storage" ]; then
+            rsync -a "$DEPLOY_PATH/app/storage/" "$DEPLOY_PATH/shared/storage/"
+          fi
 
           # Extract
           tar -xzf "$DEPLOY_PATH/deploy_artifact.tar.gz" -C "$TMP_DIR"
           rm -f "$DEPLOY_PATH/deploy_artifact.tar.gz"
+          cp -f "$TMP_DIR/public/.htaccess" "$DEPLOY_PATH/.htaccess"
+
+          # Verify the new runtime and back up the database before replacing any code.
+          cp -p "$DEPLOY_PATH/app/.env" "$TMP_DIR/app/.env"
+          ln -s "$DEPLOY_PATH/shared/storage" "$TMP_DIR/app/storage"
+          mkdir -p "$TMP_DIR/app/storage/framework/cache/data" "$TMP_DIR/app/storage/framework/sessions"
+          mkdir -p "$TMP_DIR/app/storage/framework/views" "$TMP_DIR/app/storage/logs"
+          (
+            cd "$TMP_DIR/app"
+            php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); if (!$app->environment("production")) { fwrite(STDERR, "APP_ENV must be production\n"); exit(1); }'
+            php artisan backup:run --only-db --disable-notifications
+          )
+          rm "$TMP_DIR/app/.env"
+
+          # Keep the former application code alongside the independent Git archive.
+          mkdir -p "$DEPLOY_PATH/shared/releases"
+          tar -czf "$DEPLOY_PATH/shared/releases/app-$(date -u +%Y%m%dT%H%M%SZ).tar.gz" \
+            --exclude='./.env' --exclude='./storage' -C "$DEPLOY_PATH/app" .
 
           # Clear app except .env (kept if exists)
           find "$DEPLOY_PATH/app" -mindepth 1 -maxdepth 1 ! -name ".env" -exec rm -rf {} \;
@@ -91,7 +138,7 @@ jobs:
           cp -R "$TMP_DIR/public/." "$DEPLOY_PATH/"
 
           # Root index.php for /courrier/app
-          cp -f "$DEPLOY_PATH/deploy/production-root-index.php" "$DEPLOY_PATH/index.php" || true
+          cp -f "$DEPLOY_PATH/app/deploy/production-root-index.php" "$DEPLOY_PATH/index.php"
 
           # Clean temp
           rm -rf "$TMP_DIR"
@@ -110,10 +157,7 @@ jobs:
           # Verify app is present
           test -f artisan || (echo "artisan missing in $DEPLOY_PATH/app" && exit 1)
 
-          # Ensure .env exists (never overwrite)
-          if [ ! -f ".env" ]; then
-            cp .env.example .env
-          fi
+          test -f .env || { echo "Production .env missing" >&2; exit 1; }
 
           # Persist storage (and ensure required dirs exist)
           mkdir -p "$DEPLOY_PATH/shared/storage"
@@ -153,6 +197,7 @@ jobs:
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
+          php artisan queue:restart
 
           echo "Deploy OK"
           EOF

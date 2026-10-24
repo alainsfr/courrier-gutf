@@ -10,5 +10,6 @@ $basePath = __DIR__ . '/app';
 require $basePath . '/vendor/autoload.php';
 
 // 2. Démarrer Laravel 12 et traiter la requête entrante
-(require_once $basePath . '/bootstrap/app.php')
-    ->handleRequest(Illuminate\Http\Request::capture());
+$app = require_once $basePath . '/bootstrap/app.php';
+$app->usePublicPath(__DIR__);
+$app->handleRequest(Illuminate\Http\Request::capture());

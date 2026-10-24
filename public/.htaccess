@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # The PlanetHoster layout keeps private folders beside this public entry point.
+    RewriteRule ^(?:app|shared|\.deploy_tmp)(?:/|$) - [F,L,NC]
+    RewriteRule ^deploy_artifact\.tar\.gz$ - [F,L,NC]
+    RewriteRule (^|/)\.(?!well-known(?:/|$)) - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
