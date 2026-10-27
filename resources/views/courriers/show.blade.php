@@ -17,6 +17,11 @@
                 <p class="mb-0 truncate text-sm text-gray-500">{{ $courrier->objet }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                @can('update', $courrier)
+                    @if(in_array($courrier->etapeOrdre(), [2, 3], true) && ! $courrier->isArchived())
+                        <x-buttons.secondary :href="route('courriers.edit', $courrier)">{{ __('courrier.correct_title') }}</x-buttons.secondary>
+                    @endif
+                @endcan
                 <x-buttons.secondary :href="route('courriers.bordereau', $courrier)" target="_blank" rel="noopener">
                     {{ __('courrier.bordereau_print') }}
                 </x-buttons.secondary>
@@ -32,7 +37,12 @@
 
     @if (session('status'))
         <div class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-            {{ match (session('status')) { 'workflow-transferred' => __('courrier.show_transfer_ok'), 'courrier-completed' => __('courrier.direct_completed'), default => session('status') } }}
+            {{ match (session('status')) {
+                'workflow-transferred' => __('courrier.show_transfer_ok'), 'courrier-completed' => __('courrier.direct_completed'),
+                'courrier-claimed' => __('courrier.claimed_ok'), 'courrier-corrected' => __('courrier.corrected_ok'),
+                'courrier-reassigned' => __('courrier.reassigned_ok'), 'courrier-created' => __('courrier.created_ok'),
+                'courrier-assigned' => __('courrier.assigned_ok'), 'courrier-processing-started' => __('courrier.processing_ok'),
+                'courrier-archived' => __('courrier.archived_ok'), default => session('status') } }}
         </div>
     @endif
 
@@ -333,7 +343,14 @@
 
                 @if($canActOnBureau && ! $courrier->isArchived())
                     <div class="space-y-2">
-                        @if($nextEtape && $canAdvance)
+                        @if($canClaim)
+                                <form method="POST" action="{{ route('courriers.claim', $courrier) }}">
+                                    @csrf
+                                    <x-buttons.primary type="submit" class="w-full">{{ __('courrier.claim') }}</x-buttons.primary>
+                                    <p class="mt-1.5 text-xs text-gray-500">{{ __('courrier.claim_hint') }}</p>
+                                </form>
+                        @endif
+                        @if($nextEtape && $canAdvance && ! $canClaim)
                             <form method="POST" action="{{ $courrier->isAtOrdre(3) ? route('courriers.complete', $courrier) : route('courriers.transfer', $courrier) }}">
                                 @csrf
                                 <input type="hidden" name="nouvelle_etape_id" value="{{ $nextEtape->id }}">
@@ -386,20 +403,11 @@
                     </div>
                 @endif
 
-                @can('assign', $courrier)
-                    @if(! $courrier->isArchived() && $canActOnBureau)
-                        <form method="POST" action="{{ route('courriers.assign', $courrier) }}" class="mt-3 border-t border-gray-100 pt-3">
-                            @csrf
-                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-gray-400">{{ __('courrier.assign_to') }}</label>
-                            <select name="assigned_to_user_id" class="mb-2 w-full rounded-md border border-gray-300 px-2.5 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30" required>
-                                @foreach($agents as $a)
-                                    <option value="{{ $a->id }}" @selected($courrier->assigned_to_user_id == $a->id)>{{ $a->name }}</option>
-                                @endforeach
-                            </select>
-                            <x-buttons.primary type="submit" class="w-full">
-                                {{ __('courrier.assign') }}
-                            </x-buttons.primary>
-                        </form>
+                @can('reassign', $courrier)
+                    @if(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true))
+                        <div class="mt-3 border-t border-gray-100 pt-3">
+                            <x-buttons.secondary :href="route('courriers.reassignment', $courrier)" class="w-full">{{ __('courrier.reassign_title') }}</x-buttons.secondary>
+                        </div>
                     @endif
                 @endcan
             </div>

@@ -68,7 +68,7 @@
                             <td class="px-4 py-3 text-gray-700">{{ $u->email }}</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                                    {{ str_replace('_', ' ', $u->getRoleNames()->first() ?? '—') }}
+                                    {{ __('users.roles.'.($u->getRoleNames()->first() ?? 'none')) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ $u->bureau?->nom ?? '—' }}</td>

@@ -132,6 +132,12 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->middleware('permission:courrier.view')
             ->name('bordereau');
 
+        Route::get('/{courrier}/edit', [CourrierController::class, 'edit'])->name('edit');
+        Route::put('/{courrier}', [CourrierController::class, 'update'])->name('update');
+        Route::post('/{courrier}/claim', [CourrierController::class, 'claim'])->name('claim');
+        Route::get('/{courrier}/reassign', [CourrierController::class, 'reassignment'])->name('reassignment');
+        Route::post('/{courrier}/reassign', [CourrierController::class, 'reassign'])->name('reassign');
+
         Route::get('/{courrier}', [CourrierController::class, 'show'])
             ->middleware('permission:courrier.view')
             ->name('show');

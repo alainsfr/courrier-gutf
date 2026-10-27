@@ -1,6 +1,24 @@
 <?php
 
 return [
+    'last_super_admin' => 'Conservez au moins un super-administrateur actif avant de modifier ces droits.',
+    'roles_guide' => 'Comprendre les rôles',
+    'roles_hint' => 'Le rôle définit les actions autorisées. Le bureau détermine les dossiers concernés.',
+    'roles' => [
+        'super-admin' => 'Super-administrateur', 'admin' => 'Administrateur des courriers',
+        'agent_courrier' => 'Agent d’enregistrement', 'agent_traitement' => 'Agent de traitement',
+        'validateur' => 'Validateur', 'consultation' => 'Consultation', 'directeur' => 'Direction', 'auditor' => 'Auditeur', 'none' => 'Aucun rôle',
+    ],
+    'role_descriptions' => [
+        'super-admin' => 'Gère les comptes, les paramètres et l’ensemble des dossiers.',
+        'admin' => 'Supervise les dossiers et les actions de traitement.',
+        'agent_courrier' => 'Enregistre et affecte les courriers. Corrige les erreurs avant leur prise en charge.',
+        'agent_traitement' => 'Prend en charge les dossiers de son bureau, les traite, les termine et les archive.',
+        'validateur' => 'Valide les dossiers soumis à validation dans son bureau.',
+        'consultation' => 'Consulte les dossiers autorisés et échange par messagerie, sans modifier leur traitement.',
+        'directeur' => 'Consulte le pilotage et les rapports, et donne les visas qui lui sont confiés.',
+        'auditor' => 'Consulte et exporte le journal d’audit.',
+    ],
     'title' => 'Utilisateurs',
     'subtitle' => 'Comptes, rôles et affectation aux bureaux.',
     'new' => 'Nouvel utilisateur',

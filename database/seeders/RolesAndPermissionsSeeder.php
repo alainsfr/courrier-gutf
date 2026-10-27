@@ -19,6 +19,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Courrier
             'courrier.view',
             'courrier.create',
+            'courrier.update',
+            'courrier.reassign',
             'courrier.assign',
             'courrier.process',
             'courrier.attach',
@@ -62,6 +64,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'agent_courrier' => [
                 'courrier.view',
                 'courrier.create',
+                'courrier.update',
+                'courrier.reassign',
                 'courrier.assign',
                 'courrier.attach',
                 'courrier.detach',
@@ -74,6 +78,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'agent_traitement' => [
                 'courrier.view',
                 'courrier.process',
+                'courrier.update',
                 'courrier.archive',
                 'courrier.attach',
                 'courrier.detach',

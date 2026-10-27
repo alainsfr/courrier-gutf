@@ -13,6 +13,8 @@ use App\Models\WorkflowEtape;
 use App\Services\CourrierQueryService;
 use App\Services\AuditService;
 use App\Services\WorkflowService;
+use App\Services\CourrierManagementService;
+use App\Http\Requests\CorrectCourrierRequest;
 use App\Notifications\CourrierStatusNotification;
 use RuntimeException;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -23,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -189,7 +192,7 @@ class CourrierController extends Controller
     {
         $this->authorize('create', Courrier::class);
 
-        $agents = User::where('is_active', true)->whereNotNull('bureau_id')->orderBy('name')->get(['id', 'name', 'email', 'bureau_id']);
+        $agents = $this->processingAgents();
         $bureaux = Bureau::where('is_active', true)->orderBy('ordre')->orderBy('nom')->get(['id', 'nom']);
 
         return view('courriers.create', compact('agents', 'bureaux'));
@@ -224,6 +227,10 @@ class CourrierController extends Controller
         ]);
 
         unset($validated['document_file']);
+
+        if (! empty($validated['assigned_to_user_id']) && ! User::findOrFail($validated['assigned_to_user_id'])->can('courrier.process')) {
+            throw ValidationException::withMessages(['assigned_to_user_id' => __('courrier.agent_invalid')]);
+        }
 
         $courrier = DB::transaction(function () use ($validated, $request) {
             $etapeInitiale = WorkflowEtape::query()
@@ -355,10 +362,7 @@ class CourrierController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
 
-        $agents = User::query()->where('is_active', true)
-            ->where('bureau_id', $courrier->bureau_actuel_id)
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+        $agents = $this->processingAgents($courrier->bureau_actuel_id);
 
         $nextEtape = null;
         $prevEtape = null;
@@ -384,6 +388,9 @@ class CourrierController extends Controller
             && $user->can('transfer', $courrier);
         $canAdvance = $nextEtape && $user->can($this->workflowService->transitionAbility((int) $courrier->workflowEtape->ordre, (int) $nextEtape->ordre), $courrier);
         $canReturn = $prevEtape && $user->can($this->workflowService->transitionAbility((int) $courrier->workflowEtape->ordre, (int) $prevEtape->ordre), $courrier);
+        $canClaim = ! $courrier->assigned_to_user_id && $courrier->isAtOrdre(2)
+            && $user->bureau_id && (int) $user->bureau_id === (int) $courrier->bureau_actuel_id
+            && $user->can('courrier.process') && $user->can('claim', $courrier);
 
         return view('courriers.show', compact(
             'courrier',
@@ -394,10 +401,68 @@ class CourrierController extends Controller
             'canActOnBureau',
             'canAdvance',
             'canReturn',
+            'canClaim',
             'pendingVisa',
             'hasPendingVisa',
             'parapheurValidators'
         ));
+    }
+
+    public function claim(Request $request, Courrier $courrier, CourrierManagementService $management): RedirectResponse
+    {
+        $management->claim($courrier, $request->user());
+        return back()->with('status', 'courrier-claimed');
+    }
+
+    public function edit(Courrier $courrier, CourrierManagementService $management): View
+    {
+        $this->authorize('update', $courrier);
+        abort_unless(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true), 403);
+        return view('courriers.edit', ['courrier' => $courrier, 'version' => $management->version($courrier)]);
+    }
+
+    public function update(CorrectCourrierRequest $request, Courrier $courrier, CourrierManagementService $management): RedirectResponse
+    {
+        $data = $request->validated();
+        $management->correct($courrier, $request->user(), $data, $data['reason'], $data['version']);
+        return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-corrected');
+    }
+
+    public function reassignment(Courrier $courrier, CourrierManagementService $management): View
+    {
+        $this->authorize('reassign', $courrier);
+        abort_unless(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true), 403);
+        return view('courriers.reassign', [
+            'courrier' => $courrier, 'version' => $management->version($courrier),
+            'bureaux' => Bureau::where('is_active', true)->orderBy('ordre')->get(),
+            'agents' => $this->processingAgents(),
+        ]);
+    }
+
+    public function reassign(Request $request, Courrier $courrier, CourrierManagementService $management): RedirectResponse
+    {
+        $this->authorize('reassign', $courrier);
+        $data = $request->validate([
+            'bureau_actuel_id' => ['required', 'integer', Rule::exists('bureaux', 'id')->where('is_active', true)],
+            'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'reason' => ['required', 'string', 'min:5', 'max:2000'],
+            'version' => ['required', 'string', 'size:64'],
+        ]);
+        $current = $management->reassign($courrier, $request->user(), Bureau::findOrFail($data['bureau_actuel_id']),
+            empty($data['assigned_to_user_id']) ? null : User::findOrFail($data['assigned_to_user_id']), $data['reason'], $data['version']);
+        $recipients = User::where('bureau_id', $current->bureau_actuel_id)->where('is_active', true)->get()
+            ->filter(fn (User $recipient) => $recipient->id !== $request->user()->id && $recipient->can('view', $current));
+        $this->notifyUsers($recipients->all(), __('notifications.courrier_assigned_title'),
+            __('notifications.courrier_assigned_msg', ['ref' => $current->reference_interne]),
+            route('courriers.show', $current), ['type' => 'assigned', 'courrier_id' => $current->id]);
+        return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-reassigned');
+    }
+
+    private function processingAgents(?int $office = null): \Illuminate\Support\Collection
+    {
+        return User::where('is_active', true)->whereNotNull('bureau_id')->with(['roles.permissions', 'permissions'])
+            ->when($office, fn ($q) => $q->where('bureau_id', $office))->orderBy('name')
+            ->get(['id', 'name', 'email', 'bureau_id'])->filter(fn (User $agent) => $agent->can('courrier.process'))->values();
     }
 
     public function submitToParapheur(Request $request, Courrier $courrier): RedirectResponse
@@ -490,18 +555,33 @@ class CourrierController extends Controller
         $validated = $request->validate([
             'assigned_to_user_id' => ['required', 'integer', Rule::exists('users', 'id')
                 ->where('bureau_id', $courrier->bureau_actuel_id)->where('is_active', true)],
+            'reason' => ['nullable', 'string', 'min:5', 'max:2000'],
         ]);
 
-        $etapeLabel = $courrier->workflowEtape?->libelle;
-        $courrier->update([
-            'assigned_to_user_id' => $validated['assigned_to_user_id'],
-        ]);
-
-        $assignee = User::find($validated['assigned_to_user_id']);
-
-        $this->auditService->log($courrier, 'assigned', $etapeLabel, $etapeLabel, [
-            'assigned_to' => $assignee?->name,
-        ]);
+        $assignee = DB::transaction(function () use ($courrier, $validated) {
+            $current = Courrier::lockForUpdate()->findOrFail($courrier->id);
+            $this->authorize('assign', $current);
+            abort_unless(! $current->isArchived() && in_array($current->etapeOrdre(), [2, 3], true), 422);
+            $assignee = User::findOrFail($validated['assigned_to_user_id']);
+            if (! $assignee->is_active || (int) $assignee->bureau_id !== (int) $current->bureau_actuel_id || ! $assignee->can('courrier.process')) {
+                throw ValidationException::withMessages(['assigned_to_user_id' => __('courrier.agent_invalid')]);
+            }
+            if ((int) $current->assigned_to_user_id === (int) $assignee->id) {
+                return $assignee;
+            }
+            if ($current->assigned_to_user_id && blank($validated['reason'] ?? null)) {
+                throw ValidationException::withMessages(['reason' => __('courrier.reason_required')]);
+            }
+            $oldAgent = $current->assignedTo?->name;
+            $current->update(['assigned_to_user_id' => $assignee->id]);
+            CourrierHistory::create([
+                'courrier_id' => $current->id, 'action' => 'assigned', 'actor_user_id' => Auth::id(),
+                'note_metier' => $validated['reason'] ?? null,
+                'metadata' => ['before' => ['agent' => $oldAgent], 'after' => ['agent' => $assignee->name]],
+                'created_at' => now(),
+            ]);
+            return $assignee;
+        });
 
         if ($assignee && (int) $assignee->id !== (int) Auth::id()) {
             $this->notifyUsers(

@@ -3,6 +3,8 @@
 return [
     'title' => 'Audit Log',
     'actions' => [
+        'claimed' => 'Ownership taken', 'details_updated' => 'Information corrected',
+        'reassigned' => 'Assignment corrected', 'workflow_transfer' => 'Processing progress',
         'created' => 'Creation',
         'assigned' => 'Assignment',
         'processing_started' => 'Processing Started',

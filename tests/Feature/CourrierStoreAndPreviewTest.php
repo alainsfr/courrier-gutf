@@ -155,7 +155,7 @@ class CourrierStoreAndPreviewTest extends TestCase
             'is_active' => true,
             'bureau_id' => $this->agent->bureau_id,
         ]);
-        $assignee->assignRole('agent_courrier');
+        $assignee->assignRole('agent_traitement');
 
         $payload = [
             'bureau_actuel_id' => $this->agent->bureau_id,

@@ -33,7 +33,7 @@
                         · {{ $h->actor?->name ?? 'Système' }}
                         @if($h->action_type)
                             <span class="ms-1 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500">
-                                {{ $h->action_type }}
+                                {{ __('courrier.history_direction.'.$h->action_type) }}
                             </span>
                         @endif
                     </div>
@@ -68,6 +68,20 @@
                         <div class="mt-2 rounded-lg border border-gray-100 bg-gray-50 px-2.5 py-2 text-xs leading-relaxed text-gray-600">
                             {{ $h->note_metier }}
                         </div>
+                    @endif
+                    @if($h->action === 'reassigned')
+                        <p class="mt-1.5 text-xs text-gray-500">{{ data_get($h->metadata, 'before.bureau') ?? '—' }} → {{ data_get($h->metadata, 'after.bureau') ?? '—' }} · {{ data_get($h->metadata, 'after.agent') ?? __('courrier.assign_none') }}</p>
+                    @endif
+                    @if($h->action === 'details_updated')
+                        <details class="mt-2 text-xs text-gray-500">
+                            <summary class="cursor-pointer font-semibold">{{ __('courrier.view_changes') }}</summary>
+                            <dl class="mt-2 space-y-2">
+                                @foreach(data_get($h->metadata, 'after', []) as $field => $value)
+                                    <div><dt class="font-semibold">{{ __('courrier.field_labels.'.$field) }}</dt>
+                                        <dd class="m-0 break-words">{{ data_get($h->metadata, 'before.'.$field) ?? '—' }} → {{ $value ?? '—' }}</dd></div>
+                                @endforeach
+                            </dl>
+                        </details>
                     @endif
                 </div>
             </div>

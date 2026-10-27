@@ -52,7 +52,7 @@ class DirectOfficeWorkflowTest extends TestCase
         $this->assertNull($courrier->assigned_to_user_id);
         $this->assertNotEmpty($this->worker->unreadNotifications);
         $this->assertSame($this->office->id, $courrier->histories()->first()->metadata['bureau_id']);
-        $this->actingAs($this->worker)->get(route('courriers.show', $courrier))->assertOk()->assertSee('Démarrer le traitement');
+        $this->actingAs($this->worker)->get(route('courriers.show', $courrier))->assertOk()->assertSee('Prendre en charge');
     }
 
     public function test_the_same_office_processes_completes_and_archives_without_a_validation_detour(): void

@@ -100,6 +100,13 @@ class WorkflowService
 
             $this->assertActionValide($ancienneEtape, $nouvelleEtape, $actionType);
 
+            if ((int) $ancienneEtape?->ordre === 2 && (int) $nouvelleEtape->ordre === 3
+                && ! $courrier->assigned_to_user_id && $user->bureau_id
+                && (int) $user->bureau_id === (int) $courrier->bureau_actuel_id) {
+                app(CourrierManagementService::class)->claim($courrier, $user);
+                $courrier->refresh();
+            }
+
             $fromLabel = $ancienneEtape?->libelle;
             $toLabel = $actionType === self::ACTION_REJECT
                 ? ($nouvelleEtape->libelle.' (rejet)')

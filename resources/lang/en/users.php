@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'last_super_admin' => 'Keep at least one active super-administrator before changing these permissions.',
+    'roles_guide' => 'Understand roles',
+    'roles_hint' => 'The role defines permitted actions. The office determines the relevant dossiers.',
+    'roles' => [
+        'super-admin' => 'Super-administrator', 'admin' => 'Mail administrator', 'agent_courrier' => 'Registration agent',
+        'agent_traitement' => 'Processing agent', 'validateur' => 'Validator', 'consultation' => 'Read-only',
+        'directeur' => 'Management', 'auditor' => 'Auditor', 'none' => 'No role',
+    ],
+    'role_descriptions' => [
+        'super-admin' => 'Manages accounts, settings and all dossiers.', 'admin' => 'Supervises dossiers and processing actions.',
+        'agent_courrier' => 'Registers and assigns mail. Corrects errors before an agent takes ownership.',
+        'agent_traitement' => 'Takes ownership of dossiers in their office, processes, completes and archives them.',
+        'validateur' => 'Validates dossiers awaiting validation in their office.',
+        'consultation' => 'Reads permitted dossiers and uses messaging without changing processing.',
+        'directeur' => 'Views reports and gives approvals assigned to them.', 'auditor' => 'Reads and exports the audit log.',
+    ],
     'title' => 'Users',
     'subtitle' => 'Accounts, roles and office assignment.',
     'new' => 'New user',

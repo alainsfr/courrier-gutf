@@ -3,6 +3,8 @@
 return [
     'title' => 'Journal d’audit',
     'actions' => [
+        'claimed' => 'Prise en charge', 'details_updated' => 'Correction des informations',
+        'reassigned' => 'Correction de l’affectation', 'workflow_transfer' => 'Avancement du traitement',
         'created' => 'Création',
         'assigned' => 'Affectation',
         'processing_started' => 'Début traitement',

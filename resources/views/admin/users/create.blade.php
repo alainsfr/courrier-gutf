@@ -47,7 +47,7 @@
                     <select class="{{ $input }}" name="role" required>
                         <option value="" disabled @selected(! old('role'))>Choisir un rôle</option>
                         @foreach($roles as $r)
-                            <option value="{{ $r->name }}" @selected(old('role') === $r->name)>{{ $r->name }}</option>
+                            <option value="{{ $r->name }}" @selected(old('role') === $r->name)>{{ __('users.roles.'.$r->name) }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -84,6 +84,7 @@
                 </div>
             </div>
 
+            <x-role-guide />
             <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-5">
                 <x-buttons.primary type="submit">
                     {{ __('users.save') }}

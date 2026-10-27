@@ -36,11 +36,7 @@ class DashboardController extends Controller
         }
 
         $kpiIncoming = (clone $query)->where('type', 'entrant')->count();
-        $kpiInProgress = (clone $query)->whereEtapeOrdreIn([
-            Courrier::ETAPE_ANALYSE,
-            Courrier::ETAPE_TRAITEMENT,
-            Courrier::ETAPE_VALIDATION,
-        ])->count();
+        $kpiInProgress = (clone $query)->whereEtapeOrdre(Courrier::ETAPE_TRAITEMENT)->count();
         $kpiArchived = (clone $query)->where(function ($q) {
             $q->whereNotNull('archived_at')
                 ->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_ARCHIVAGE));

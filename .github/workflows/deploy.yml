@@ -21,10 +21,21 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: gd, zip, mbstring, pdo_mysql
+          extensions: gd, zip, mbstring, pdo_mysql, pdo_sqlite
           tools: composer:v2
 
-      - name: Install Composer deps (build)
+      - name: Install dependencies for verification
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Verify application before deployment
+        env:
+          APP_ENV: testing
+          APP_KEY: "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ":memory:"
+        run: php vendor/bin/phpunit --do-not-cache-result
+
+      - name: Keep only production dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Setup Node
@@ -125,11 +136,6 @@ jobs:
             php artisan backup:run --only-db --disable-notifications
           )
           rm "$TMP_DIR/app/.env"
-
-          # Keep the former application code alongside the independent Git archive.
-          mkdir -p "$DEPLOY_PATH/shared/releases"
-          tar -czf "$DEPLOY_PATH/shared/releases/app-$(date -u +%Y%m%dT%H%M%SZ).tar.gz" \
-            --exclude='./.env' --exclude='./storage' -C "$DEPLOY_PATH/app" .
 
           # Clear app except .env (kept if exists)
           find "$DEPLOY_PATH/app" -mindepth 1 -maxdepth 1 ! -name ".env" -exec rm -rf {} \;

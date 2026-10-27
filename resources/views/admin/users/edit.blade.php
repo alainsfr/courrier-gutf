@@ -21,6 +21,7 @@
     @endif
 
     <x-form-errors />
+    <div class="mb-5"><x-role-guide /></div>
 
     <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <form method="POST" action="{{ route('admin.users.update', $user) }}" enctype="multipart/form-data" class="space-y-5">
@@ -56,7 +57,7 @@
                     <label class="{{ $label }}">{{ __('users.role') }}</label>
                     <select class="{{ $input }}" name="role" required>
                         @foreach($roles as $r)
-                            <option value="{{ $r->name }}" @selected(old('role', $currentRole) === $r->name)>{{ $r->name }}</option>
+                            <option value="{{ $r->name }}" @selected(old('role', $currentRole) === $r->name)>{{ __('users.roles.'.$r->name) }}</option>
                         @endforeach
                     </select>
                 </div>

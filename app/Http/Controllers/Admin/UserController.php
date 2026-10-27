@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Bureau;
 use App\Models\User;
+use App\Services\AdminAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -91,7 +92,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(Request $request, User $user, AdminAccessService $access): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -125,35 +126,38 @@ class UserController extends Controller
             $payload['password'] = Hash::make($validated['password']);
         }
 
-        if ($request->boolean('remove_avatar') && $user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-            $payload['avatar_path'] = null;
-        }
-
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar_path) {
+        $access->change($user, function (User $user) use ($request, $payload, $validated) {
+            if ($request->boolean('remove_avatar') && $user->avatar_path) {
                 Storage::disk('public')->delete($user->avatar_path);
+                $payload['avatar_path'] = null;
             }
-            $payload['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
-        }
 
-        $user->update($payload);
-        $user->syncRoles([$validated['role']]);
+            if ($request->hasFile('avatar')) {
+                if ($user->avatar_path) {
+                    Storage::disk('public')->delete($user->avatar_path);
+                }
+                $payload['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+            }
+
+            $user->update($payload);
+            $user->syncRoles([$validated['role']]);
+        }, role: $validated['role'], active: $isActive);
 
         return redirect()
             ->route('admin.users.index')
             ->with('status', __('users.updated'));
     }
 
-    public function toggleActive(Request $request, User $user): RedirectResponse
+    public function toggleActive(Request $request, User $user, AdminAccessService $access): RedirectResponse
     {
         if ((int) $user->id === (int) $request->user()->id) {
             return back()->withErrors(['user' => __('users.cannot_deactivate_self')]);
         }
 
-        $user->forceFill([
-            'is_active' => ! $user->is_active,
-        ])->save();
+        $access->change($user, function (User $current) {
+            $current->forceFill(['is_active' => ! $current->is_active])->save();
+        }, toggle: true);
+        $user->refresh();
 
         return back()->with(
             'status',
@@ -161,17 +165,19 @@ class UserController extends Controller
         );
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function destroy(User $user, AdminAccessService $access): RedirectResponse
     {
         if ((int) $user->id === (int) auth()->id()) {
             return back()->withErrors(['user' => __('users.cannot_delete_self')]);
         }
 
-        if ($user->avatar_path) {
-            Storage::disk('public')->delete($user->avatar_path);
-        }
+        $access->change($user, function (User $user) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
 
-        $user->delete();
+            $user->delete();
+        }, delete: true);
 
         return redirect()
             ->route('admin.users.index')

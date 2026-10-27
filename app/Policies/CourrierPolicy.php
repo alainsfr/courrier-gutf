@@ -68,6 +68,34 @@ class CourrierPolicy
         return $this->isInCurrentBureau($user, $courrier);
     }
 
+    public function claim(User $user, Courrier $courrier): bool
+    {
+        return $user->can('courrier.process') && $this->isInCurrentBureau($user, $courrier)
+            && $courrier->isAtOrdre(Courrier::ETAPE_ANALYSE)
+            && (! $courrier->assigned_to_user_id || (int) $courrier->assigned_to_user_id === (int) $user->id);
+    }
+
+    public function update(User $user, Courrier $courrier): bool
+    {
+        if (! $user->can('courrier.update') || ! in_array($courrier->etapeOrdre(), [2, 3], true) || $courrier->isArchived()) {
+            return false;
+        }
+
+        return ($courrier->isAtOrdre(2) && ! $courrier->assigned_to_user_id
+                && (int) $courrier->created_by_user_id === (int) $user->id)
+            || ($this->isInCurrentBureau($user, $courrier)
+                && (int) $courrier->assigned_to_user_id === (int) $user->id);
+    }
+
+    public function reassign(User $user, Courrier $courrier): bool
+    {
+        return $user->can('courrier.reassign') && ! $courrier->isArchived()
+            && in_array($courrier->etapeOrdre(), [2, 3], true)
+            && ($this->isInCurrentBureau($user, $courrier)
+                || ($courrier->isAtOrdre(2) && ! $courrier->assigned_to_user_id
+                    && (int) $courrier->created_by_user_id === (int) $user->id));
+    }
+
     /**
      * Transfert Kanban / fiche : réservé au bureau qui détient le pli.
      */
