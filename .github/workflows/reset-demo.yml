@@ -1,0 +1,69 @@
+name: Reset demonstration data (permanent deletion)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DELETE_OLD_DEMO_DATA to delete old data without a backup'
+        required: true
+        type: string
+
+concurrency:
+  group: courrier-gutf-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check explicit deletion request
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: test "$CONFIRMATION" = DELETE_OLD_DEMO_DATA
+
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PH_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.PH_SSH_PORT }}" -H "${{ secrets.PH_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Install reset command in the current application
+        run: |
+          scp -P "${{ secrets.PH_SSH_PORT }}" app/Console/Commands/ResetDemoCommand.php \
+            "${{ secrets.PH_SSH_USER }}@${{ secrets.PH_SSH_HOST }}:${{ secrets.PH_DEPLOY_PATH }}/app/app/Console/Commands/ResetDemoCommand.php"
+
+      - name: Delete old data and retained release archives without a backup
+        run: |
+          ssh -p "${{ secrets.PH_SSH_PORT }}" "${{ secrets.PH_SSH_USER }}@${{ secrets.PH_SSH_HOST }}" << 'EOF'
+          set -e
+          DEPLOY_PATH="${{ secrets.PH_DEPLOY_PATH }}"
+          case "$DEPLOY_PATH" in /*) ;; *) exit 1 ;; esac
+          test "$DEPLOY_PATH" != /
+          DEPLOY_PATH="$(cd "$DEPLOY_PATH" && pwd -P)"
+          test "$DEPLOY_PATH" != /
+          cd "$DEPLOY_PATH/app"
+          test -f .env && test -f artisan
+          php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); if (!$app->environment("production")) { exit(1); }'
+          DATABASE="$(php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo Illuminate\Support\Facades\DB::connection()->getDatabaseName();')"
+          php artisan app:reset-demo --execute=DELETE_OLD_DEMO_DATA --expected-database="$DATABASE" --production
+          DRIVER="$(php -r 'require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap(); echo Illuminate\Support\Facades\DB::connection()->getDriverName();')"
+          if [ "$DRIVER" != sqlite ]; then
+            rm -f -- database/database.sqlite database/database.sqlite-wal database/database.sqlite-shm database/database.sqlite-journal
+          fi
+          RELEASES="$DEPLOY_PATH/shared/releases"
+          if [ -L "$RELEASES" ]; then
+            echo "Unexpected release directory link; refusing deletion" >&2
+            exit 1
+          fi
+          if [ -d "$RELEASES" ]; then
+            test "$(realpath "$RELEASES")" = "$DEPLOY_PATH/shared/releases"
+            find "$RELEASES" -maxdepth 1 -type f -name 'app-*.tar.gz' -delete
+          fi
+          echo "RESET_HOSTED_DEMO_OK"
+          EOF
