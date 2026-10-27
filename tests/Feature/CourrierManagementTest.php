@@ -38,7 +38,7 @@ class CourrierManagementTest extends TestCase
 
     private function actor(string $role, string $office): User
     {
-        $user = User::factory()->create(['is_active' => true, 'bureau_id' => Bureau::where('code', $office)->value('id')]);
+        $user = User::factory()->create(['is_active' => true, 'locale' => 'fr', 'bureau_id' => Bureau::where('code', $office)->value('id')]);
         $user->assignRole($role);
         return $user;
     }

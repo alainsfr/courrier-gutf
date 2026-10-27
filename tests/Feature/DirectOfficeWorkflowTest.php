@@ -27,10 +27,10 @@ class DirectOfficeWorkflowTest extends TestCase
         $this->seed([RolesAndPermissionsSeeder::class, BureauSeeder::class, WorkflowEtapesSeeder::class]);
         $this->office = Bureau::where('code', 'enregistrement_fiscal')->firstOrFail();
         $this->registrar = User::factory()->create([
-            'is_active' => true, 'bureau_id' => Bureau::where('code', 'accueil')->value('id'),
+            'is_active' => true, 'locale' => 'fr', 'bureau_id' => Bureau::where('code', 'accueil')->value('id'),
         ]);
         $this->registrar->assignRole('agent_courrier');
-        $this->worker = User::factory()->create(['is_active' => true, 'bureau_id' => $this->office->id]);
+        $this->worker = User::factory()->create(['is_active' => true, 'locale' => 'fr', 'bureau_id' => $this->office->id]);
         $this->worker->assignRole('agent_traitement');
     }
 

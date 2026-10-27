@@ -16,7 +16,7 @@ class LastSuperAdminTest extends TestCase
     public function test_the_last_active_super_admin_cannot_demote_themselves(): void
     {
         $this->seed(RolesAndPermissionsSeeder::class);
-        $admin = User::factory()->create(['is_active' => true]);
+        $admin = User::factory()->create(['is_active' => true, 'locale' => 'fr']);
         $admin->assignRole('super-admin');
         $inactive = User::factory()->create(['is_active' => false]);
         $inactive->assignRole('super-admin');
