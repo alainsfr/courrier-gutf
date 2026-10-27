@@ -96,4 +96,18 @@ class ResetDemoTest extends TestCase
         }
         $this->assertFalse(app()->isDownForMaintenance());
     }
+
+    public function test_reset_recognizes_the_legacy_administrator_role_without_changing_credentials(): void
+    {
+        $admin = User::factory()->create(['is_active' => true]);
+        $admin->assignRole('admin');
+        $password = $admin->getAuthPassword();
+        $this->artisan('app:reset-demo', [
+            '--execute' => 'DELETE_OLD_DEMO_DATA', '--expected-database' => DB::connection()->getDatabaseName(),
+        ])->assertSuccessful();
+        $this->assertDatabaseCount('users', 1);
+        $this->assertSame($admin->email, User::sole()->email);
+        $this->assertSame($password, User::sole()->getAuthPassword());
+        $this->assertTrue(User::sole()->hasRole('super-admin'));
+    }
 }

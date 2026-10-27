@@ -45,7 +45,8 @@ class ResetDemoCommand extends Command
             return self::FAILURE;
         }
 
-        $admin = User::role('super-admin')->where('is_active', true)->orderBy('id')->first();
+        $admin = User::role('super-admin')->where('is_active', true)->orderBy('id')->first()
+            ?? User::role('admin')->where('is_active', true)->orderBy('id')->first();
         if (! $admin) {
             $this->error('Suppression refusée : aucun accès super-administrateur actif à conserver.');
             return self::FAILURE;

@@ -6,6 +6,8 @@ Elle ne crée ni sauvegarde ni copie temporaire des anciennes données.
 
 Le code actuel et sa configuration restent en place. Un seul compte
 super-administrateur actif conserve ses identifiants pour permettre la connexion.
+À défaut, un administrateur actif de l'ancien rôle `admin` est reconnu et conserve
+ses identifiants avec le rôle système `super-admin`.
 Les bureaux, rôles et étapes sont recréés sans dossiers fictifs.
 
 La commande exige la confirmation littérale `DELETE_OLD_DEMO_DATA` et le nom exact
