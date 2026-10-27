@@ -25,7 +25,7 @@ use Tests\TestCase;
 /**
  * Parcours End-to-End HTTP de l'application COURRIER GUTF.
  *
- * Couvre : auth, dashboard, registre, création, PJ, workflow multi-bureaux,
+ * Couvre : auth, dashboard, registre, création, PJ, affectation directe et traitement au sein du bureau,
  * kanban scoped, validation, archivage, messagerie, notifications, recherche,
  * profil, exports, administration, contrôle d'accès.
  *
@@ -157,15 +157,16 @@ class ApplicationE2ETest extends TestCase
         $this->get(route('notifications.index'))->assertOk();
         $this->get(route('profile.edit'))->assertOk();
 
-        // Kanban Accueil : uniquement Réception
+        // Les colonnes représentent les états, indépendamment du bureau.
         $kanbanAccueil = $this->get(route('courriers.kanban'));
-        $this->assertSame(1, $kanbanAccueil->viewData('etapes')->count());
-        $this->assertSame('Réception', $kanbanAccueil->viewData('etapes')->first()->libelle);
+        $this->assertSame([2, 3, 5, 6], $kanbanAccueil->viewData('etapes')->pluck('ordre')->all());
+        $this->assertSame('À traiter', $kanbanAccueil->viewData('etapes')->first()->libelle);
 
         // ── 3. Création courrier + PJ ────────────────────────────────────────
         $create = $this->post(route('courriers.store'), [
             'type' => 'entrant',
             'objet' => 'E2E — Requête d’enregistrement foncier',
+            'bureau_actuel_id' => $this->agentTraitement->bureau_id,
             'tf' => 'TF-E2E-2026-001',
             'proprietaire' => 'Société Test E2E',
             'expediteur' => 'Notaire E2E',
@@ -177,8 +178,8 @@ class ApplicationE2ETest extends TestCase
         $this->assertNotNull($courrier);
         $create->assertRedirect(route('courriers.show', $courrier));
 
-        $this->assertSame((int) $this->etape(1)->id, (int) $courrier->workflow_etape_id);
-        $this->assertSame((int) $this->etape(1)->bureau_id, (int) $courrier->bureau_actuel_id);
+        $this->assertSame((int) $this->etape(2)->id, (int) $courrier->workflow_etape_id);
+        $this->assertSame((int) $this->agentTraitement->bureau_id, (int) $courrier->bureau_actuel_id);
         $this->assertDatabaseHas('courrier_histories', [
             'courrier_id' => $courrier->id,
             'action' => 'created',
@@ -191,89 +192,29 @@ class ApplicationE2ETest extends TestCase
         $this->get(route('courriers.attachments.preview', [$courrier, $attachment]))->assertOk();
         $this->get(route('courriers.attachments.download', [$courrier, $attachment]))->assertOk();
 
-        // ── 4. Affectation ───────────────────────────────────────────────────
-        $this->post(route('courriers.assign', $courrier), [
-            'assigned_to_user_id' => $this->agentAccueil->id,
-        ])->assertRedirect();
+        // ── 4. Affectation à un agent du bureau destinataire ──────────────────
+        $this->asUser($this->admin)->post(route('courriers.assign', $courrier), [
+            'assigned_to_user_id' => $this->agentTraitement->id,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame($this->agentTraitement->id, (int) $courrier->fresh()->assigned_to_user_id);
 
-        $courrier->refresh();
-        $this->assertSame($this->agentAccueil->id, (int) $courrier->assigned_to_user_id);
-
-        // ── 5. Workflow séquentiel multi-bureaux ─────────────────────────────
-        // Réception → Analyse (Accueil)
-        $this->postJson(route('courriers.transfer', $courrier), [
-            'nouvelle_etape_id' => $this->etape(2)->id,
-            'action_type' => WorkflowService::ACTION_FORWARD,
-        ])->assertOk()->assertJsonPath('ok', true);
-
-        $courrier->refresh();
-        $this->assertSame((int) $this->etape(2)->id, (int) $courrier->workflow_etape_id);
-
-        // Accueil ne peut plus transférer (plus son bureau)
-        $this->postJson(route('courriers.transfer', $courrier), [
+        // ── 5. Le bureau traite, termine et archive lui-même ──────────────────
+        $this->asUser($this->agentAccueil)->postJson(route('courriers.transfer', $courrier), [
             'nouvelle_etape_id' => $this->etape(3)->id,
             'action_type' => WorkflowService::ACTION_FORWARD,
         ])->assertForbidden();
-
-        // Analyse → Traitement (Visas)
-        $this->asUser($this->agentVisas)
-            ->postJson(route('courriers.transfer', $courrier), [
-                'nouvelle_etape_id' => $this->etape(3)->id,
-                'action_type' => WorkflowService::ACTION_FORWARD,
-            ])
-            ->assertOk();
-
-        $courrier->refresh();
-        $this->assertSame((int) $this->etape(3)->id, (int) $courrier->workflow_etape_id);
-
-        // Réaffecter à l’agent traitement + soumettre validation
-        $this->asUser($this->admin)
-            ->post(route('courriers.assign', $courrier), [
-                'assigned_to_user_id' => $this->agentTraitement->id,
-            ])
-            ->assertRedirect();
-
-        // Kanban Traitement : une seule colonne
-        $kanbanTraitement = $this->asUser($this->agentTraitement)->get(route('courriers.kanban'));
-        $kanbanTraitement->assertOk();
-        $this->assertSame(1, $kanbanTraitement->viewData('etapes')->count());
-        $this->assertSame('Traitement', $kanbanTraitement->viewData('etapes')->first()->libelle);
-        $this->assertTrue(
-            $kanbanTraitement->viewData('courriersByEtape')
-                ->get($this->etape(3)->id, collect())
-                ->contains('id', $courrier->id)
-        );
-
-        // Traitement → Validation
         $this->asUser($this->agentTraitement)
-            ->post(route('courriers.submit_validation', $courrier))
-            ->assertRedirect();
-
-        $courrier->refresh();
-        $this->assertTrue($courrier->isEnValidation());
-
-        // Le validateur a une notification
-        $this->assertTrue(
-            $this->validateur->fresh()->unreadNotifications->isNotEmpty()
-            || $this->agentVisas->fresh()->unreadNotifications->isNotEmpty()
-        );
-
-        // Validation → Sortie
-        $this->asUser($this->validateur)
-            ->post(route('courriers.validate', $courrier))
-            ->assertRedirect();
-
-        $courrier->refresh();
-        $this->assertSame((int) $this->etape(5)->id, (int) $courrier->workflow_etape_id);
-
-        // Sortie → Archivage (admin / permission archive)
-        $this->asUser($this->admin)
-            ->post(route('courriers.archive', $courrier))
-            ->assertRedirect();
-
+            ->post(route('courriers.start_processing', $courrier))->assertRedirect();
+        $this->assertTrue($courrier->fresh()->isAtOrdre(3));
+        $kanban = $this->get(route('courriers.kanban'))->assertOk();
+        $this->assertSame([2, 3, 5, 6], $kanban->viewData('etapes')->pluck('ordre')->all());
+        $this->assertTrue($kanban->viewData('courriersByEtape')->get($this->etape(3)->id, collect())->contains('id', $courrier->id));
+        $this->post(route('courriers.complete', $courrier))->assertRedirect();
+        $this->assertTrue($courrier->fresh()->isAtOrdre(5));
+        $this->post(route('courriers.archive', $courrier))->assertRedirect();
         $courrier->refresh();
         $this->assertTrue($courrier->isArchived());
-        $this->assertSame((int) $this->etape(6)->id, (int) $courrier->workflow_etape_id);
+        $this->assertSame((int) $this->agentTraitement->bureau_id, (int) $courrier->bureau_actuel_id);
 
         // ── 6. Registre / recherche / exports ────────────────────────────────
         $this->asUser($this->agentAccueil)
@@ -380,33 +321,21 @@ class ApplicationE2ETest extends TestCase
         $this->asUser($this->agentAccueil)->post(route('courriers.store'), [
             'type' => 'interne',
             'objet' => 'E2E rejet',
+            'bureau_actuel_id' => $this->agentTraitement->bureau_id,
             'date_reception' => now()->toDateString(),
         ])->assertRedirect();
 
         $toReject = Courrier::query()->where('objet', 'E2E rejet')->firstOrFail();
 
-        $this->asUser($this->agentAccueil)->postJson(route('courriers.transfer', $toReject), [
+        $this->asUser($this->agentTraitement)->post(route('courriers.start_processing', $toReject))->assertRedirect();
+        $this->postJson(route('courriers.transfer', $toReject), [
             'nouvelle_etape_id' => $this->etape(2)->id,
-            'action_type' => WorkflowService::ACTION_FORWARD,
+            'action_type' => WorkflowService::ACTION_REJECT,
+            'note_metier' => 'Pièces incomplètes — E2E',
         ])->assertOk();
-
-        $this->asUser($this->agentVisas)->postJson(route('courriers.transfer', $toReject), [
-            'nouvelle_etape_id' => $this->etape(3)->id,
-            'action_type' => WorkflowService::ACTION_FORWARD,
-        ])->assertOk();
-
-        $this->asUser($this->admin)->post(route('courriers.assign', $toReject), [
-            'assigned_to_user_id' => $this->agentTraitement->id,
-        ]);
-
-        $this->asUser($this->agentTraitement)->post(route('courriers.submit_validation', $toReject));
-
-        $this->asUser($this->validateur)->post(route('courriers.reject', $toReject), [
-            'reason' => 'Pièces incomplètes — E2E',
-        ])->assertRedirect();
-
         $toReject->refresh();
-        $this->assertSame((int) $this->etape(3)->id, (int) $toReject->workflow_etape_id);
+        $this->assertTrue($toReject->isAtOrdre(2));
+        $this->assertSame((int) $this->agentTraitement->bureau_id, (int) $toReject->bureau_actuel_id);
 
         // ── 12. Guest bloqué ─────────────────────────────────────────────────
         auth()->logout();

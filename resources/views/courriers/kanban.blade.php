@@ -63,7 +63,7 @@
                                 <div class="min-w-0">
                                     <div class="truncate text-sm font-bold text-gray-800">{{ $etape->libelle }}</div>
                                     <div class="truncate text-[11px] text-gray-500">
-                                        {{ $etape->bureau?->nom }} · {{ $etape->delai_jours }}j
+                                        {{ (int) $etape->ordre < 5 ? $etape->delai_jours.'j' : __('courrier.direct_same_office') }}
                                     </div>
                                 </div>
                             </div>
@@ -81,6 +81,7 @@
                         @forelse($cards as $c)
                             <article class="kanban-card group cursor-grab rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md active:cursor-grabbing {{ $c->is_late ? 'border-rose-300 ring-1 ring-rose-100' : 'border-gray-200' }}"
                                      data-courrier-id="{{ $c->id }}"
+                                     data-can-move="{{ auth()->user()->can('transfer', $c) ? '1' : '0' }}"
                                      data-etape-id="{{ $etape->id }}"
                                      data-etape-ordre="{{ $etape->ordre }}"
                                      data-rejectable="{{ $etape->is_rejectable ? '1' : '0' }}">
@@ -172,6 +173,8 @@
 
             const transferTemplate = board.dataset.transferTemplate;
             const csrf = board.dataset.csrf;
+            const nextOrders = @json($nextOrders);
+            const previousOrders = @json($previousOrders);
             const toastEl = document.getElementById('kanban-toast');
             const rejectModal = document.getElementById('reject-modal');
             const rejectNote = document.getElementById('reject-note');
@@ -197,10 +200,8 @@
             }
 
             function resolveAction(fromOrdre, toOrdre, fromRejectable) {
-                const delta = toOrdre - fromOrdre;
-                if (delta === 1) return 'forward';
-                if (delta === -1) return 'backward';
-                if (delta < -1 && fromRejectable) return 'reject';
+                if (Number(nextOrders[fromOrdre]) === toOrdre) return 'forward';
+                if (Number(previousOrders[fromOrdre]) === toOrdre) return 'backward';
                 return null;
             }
 
@@ -290,6 +291,8 @@
                     animation: 180,
                     easing: 'cubic-bezier(0.2, 0, 0, 1)',
                     draggable: '.kanban-card',
+                    filter: '.kanban-card[data-can-move="0"]',
+                    preventOnFilter: false,
                     ghostClass: 'opacity-40',
                     chosenClass: 'ring-2 ring-slate-300',
                     dragClass: 'shadow-lg',

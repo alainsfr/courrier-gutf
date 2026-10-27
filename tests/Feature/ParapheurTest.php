@@ -89,8 +89,9 @@ class ParapheurTest extends TestCase
 
     public function test_validator_can_approve_pending_visa(): void
     {
+        $this->validator->forceFill(['signature_pin' => \Illuminate\Support\Facades\Hash::make('1234')])->save();
         $this->actingAs($this->validator)
-            ->post(route('parapheur.approve', $this->visa))
+            ->post(route('parapheur.approve', $this->visa), ['signature_pin' => '1234'])
             ->assertRedirect(route('courriers.show', $this->courrier));
 
         $this->visa->refresh();

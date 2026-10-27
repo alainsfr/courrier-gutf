@@ -60,6 +60,7 @@ class CourrierStoreAndPreviewTest extends TestCase
         $this->actingAs($this->agent)
             ->from(route('courriers.create'))
             ->post(route('courriers.store'), [
+                'bureau_actuel_id' => $this->agent->bureau_id,
                 'type' => 'entrant',
             ])
             ->assertRedirect(route('courriers.create'))
@@ -74,6 +75,7 @@ class CourrierStoreAndPreviewTest extends TestCase
         );
 
         $response = $this->actingAs($this->agent)->post(route('courriers.store'), [
+            'bureau_actuel_id' => $this->agent->bureau_id,
             'type' => 'entrant',
             'objet' => 'Test aperçu document',
             'tf' => 'TF-PREVIEW-001',
@@ -86,7 +88,7 @@ class CourrierStoreAndPreviewTest extends TestCase
         $this->assertNotNull($courrier);
         $response->assertRedirect(route('courriers.show', $courrier));
 
-        $this->assertSame(1, (int) $courrier->workflowEtape?->ordre);
+        $this->assertSame(2, (int) $courrier->workflowEtape?->ordre);
         $this->assertNotNull($courrier->bureau_actuel_id);
         $this->assertSame($this->agent->id, (int) $courrier->created_by_user_id);
 
@@ -130,6 +132,7 @@ class CourrierStoreAndPreviewTest extends TestCase
         $pdf = UploadedFile::fake()->create('scan.pdf', 100, 'application/octet-stream');
 
         $response = $this->actingAs($this->agent)->post(route('courriers.store'), [
+            'bureau_actuel_id' => $this->agent->bureau_id,
             'type' => 'entrant',
             'objet' => 'Upload mime souple',
             'date_reception' => now()->toDateString(),
@@ -155,6 +158,7 @@ class CourrierStoreAndPreviewTest extends TestCase
         $assignee->assignRole('agent_courrier');
 
         $payload = [
+            'bureau_actuel_id' => $this->agent->bureau_id,
             'type' => 'entrant',
             'objet' => 'Mutation complète CCT',
             'description' => 'Dossier de test enregistrement complet',
@@ -194,9 +198,9 @@ class CourrierStoreAndPreviewTest extends TestCase
         $this->assertNotNull($courrier->date_limite);
         $this->assertFalse((bool) $courrier->is_late);
 
-        $etapeReception = WorkflowEtape::query()->where('ordre', 1)->first();
+        $etapeReception = WorkflowEtape::query()->where('ordre', 2)->first();
         $this->assertSame($etapeReception?->id, (int) $courrier->workflow_etape_id);
-        $this->assertSame($etapeReception?->bureau_id, (int) $courrier->bureau_actuel_id);
+        $this->assertSame($this->agent->bureau_id, (int) $courrier->bureau_actuel_id);
 
         $history = CourrierHistory::query()
             ->where('courrier_id', $courrier->id)
@@ -212,6 +216,7 @@ class CourrierStoreAndPreviewTest extends TestCase
     {
         foreach (['entrant' => 'ENT', 'sortant' => 'SOR', 'interne' => 'INT'] as $type => $prefix) {
             $response = $this->actingAs($this->agent)->post(route('courriers.store'), [
+                'bureau_actuel_id' => $this->agent->bureau_id,
                 'type' => $type,
                 'objet' => "Courrier {$type}",
                 'date_reception' => now()->toDateString(),
@@ -228,6 +233,7 @@ class CourrierStoreAndPreviewTest extends TestCase
 
         // Second entrant → seq 2
         $this->actingAs($this->agent)->post(route('courriers.store'), [
+            'bureau_actuel_id' => $this->agent->bureau_id,
             'type' => 'entrant',
             'objet' => 'Second entrant',
             'date_reception' => now()->toDateString(),

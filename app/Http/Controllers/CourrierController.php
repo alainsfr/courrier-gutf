@@ -98,7 +98,6 @@ class CourrierController extends Controller
             ->get(['id', 'name', 'email']);
 
         $etapes = WorkflowEtape::query()
-            ->when(! $isAdmin && $user->bureau_id, fn ($q) => $q->where('bureau_id', $user->bureau_id))
             ->orderBy('ordre')
             ->get(['id', 'libelle', 'ordre', 'ui_color']);
 
@@ -190,8 +189,10 @@ class CourrierController extends Controller
     {
         $this->authorize('create', Courrier::class);
 
-        $agents = User::orderBy('name')->get(['id', 'name', 'email']);
-        return view('courriers.create', compact('agents'));
+        $agents = User::where('is_active', true)->whereNotNull('bureau_id')->orderBy('name')->get(['id', 'name', 'email', 'bureau_id']);
+        $bureaux = Bureau::where('is_active', true)->orderBy('ordre')->orderBy('nom')->get(['id', 'nom']);
+
+        return view('courriers.create', compact('agents', 'bureaux'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -216,25 +217,28 @@ class CourrierController extends Controller
             'date_courrier' => ['nullable', 'date'],
             'date_reception' => ['nullable', 'date'],
             'date_envoi' => ['nullable', 'date'],
-            'assigned_to_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'bureau_actuel_id' => ['required', 'integer', Rule::exists('bureaux', 'id')->where('is_active', true)],
+            'assigned_to_user_id' => ['nullable', 'integer', Rule::exists('users', 'id')
+                ->where('bureau_id', $request->input('bureau_actuel_id'))->where('is_active', true)],
             'document_file' => ['nullable', 'file', 'max:10240', 'extensions:pdf,jpg,jpeg,png'],
         ]);
 
         unset($validated['document_file']);
 
         $courrier = DB::transaction(function () use ($validated, $request) {
-            $etapeReception = WorkflowEtape::query()
+            $etapeInitiale = WorkflowEtape::query()
                 ->with('bureau:id,nom,code')
-                ->where('ordre', 1)
+                ->where('ordre', Courrier::ETAPE_ANALYSE)
                 ->first();
 
-            if (! $etapeReception) {
+            if (! $etapeInitiale) {
                 throw new RuntimeException(
-                    'Étape « Réception » (ordre 1) introuvable. Exécutez WorkflowEtapesSeeder.'
+                    'Étape « À traiter » introuvable. Exécutez WorkflowEtapesSeeder.'
                 );
             }
 
-            $dateLimite = $this->workflowService->calculerDateLimite($etapeReception);
+            $dateLimite = $this->workflowService->calculerDateLimite($etapeInitiale);
+            $bureauDestinataire = Bureau::where('is_active', true)->findOrFail($validated['bureau_actuel_id']);
 
             $year = now()->year;
             $seq = (Courrier::where('type', $validated['type'])->where('year', $year)->max('seq') ?? 0) + 1;
@@ -244,7 +248,7 @@ class CourrierController extends Controller
                 default => 'ENT',
             };
 
-            $etapeLabel = $etapeReception->libelle;
+            $etapeLabel = $etapeInitiale->libelle;
 
             $courrier = Courrier::create([
                 ...$validated,
@@ -252,8 +256,8 @@ class CourrierController extends Controller
                 'seq' => $seq,
                 'reference_interne' => sprintf('GUTF-%s-%d-%06d', $prefix, $year, $seq),
                 'created_by_user_id' => Auth::id(),
-                'workflow_etape_id' => $etapeReception->id,
-                'bureau_actuel_id' => $etapeReception->bureau_id,
+                'workflow_etape_id' => $etapeInitiale->id,
+                'bureau_actuel_id' => $bureauDestinataire->id,
                 'date_limite' => $dateLimite,
                 'is_late' => false,
             ]);
@@ -265,18 +269,18 @@ class CourrierController extends Controller
                 'from_status' => null,
                 'to_status' => $etapeLabel,
                 'ancienne_etape_id' => null,
-                'nouvelle_etape_id' => $etapeReception->id,
+                'nouvelle_etape_id' => $etapeInitiale->id,
                 'note_metier' => null,
                 'action_type' => null,
                 'actor_user_id' => Auth::id(),
                 'metadata' => [
                     'reference_interne' => $courrier->reference_interne,
                     'tf' => $courrier->tf,
-                    'bureau_id' => $etapeReception->bureau_id,
-                    'bureau_nom' => $etapeReception->bureau?->nom,
-                    'etape_libelle' => $etapeReception->libelle,
-                    'etape_ordre' => $etapeReception->ordre,
-                    'delai_jours' => $etapeReception->delai_jours,
+                    'bureau_id' => $bureauDestinataire->id,
+                    'bureau_nom' => $bureauDestinataire->nom,
+                    'etape_libelle' => $etapeInitiale->libelle,
+                    'etape_ordre' => $etapeInitiale->ordre,
+                    'delai_jours' => $etapeInitiale->delai_jours,
                     'date_limite' => $dateLimite?->toIso8601String(),
                 ],
                 'created_at' => now(),
@@ -295,6 +299,12 @@ class CourrierController extends Controller
 
             return $courrier;
         });
+
+        $recipients = User::where('bureau_id', $courrier->bureau_actuel_id)->where('is_active', true)->get()
+            ->filter(fn (User $recipient) => $recipient->id !== Auth::id() && $recipient->can('view', $courrier));
+        $this->notifyUsers($recipients->all(), __('notifications.courrier_assigned_title'),
+            __('notifications.courrier_assigned_msg', ['ref' => $courrier->reference_interne]),
+            route('courriers.show', $courrier), ['type' => 'assigned', 'courrier_id' => $courrier->id]);
 
         return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-created');
     }
@@ -345,11 +355,8 @@ class CourrierController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'email']);
 
-        $agents = User::query()
-            ->when(
-                ! $user?->hasRole(['admin', 'super-admin']) && $courrier->bureau_actuel_id,
-                fn ($q) => $q->where('bureau_id', $courrier->bureau_actuel_id)
-            )
+        $agents = User::query()->where('is_active', true)
+            ->where('bureau_id', $courrier->bureau_actuel_id)
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
@@ -357,10 +364,10 @@ class CourrierController extends Controller
         $prevEtape = null;
         if ($courrier->workflowEtape) {
             $nextEtape = WorkflowEtape::query()
-                ->where('ordre', (int) $courrier->workflowEtape->ordre + 1)
+                ->where('ordre', $this->workflowService->nextOrder((int) $courrier->workflowEtape->ordre))
                 ->first();
             $prevEtape = WorkflowEtape::query()
-                ->where('ordre', (int) $courrier->workflowEtape->ordre - 1)
+                ->where('ordre', $this->workflowService->previousOrder((int) $courrier->workflowEtape->ordre))
                 ->first();
         }
 
@@ -375,6 +382,8 @@ class CourrierController extends Controller
 
         $canActOnBureau = $user
             && $user->can('transfer', $courrier);
+        $canAdvance = $nextEtape && $user->can($this->workflowService->transitionAbility((int) $courrier->workflowEtape->ordre, (int) $nextEtape->ordre), $courrier);
+        $canReturn = $prevEtape && $user->can($this->workflowService->transitionAbility((int) $courrier->workflowEtape->ordre, (int) $prevEtape->ordre), $courrier);
 
         return view('courriers.show', compact(
             'courrier',
@@ -383,6 +392,8 @@ class CourrierController extends Controller
             'prevEtape',
             'previewAttachment',
             'canActOnBureau',
+            'canAdvance',
+            'canReturn',
             'pendingVisa',
             'hasPendingVisa',
             'parapheurValidators'
@@ -477,7 +488,8 @@ class CourrierController extends Controller
         $this->authorize('assign', $courrier);
 
         $validated = $request->validate([
-            'assigned_to_user_id' => ['required', 'integer', 'exists:users,id'],
+            'assigned_to_user_id' => ['required', 'integer', Rule::exists('users', 'id')
+                ->where('bureau_id', $courrier->bureau_actuel_id)->where('is_active', true)],
         ]);
 
         $etapeLabel = $courrier->workflowEtape?->libelle;
@@ -521,12 +533,12 @@ class CourrierController extends Controller
         return back()->with('status', 'courrier-processing-started');
     }
 
-    public function submitForValidation(Courrier $courrier): RedirectResponse
+    public function complete(Courrier $courrier): RedirectResponse
     {
         $this->authorize('process', $courrier);
         abort_unless($courrier->isAtOrdre(Courrier::ETAPE_TRAITEMENT), 422);
 
-        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_VALIDATION)->firstOrFail();
+        $cible = WorkflowEtape::query()->where('ordre', Courrier::ETAPE_SORTIE)->firstOrFail();
         $this->workflowService->transfererCourrier(
             $courrier,
             (int) $cible->id,
@@ -535,18 +547,7 @@ class CourrierController extends Controller
             WorkflowService::ACTION_FORWARD
         );
 
-        $validators = User::role('validateur')->get()
-            ->reject(fn (User $u) => (int) $u->id === (int) Auth::id());
-
-        $this->notifyUsers(
-            $validators->all(),
-            __('notifications.courrier_validation_title'),
-            __('notifications.courrier_validation_msg', ['ref' => $courrier->reference_interne]),
-            route('courriers.show', $courrier),
-            ['type' => 'validation', 'courrier_id' => $courrier->id]
-        );
-
-        return back()->with('status', 'courrier-submitted');
+        return back()->with('status', 'courrier-completed');
     }
 
     public function validateCourrier(Courrier $courrier): RedirectResponse

@@ -95,11 +95,6 @@
     {{-- KPI --}}
     <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         @php
-            $hasReception = $byEtape->contains(fn ($e) => (int) $e->ordre === 1) || $isAdmin;
-            $hasValidation = $byEtape->contains(fn ($e) => (int) $e->ordre === 4)
-                || $isAdmin
-                || auth()->user()?->can('courrier.validate');
-
             $kpis = collect([
                 [
                     'label' => __('app.kpi_active'),
@@ -116,18 +111,18 @@
                     'show' => true,
                 ],
                 [
-                    'label' => __('app.kpi_validation'),
-                    'value' => $kpiValidation,
+                    'label' => __('app.kpi_completed'),
+                    'value' => $kpiCompleted,
                     'tone' => 'accent',
-                    'href' => route('courriers.index', ['workflow_etape_id' => $byEtape->firstWhere('ordre', 4)?->id]),
-                    'show' => $hasValidation,
+                    'href' => route('courriers.index', ['workflow_etape_id' => $byEtape->firstWhere('ordre', 5)?->id]),
+                    'show' => true,
                 ],
                 [
-                    'label' => __('app.kpi_reception'),
-                    'value' => $kpiReception,
+                    'label' => __('app.kpi_pending'),
+                    'value' => $kpiPending,
                     'tone' => 'muted',
-                    'href' => route('courriers.index', ['workflow_etape_id' => $byEtape->firstWhere('ordre', 1)?->id]),
-                    'show' => $hasReception,
+                    'href' => route('courriers.index', ['workflow_etape_id' => $byEtape->firstWhere('ordre', 2)?->id]),
+                    'show' => true,
                 ],
                 [
                     'label' => __('app.kpi_in_progress'),

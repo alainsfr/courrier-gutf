@@ -35,8 +35,7 @@ class CourrierPolicy
             return true;
         }
 
-        // Validateur : accès aux plis en attente de validation (étape 4)
-        if ($user->can('courrier.validate') && $courrier->isEnValidation()) {
+        if ($user->can('courrier.validate') && $courrier->isEnValidation() && $this->isInCurrentBureau($user, $courrier)) {
             return true;
         }
 
@@ -74,11 +73,13 @@ class CourrierPolicy
      */
     public function transfer(User $user, Courrier $courrier): bool
     {
-        if (! $user->can('courrier.view')) {
+        if ($courrier->isArchived() || ! $user->can('courrier.view')) {
             return false;
         }
 
-        return $this->isInCurrentBureau($user, $courrier);
+        return $this->isInCurrentBureau($user, $courrier)
+            && ($user->can('courrier.process') || $user->can('courrier.assign')
+                || $user->can('courrier.validate') || $user->can('courrier.archive'));
     }
 
     public function process(User $user, Courrier $courrier): bool
@@ -87,8 +88,9 @@ class CourrierPolicy
             return false;
         }
 
-        // Seul l'assigné peut démarrer / soumettre le traitement
-        return (int) $courrier->assigned_to_user_id === (int) $user->id;
+        // Sans agent désigné, le bureau peut prendre en charge le traitement.
+        return $this->isInCurrentBureau($user, $courrier)
+            && (! $courrier->assigned_to_user_id || (int) $courrier->assigned_to_user_id === (int) $user->id);
     }
 
     public function validate(User $user, Courrier $courrier): bool
@@ -111,7 +113,8 @@ class CourrierPolicy
 
     public function archive(User $user, Courrier $courrier): bool
     {
-        return $user->can('courrier.archive');
+        return $user->can('courrier.archive') && $this->isInCurrentBureau($user, $courrier)
+            && (! $courrier->assigned_to_user_id || (int) $courrier->assigned_to_user_id === (int) $user->id);
     }
 
     public function attach(User $user, Courrier $courrier): bool

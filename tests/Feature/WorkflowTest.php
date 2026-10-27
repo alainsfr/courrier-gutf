@@ -37,12 +37,14 @@ class WorkflowTest extends TestCase
         $this->agent->assignRole('agent_courrier');
     }
 
-    public function test_store_assigns_reception_etape_and_bureau(): void
+    public function test_store_assigns_the_chosen_office_and_pending_stage(): void
     {
-        $etape1 = WorkflowEtape::query()->where('ordre', 1)->firstOrFail();
+        $etape1 = WorkflowEtape::query()->where('ordre', 2)->firstOrFail();
+        $destination = WorkflowEtape::where('ordre', 3)->value('bureau_id');
 
         $response = $this->actingAs($this->agent)->post(route('courriers.store'), [
             'type' => 'entrant',
+            'bureau_actuel_id' => $destination,
             'objet' => 'Dossier workflow test',
             'tf' => 'TF-TEST-001',
             'proprietaire' => 'Jean Dupont',
@@ -55,7 +57,7 @@ class WorkflowTest extends TestCase
         $response->assertRedirect(route('courriers.show', $courrier));
 
         $this->assertSame((int) $etape1->id, (int) $courrier->workflow_etape_id);
-        $this->assertSame((int) $etape1->bureau_id, (int) $courrier->bureau_actuel_id);
+        $this->assertSame((int) $destination, (int) $courrier->bureau_actuel_id);
         $this->assertFalse((bool) $courrier->is_late);
         $this->assertNotNull($courrier->date_limite);
         $this->assertSame('TF-TEST-001', $courrier->tf);
@@ -68,7 +70,7 @@ class WorkflowTest extends TestCase
         ]);
     }
 
-    public function test_transfer_moves_courrier_to_etape_2_and_writes_history(): void
+    public function test_legacy_reception_advances_without_changing_the_responsible_office(): void
     {
         $etape1 = WorkflowEtape::query()->where('ordre', 1)->firstOrFail();
         $etape2 = WorkflowEtape::query()->where('ordre', 2)->firstOrFail();
@@ -98,7 +100,7 @@ class WorkflowTest extends TestCase
 
         $courrier->refresh();
         $this->assertSame((int) $etape2->id, (int) $courrier->workflow_etape_id);
-        $this->assertSame((int) $etape2->bureau_id, (int) $courrier->bureau_actuel_id);
+        $this->assertSame((int) $etape1->bureau_id, (int) $courrier->bureau_actuel_id);
 
         $history = CourrierHistory::query()
             ->where('courrier_id', $courrier->id)

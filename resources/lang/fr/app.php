@@ -16,8 +16,10 @@ return [
     'kpi_archived' => 'Archivés',
     'kpi_late' => 'En retard',
     'kpi_validation' => 'À valider',
+    'kpi_completed' => 'Terminés',
     'kpi_this_month' => 'Ce mois',
     'kpi_reception' => 'À la réception',
+    'kpi_pending' => 'À traiter',
     'kpi_active' => 'Actifs',
 
     'attention_banner' => ':count courrier en retard nécessite votre attention.|:count courriers en retard nécessitent votre attention.',

@@ -19,7 +19,7 @@ class WorkflowController extends Controller
     ) {}
 
     /**
-     * Tableau Kanban : colonnes = étapes du bureau de l'agent (toutes pour admin).
+     * Tableau Kanban : avancement des courriers du bureau responsable.
      */
     public function kanban(Request $request): View
     {
@@ -38,16 +38,6 @@ class WorkflowController extends Controller
         $etapesQuery = WorkflowEtape::query()
             ->with('bureau:id,nom,code,icon,color')
             ->orderBy('ordre');
-
-        // Agents : uniquement les étapes de leur bureau (ex. Traitement seul)
-        // Admin avec filtre bureau : idem. Admin sans filtre : circuit complet.
-        if ($bureauId) {
-            $etapesQuery->where('bureau_id', $bureauId);
-        } elseif (! $isAdmin) {
-            $etapesQuery->whereRaw('1 = 0');
-        }
-
-        $etapes = $etapesQuery->get();
 
         $query = Courrier::query()
             ->with([
@@ -68,12 +58,10 @@ class WorkflowController extends Controller
             });
         }
 
-        // Ne charger que les plis des étapes visibles
-        if ($etapes->isNotEmpty()) {
-            $query->whereIn('workflow_etape_id', $etapes->pluck('id'));
-        } elseif (! $isAdmin) {
-            $query->whereRaw('1 = 0');
-        }
+        $legacyIds = (clone $query)->whereHas('workflowEtape', fn ($q) => $q->whereIn('ordre', [1, 4]))
+            ->distinct()->pluck('workflow_etape_id');
+        $legacyOrders = WorkflowEtape::whereIn('id', $legacyIds)->pluck('ordre')->all();
+        $etapes = $etapesQuery->whereIn('ordre', array_merge(WorkflowService::DIRECT_ORDERS, $legacyOrders))->get();
 
         $courriersByEtape = $query
             ->latest('id')
@@ -95,6 +83,8 @@ class WorkflowController extends Controller
             'bureaux' => $bureaux,
             'isAdmin' => $isAdmin,
             'transferUrlTemplate' => url('/courriers/__ID__/transfer'),
+            'nextOrders' => collect([1, 2, 3, 4, 5, 6])->mapWithKeys(fn ($order) => [$order => $this->workflowService->nextOrder($order)]),
+            'previousOrders' => collect([1, 2, 3, 4, 5, 6])->mapWithKeys(fn ($order) => [$order => $this->workflowService->previousOrder($order)]),
         ]);
     }
 
@@ -134,6 +124,8 @@ class WorkflowController extends Controller
             }
 
             throw $e;
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -148,8 +140,6 @@ class WorkflowController extends Controller
         $courrier->refresh()->load(['workflowEtape', 'bureauActuel']);
 
         if (! $request->expectsJson()) {
-            // Après un transfert hors bureau, l'agent perd souvent le droit "view" :
-            // éviter un 403 sur la fiche en renvoyant vers le Kanban.
             if ($request->user()?->can('view', $courrier)) {
                 return redirect()
                     ->route('courriers.show', $courrier)
@@ -163,7 +153,7 @@ class WorkflowController extends Controller
 
         return response()->json([
             'ok' => true,
-            'message' => 'Courrier transféré.',
+            'message' => 'Avancement du courrier mis à jour.',
             'action_type' => $actionType,
             'history_id' => $history->id,
             'courrier' => [
@@ -182,18 +172,12 @@ class WorkflowController extends Controller
             return WorkflowService::ACTION_FORWARD;
         }
 
-        $delta = (int) $to->ordre - (int) $from->ordre;
-
-        if ($delta === 1) {
+        if ((int) $to->ordre === $this->workflowService->nextOrder((int) $from->ordre)) {
             return WorkflowService::ACTION_FORWARD;
         }
 
-        if ($delta === -1) {
+        if ((int) $to->ordre === $this->workflowService->previousOrder((int) $from->ordre)) {
             return WorkflowService::ACTION_BACKWARD;
-        }
-
-        if ($delta < -1) {
-            return WorkflowService::ACTION_REJECT;
         }
 
         throw ValidationException::withMessages([

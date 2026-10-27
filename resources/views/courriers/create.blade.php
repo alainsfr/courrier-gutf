@@ -117,11 +117,21 @@
                         <input type="number" step="0.01" min="0" name="valeur_immeuble" value="{{ old('valeur_immeuble') }}" placeholder="0.00" class="{{ $input }}">
                     </div>
                     <div>
+                        <label for="bureau-destinataire" class="{{ $label }}">{{ __('courrier.destination_office') }} <span class="text-rose-500">*</span></label>
+                        <select id="bureau-destinataire" name="bureau_actuel_id" required class="{{ $input }}">
+                            <option value="">{{ __('courrier.destination_office_choose') }}</option>
+                            @foreach($bureaux as $bureau)
+                                <option value="{{ $bureau->id }}" @selected((string) old('bureau_actuel_id') === (string) $bureau->id)>{{ $bureau->nom }}</option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1.5 text-xs text-gray-500">{{ __('courrier.form_assign_help') }}</p>
+                    </div>
+                    <div>
                         <label class="{{ $label }}">{{ __('courrier.assign_to') }}</label>
-                        <select name="assigned_to_user_id" class="{{ $input }}">
+                        <select id="agent-destinataire" name="assigned_to_user_id" class="{{ $input }}">
                             <option value="">{{ __('courrier.assign_none') }}</option>
                             @foreach($agents as $a)
-                                <option value="{{ $a->id }}" @selected(old('assigned_to_user_id') == $a->id)>
+                                <option value="{{ $a->id }}" data-bureau-id="{{ $a->bureau_id }}" @selected(old('assigned_to_user_id') == $a->id)>
                                     {{ $a->name }} ({{ $a->email }})
                                 </option>
                             @endforeach
@@ -155,4 +165,24 @@
             </div>
         </div>
     </form>
+    @push('scripts')
+    <script>
+        (() => {
+            const office = document.getElementById('bureau-destinataire');
+            const agent = document.getElementById('agent-destinataire');
+            const filterAgents = () => {
+                for (const option of agent.options) {
+                    if (!option.value) continue;
+                    const available = option.dataset.bureauId === office.value;
+                    option.hidden = !available;
+                    option.disabled = !available;
+                    if (!available && option.selected) agent.value = '';
+                }
+                agent.disabled = !office.value;
+            };
+            office.addEventListener('change', filterAgents);
+            filterAgents();
+        })();
+    </script>
+    @endpush
 </x-app-layout>

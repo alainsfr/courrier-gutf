@@ -10,6 +10,7 @@ use App\Models\WorkflowEtape;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
@@ -19,8 +20,40 @@ class WorkflowService
     public const ACTION_BACKWARD = 'backward';
     public const ACTION_REJECT = 'reject';
 
+    public const DIRECT_ORDERS = [2, 3, 5, 6];
+
+    public function nextOrder(int $order): ?int
+    {
+        return match ($order) {
+            1 => 2,
+            2 => 3,
+            3, 4 => 5,
+            5 => 6,
+            default => null,
+        };
+    }
+
+    public function previousOrder(int $order): ?int
+    {
+        return match ($order) {
+            3 => 2,
+            4, 5 => 3,
+            default => null,
+        };
+    }
+
+    public function transitionAbility(int $fromOrder, int $toOrder): string
+    {
+        return match ($fromOrder) {
+            1 => 'assign',
+            4 => 'validate',
+            5 => $toOrder === 6 ? 'archive' : 'process',
+            default => 'process',
+        };
+    }
+
     /**
-     * Transfert hybride CCT + UX SaaS.
+     * Fait avancer le traitement sans changer le bureau responsable.
      *
      * @param  string  $actionType  forward|backward|reject
      */
@@ -60,6 +93,11 @@ class WorkflowService
 
             $ancienneEtape = $courrier->workflowEtape;
 
+            // A stage changes the progress of the dossier, never its responsible office.
+            Gate::forUser($user)->authorize('transfer', $courrier);
+            $ability = $this->transitionAbility((int) $ancienneEtape?->ordre, (int) $nouvelleEtape->ordre);
+            Gate::forUser($user)->authorize($ability, $courrier);
+
             $this->assertActionValide($ancienneEtape, $nouvelleEtape, $actionType);
 
             $fromLabel = $ancienneEtape?->libelle;
@@ -71,10 +109,11 @@ class WorkflowService
 
             $courrier->forceFill([
                 'workflow_etape_id' => $nouvelleEtape->id,
-                'bureau_actuel_id' => $nouvelleEtape->bureau_id,
                 'date_limite' => $dateLimite,
                 'is_late' => false,
                 'archived_at' => (int) $nouvelleEtape->ordre === 6 ? now() : null,
+                'validated_by_user_id' => (int) $nouvelleEtape->ordre >= 5 ? ($courrier->validated_by_user_id ?? $user->id) : null,
+                'validated_at' => (int) $nouvelleEtape->ordre >= 5 ? ($courrier->validated_at ?? now()) : null,
             ])->save();
 
             $history = CourrierHistory::create([
@@ -88,8 +127,8 @@ class WorkflowService
                 'action_type' => $actionType,
                 'actor_user_id' => $user->id,
                 'metadata' => [
-                    'bureau_id' => $nouvelleEtape->bureau_id,
-                    'bureau_nom' => $nouvelleEtape->bureau?->nom,
+                    'bureau_id' => $courrier->bureau_actuel_id,
+                    'bureau_nom' => $courrier->bureauActuel?->nom,
                     'etape_libelle' => $nouvelleEtape->libelle,
                     'etape_ordre' => $nouvelleEtape->ordre,
                     'ui_color' => $nouvelleEtape->ui_color,
@@ -149,9 +188,9 @@ class WorkflowService
             return;
         }
 
-        if ((int) $cible->ordre !== ((int) $actuelle->ordre + 1)) {
+        if ((int) $cible->ordre !== $this->nextOrder((int) $actuelle->ordre)) {
             throw ValidationException::withMessages([
-                'workflow_etape_id' => "Avancement non séquentiel : depuis « {$actuelle->libelle} », seule l'étape suivante est autorisée.",
+                'workflow_etape_id' => "Depuis « {$actuelle->libelle} », seule la prochaine étape du traitement est autorisée.",
             ]);
         }
     }
@@ -164,7 +203,7 @@ class WorkflowService
             ]);
         }
 
-        if ((int) $cible->ordre !== ((int) $actuelle->ordre - 1) || (int) $cible->ordre < 1) {
+        if ((int) $cible->ordre !== $this->previousOrder((int) $actuelle->ordre)) {
             throw ValidationException::withMessages([
                 'workflow_etape_id' => "Recul non séquentiel : depuis « {$actuelle->libelle} », seule l'étape précédente est autorisée.",
             ]);
@@ -185,8 +224,7 @@ class WorkflowService
             ]);
         }
 
-        // Rejet CCT : retour strictement en arrière dans le circuit
-        if ((int) $cible->ordre >= (int) $actuelle->ordre) {
+        if ((int) $cible->ordre !== $this->previousOrder((int) $actuelle->ordre)) {
             throw ValidationException::withMessages([
                 'workflow_etape_id' => 'Un rejet doit cibler une étape antérieure du circuit.',
             ]);
@@ -207,11 +245,11 @@ class WorkflowService
 
     /**
      * SLA CCT : now + delai_jours en jours ouvrés (week-ends exclus).
-     * Archivage (ordre 6) → plus de date limite.
+     * Traitement terminé ou archivé : plus de date limite.
      */
     public function calculerDateLimite(WorkflowEtape $etape): ?CarbonInterface
     {
-        if ((int) $etape->ordre === 6) {
+        if ((int) $etape->ordre >= 5) {
             return null;
         }
 

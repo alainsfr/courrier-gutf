@@ -16,8 +16,10 @@ return [
     'kpi_archived' => 'Archived',
     'kpi_late' => 'Overdue',
     'kpi_validation' => 'To validate',
+    'kpi_completed' => 'Completed',
     'kpi_this_month' => 'This month',
     'kpi_reception' => 'At reception',
+    'kpi_pending' => 'To process',
     'kpi_active' => 'Active',
 
     'attention_banner' => ':count overdue item needs attention.|:count overdue items need attention.',

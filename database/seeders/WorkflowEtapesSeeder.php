@@ -33,7 +33,7 @@ class WorkflowEtapesSeeder extends Seeder
             ],
             [
                 'ordre' => 2,
-                'libelle' => 'Analyse',
+                'libelle' => 'À traiter',
                 'bureau_code' => 'visas_controles',
                 'delai_jours' => 2,
                 'is_rejectable' => true,
@@ -42,7 +42,7 @@ class WorkflowEtapesSeeder extends Seeder
             ],
             [
                 'ordre' => 3,
-                'libelle' => 'Traitement',
+                'libelle' => 'En traitement',
                 'bureau_code' => 'livre_foncier',
                 'delai_jours' => 5,
                 'is_rejectable' => true,
@@ -60,7 +60,7 @@ class WorkflowEtapesSeeder extends Seeder
             ],
             [
                 'ordre' => 5,
-                'libelle' => 'Sortie',
+                'libelle' => 'Terminé',
                 'bureau_code' => 'enregistrement_fiscal',
                 'delai_jours' => 2,
                 'is_rejectable' => false,
@@ -69,7 +69,7 @@ class WorkflowEtapesSeeder extends Seeder
             ],
             [
                 'ordre' => 6,
-                'libelle' => 'Archivage',
+                'libelle' => 'Archivé',
                 'bureau_code' => 'archives',
                 'delai_jours' => 1,
                 'is_rejectable' => false,

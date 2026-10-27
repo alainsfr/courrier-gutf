@@ -241,10 +241,6 @@ class CourrierQueryService
             $sub->where('created_by_user_id', $user->id)
                 ->orWhere('assigned_to_user_id', $user->id);
 
-            if ($user->can('courrier.validate')) {
-                $sub->orWhereHas('workflowEtape', fn (Builder $e) => $e->where('ordre', Courrier::ETAPE_VALIDATION));
-            }
-
             if ($user->bureau_id) {
                 $sub->orWhere('bureau_actuel_id', $user->bureau_id);
             }

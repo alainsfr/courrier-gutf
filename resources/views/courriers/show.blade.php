@@ -32,7 +32,7 @@
 
     @if (session('status'))
         <div class="mb-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-            {{ session('status') === 'workflow-transferred' ? __('courrier.show_transfer_ok') : session('status') }}
+            {{ match (session('status')) { 'workflow-transferred' => __('courrier.show_transfer_ok'), 'courrier-completed' => __('courrier.direct_completed'), default => session('status') } }}
         </div>
     @endif
 
@@ -333,19 +333,19 @@
 
                 @if($canActOnBureau && ! $courrier->isArchived())
                     <div class="space-y-2">
-                        @if($nextEtape)
-                            <form method="POST" action="{{ route('courriers.transfer', $courrier) }}">
+                        @if($nextEtape && $canAdvance)
+                            <form method="POST" action="{{ $courrier->isAtOrdre(3) ? route('courriers.complete', $courrier) : route('courriers.transfer', $courrier) }}">
                                 @csrf
                                 <input type="hidden" name="nouvelle_etape_id" value="{{ $nextEtape->id }}">
                                 <input type="hidden" name="action_type" value="forward">
                                 <x-buttons.primary type="submit" class="w-full">
-                                    {{ __('courrier.show_action_validate') }}
+                                    {{ match ((int) $nextEtape->ordre) { 3 => __('courrier.direct_start'), 5 => __('courrier.direct_complete'), 6 => __('courrier.archive'), default => __('courrier.show_action_validate') } }}
                                     <span class="text-[11px] font-normal opacity-90">→ {{ $nextEtape->libelle }}</span>
                                 </x-buttons.primary>
                             </form>
                         @endif
 
-                        @if($prevEtape && $courrier->workflowEtape?->is_rejectable)
+                        @if($prevEtape && $canReturn && $courrier->workflowEtape?->is_rejectable)
                             <form method="POST" action="{{ route('courriers.transfer', $courrier) }}" class="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
                                 @csrf
                                 <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
@@ -360,7 +360,7 @@
                             </form>
                         @endif
 
-                        @if($prevEtape)
+                        @if($prevEtape && $canReturn)
                             <form method="POST" action="{{ route('courriers.transfer', $courrier) }}">
                                 @csrf
                                 <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
@@ -372,7 +372,7 @@
                             </form>
                         @endif
 
-                        @if(! $nextEtape && ! $prevEtape)
+                        @if(! $canAdvance && ! $canReturn)
                             <p class="mb-0 text-xs text-gray-500">{{ __('courrier.show_actions_none') }}</p>
                         @endif
                     </div>

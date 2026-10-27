@@ -33,7 +33,7 @@ return [
     'empty' => 'No mail items yet.',
 
     'create_title' => 'Register mail',
-    'create_subtitle' => 'The dossier starts at the Reception stage.',
+    'create_subtitle' => 'Register the mail and assign it directly to the responsible office.',
     'back' => 'Back',
     'description' => 'Description',
     'external_ref' => 'External reference',
@@ -49,9 +49,15 @@ return [
     'form_section_acte' => 'Deed & property',
     'form_section_dates' => 'Tracking dates',
     'form_section_assign' => 'Assignment (optional)',
-    'form_assign_help' => 'Current office remains Accueil (Reception); user assignment is complementary.',
+    'form_assign_help' => 'The selected office handles the mail through completion and archiving.',
     'form_workflow_hint_title' => 'Kanban circuit',
-    'form_workflow_hint' => 'On save, the mail is placed on the « Reception » step, linked to Accueil office, with a deadline from the step SLA.',
+    'form_workflow_hint' => 'The selected office receives the mail immediately: To process → In progress → Completed → Archived.',
+    'destination_office' => 'Responsible office',
+    'destination_office_choose' => 'Choose the office responsible for processing',
+    'direct_start' => 'Start processing',
+    'direct_complete' => 'Complete processing',
+    'direct_completed' => 'Processing completed. The responsible office can now archive the mail.',
+    'direct_same_office' => 'Same responsible office',
 
     'field_tf' => 'Land title no. (TF)',
     'field_tf_placeholder' => 'e.g. TF 12345 / Douala',
@@ -66,8 +72,8 @@ return [
     'field_numero_acte' => 'Deed number',
     'field_numero_repertoire' => 'Register number',
 
-    'assign_to' => 'Assign to',
-    'assign_none' => 'Do not assign (V1)',
+    'assign_to' => 'Responsible agent (optional)',
+    'assign_none' => 'Let the office appoint an agent',
     'assign' => 'Assign',
 
     'save' => 'Save',
@@ -196,7 +202,7 @@ return [
     'export_summary_count' => 'Count',
 
     'kanban_title' => 'Kanban board',
-    'kanban_subtitle' => 'Processing circuit by office.',
+    'kanban_subtitle' => 'Mail progress within the responsible office.',
     'kanban_bureau' => 'Bureau: :bureau',
     'kanban_all_bureaux' => 'All bureaux',
     'kanban_list_view' => 'List view',
@@ -261,7 +267,7 @@ return [
     'bordereau_footer' => 'Slip :ref — generated on :date',
     'show_tf' => 'TF / external ref.',
     'show_owner' => 'Owner / party',
-    'show_bureau' => 'Current bureau',
+    'show_bureau' => 'Responsible office',
     'show_actions_title' => 'Processing actions',
     'show_action_validate' => 'Validate',
     'show_action_reject' => 'Reject',
@@ -269,5 +275,5 @@ return [
     'show_actions_none' => 'No transition available on this step.',
     'show_actions_locked' => 'Actions reserved for agents of bureau: :bureau.',
     'show_archived' => 'Archived file — actions closed.',
-    'show_transfer_ok' => 'Workflow transfer saved.',
+    'show_transfer_ok' => 'Processing progress saved.',
 ];

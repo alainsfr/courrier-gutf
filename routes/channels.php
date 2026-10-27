@@ -6,13 +6,13 @@ use App\Models\Courrier;
 use App\Models\Bureau;
 
 Broadcast::channel('conversations.{conversationId}', function ($user, $conversationId) {
-    return ConversationParticipant::where('conversation_id', (int) $conversationId)
+    return $user->is_active && $user->can('chat.view') && ConversationParticipant::where('conversation_id', (int) $conversationId)
         ->where('user_id', $user->id)
         ->exists();
 });
 
 Broadcast::channel('courriers.{courrierId}', function ($user, $courrierId) {
-    if (! $user->can('courrier.view')) {
+    if (! $user->is_active || ! $user->can('courrier.view')) {
         return false;
     }
 
@@ -26,11 +26,13 @@ Broadcast::channel('courriers.{courrierId}', function ($user, $courrierId) {
         return false;
     }
 
-    return (int) $courrier->created_by_user_id === (int) $user->id
-        || (int) $courrier->assigned_to_user_id === (int) $user->id
-        || ($user->can('courrier.validate') && $courrier->isEnValidation());
+    return $user->can('view', $courrier);
 });
 
 Broadcast::channel('bureaux.{bureauId}', function ($user, $bureauId) {
-    return $user->can('courrier.view') && Bureau::query()->whereKey((int) $bureauId)->exists();
+    return $user->is_active && $user->can('courrier.view')
+        && ($user->hasAnyRole(['admin', 'super-admin']) || (int) $user->bureau_id === (int) $bureauId)
+        && Bureau::query()->whereKey((int) $bureauId)->exists();
 });
+
+Broadcast::channel('users.{userId}', fn ($user, $userId) => $user->is_active && (int) $user->id === (int) $userId);

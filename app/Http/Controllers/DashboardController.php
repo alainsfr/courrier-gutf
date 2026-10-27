@@ -6,6 +6,7 @@ use App\Models\ConversationParticipant;
 use App\Models\Courrier;
 use App\Models\WorkflowEtape;
 use App\Services\StatisticsService;
+use App\Services\WorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -31,12 +32,6 @@ class DashboardController extends Controller
                     $sub->orWhere('bureau_actuel_id', $user->bureau_id);
                 }
 
-                if ($user->can('courrier.validate')) {
-                    $sub->orWhereHas(
-                        'workflowEtape',
-                        fn ($e) => $e->where('ordre', Courrier::ETAPE_VALIDATION)
-                    );
-                }
             });
         }
 
@@ -51,20 +46,17 @@ class DashboardController extends Controller
                 ->orWhereHas('workflowEtape', fn ($e) => $e->where('ordre', Courrier::ETAPE_ARCHIVAGE));
         })->count();
         $kpiLate = (clone $query)->where('is_late', true)->notArchived()->count();
-        $kpiValidation = (clone $query)->whereEtapeOrdre(Courrier::ETAPE_VALIDATION)->count();
+        $kpiCompleted = (clone $query)->whereEtapeOrdre(Courrier::ETAPE_SORTIE)->count();
         $kpiThisMonth = (clone $query)
             ->whereBetween('created_at', [
                 now()->startOfMonth()->toDateTimeString(),
                 now()->endOfMonth()->toDateTimeString(),
             ])
             ->count();
-        $kpiReception = (clone $query)->whereEtapeOrdre(Courrier::ETAPE_RECEPTION)->count();
+        $kpiPending = (clone $query)->whereEtapeOrdre(Courrier::ETAPE_ANALYSE)->count();
         $kpiActive = (clone $query)->notArchived()->count();
 
         $etapesQuery = WorkflowEtape::query()->orderBy('ordre');
-        if (! $isAdmin && $user->bureau_id) {
-            $etapesQuery->where('bureau_id', $user->bureau_id);
-        }
         $etapes = $etapesQuery->get(['id', 'libelle', 'ordre', 'ui_color', 'bureau_id']);
 
         $countsByEtape = (clone $query)
@@ -72,7 +64,10 @@ class DashboardController extends Controller
             ->groupBy('workflow_etape_id')
             ->pluck('total', 'workflow_etape_id');
 
-        $byEtape = $etapes->map(function (WorkflowEtape $etape) use ($countsByEtape) {
+        $byEtape = $etapes->filter(fn (WorkflowEtape $etape) =>
+            in_array((int) $etape->ordre, WorkflowService::DIRECT_ORDERS, true)
+            || ($countsByEtape[$etape->id] ?? 0) > 0
+        )->map(function (WorkflowEtape $etape) use ($countsByEtape) {
             return (object) [
                 'id' => $etape->id,
                 'libelle' => $etape->libelle,
@@ -128,9 +123,9 @@ class DashboardController extends Controller
             'kpiInProgress' => $kpiInProgress,
             'kpiArchived' => $kpiArchived,
             'kpiLate' => $kpiLate,
-            'kpiValidation' => $kpiValidation,
+            'kpiCompleted' => $kpiCompleted,
             'kpiThisMonth' => $kpiThisMonth,
-            'kpiReception' => $kpiReception,
+            'kpiPending' => $kpiPending,
             'kpiActive' => $kpiActive,
             'byEtape' => $byEtape,
             'maxEtape' => $maxEtape,

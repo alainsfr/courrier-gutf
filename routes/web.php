@@ -157,7 +157,11 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->middleware('permission:courrier.process')
             ->name('start_processing');
 
-        Route::post('/{courrier}/submit-validation', [CourrierController::class, 'submitForValidation'])
+        Route::post('/{courrier}/complete', [CourrierController::class, 'complete'])
+            ->middleware('permission:courrier.process')
+            ->name('complete');
+
+        Route::post('/{courrier}/submit-validation', [CourrierController::class, 'complete'])
             ->middleware('permission:courrier.process')
             ->name('submit_validation');
 

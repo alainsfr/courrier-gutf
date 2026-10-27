@@ -33,7 +33,7 @@ return [
     'empty' => 'Aucun courrier pour le moment.',
 
     'create_title' => 'Enregistrer un courrier',
-    'create_subtitle' => 'Le dossier démarre à l’étape Réception.',
+    'create_subtitle' => 'Enregistrez le courrier et affectez-le directement au bureau concerné.',
     'back' => 'Retour',
     'description' => 'Description',
     'external_ref' => 'Référence externe',
@@ -49,9 +49,15 @@ return [
     'form_section_acte' => 'Acte & bien immobilier',
     'form_section_dates' => 'Dates de suivi',
     'form_section_assign' => 'Affectation (optionnel)',
-    'form_assign_help' => 'Le bureau actuel reste Accueil (Réception) ; l’affectation utilisateur est complémentaire.',
+    'form_assign_help' => 'Le bureau choisi prend en charge le courrier jusqu’à sa clôture et son archivage.',
     'form_workflow_hint_title' => 'Circuit Kanban',
-    'form_workflow_hint' => 'À l’enregistrement, le courrier est placé sur l’étape « Réception », rattaché au bureau Accueil, avec une date limite calculée selon le délai de l’étape.',
+    'form_workflow_hint' => 'Le courrier sera immédiatement disponible dans le bureau choisi : À traiter → En traitement → Terminé → Archivé.',
+    'destination_office' => 'Bureau destinataire',
+    'destination_office_choose' => 'Choisir le bureau chargé du traitement',
+    'direct_start' => 'Démarrer le traitement',
+    'direct_complete' => 'Terminer le traitement',
+    'direct_completed' => 'Traitement terminé. Le bureau peut maintenant archiver le courrier.',
+    'direct_same_office' => 'Même bureau responsable',
 
     'field_tf' => 'N° Titre Foncier (TF)',
     'field_tf_placeholder' => 'Ex. TF 12345 / Douala',
@@ -66,8 +72,8 @@ return [
     'field_numero_acte' => 'N° d’acte',
     'field_numero_repertoire' => 'N° de répertoire',
 
-    'assign_to' => 'Affecter à',
-    'assign_none' => 'Ne pas affecter (V1)',
+    'assign_to' => 'Agent chargé du dossier (optionnel)',
+    'assign_none' => 'Laisser le bureau désigner un agent',
     'assign' => 'Affecter',
 
     'save' => 'Enregistrer',
@@ -198,7 +204,7 @@ return [
     'start_processing' => 'Passer en traitement',
 
     'kanban_title' => 'Tableau Kanban',
-    'kanban_subtitle' => 'Circuit de traitement par bureau.',
+    'kanban_subtitle' => 'Avancement des courriers dans leur bureau responsable.',
     'kanban_bureau' => 'Bureau : :bureau',
     'kanban_all_bureaux' => 'Tous les bureaux',
     'kanban_list_view' => 'Vue liste',
@@ -212,7 +218,7 @@ return [
     'kanban_late' => 'En retard',
 
     'kanban_no_columns' => 'Aucune colonne disponible',
-    'kanban_no_columns_hint' => 'Votre compte n’est rattaché à aucun bureau, ou aucune étape n’est configurée pour votre bureau.',
+    'kanban_no_columns_hint' => 'Les étapes de suivi ne sont pas encore configurées.',
 
     'type_internal' => 'Interne',
     'search_title' => 'Recherche avancée',
@@ -263,7 +269,7 @@ return [
     'bordereau_footer' => 'Bordereau :ref — généré le :date',
     'show_tf' => 'Réf. TF / externe',
     'show_owner' => 'Propriétaire / partie',
-    'show_bureau' => 'Bureau actuel',
+    'show_bureau' => 'Bureau responsable',
     'show_actions_title' => 'Actions de traitement',
     'show_action_validate' => 'Valider',
     'show_action_reject' => 'Rejeter',
@@ -271,5 +277,5 @@ return [
     'show_actions_none' => 'Aucune transition disponible sur cette étape.',
     'show_actions_locked' => 'Actions réservées aux agents du bureau : :bureau.',
     'show_archived' => 'Dossier archivé — actions clôturées.',
-    'show_transfer_ok' => 'Transfert workflow enregistré.',
+    'show_transfer_ok' => 'Avancement du traitement enregistré.',
 ];

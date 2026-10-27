@@ -23,7 +23,7 @@ class KanbanBureauScopeTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
     }
 
-    public function test_traitement_agent_only_sees_traitement_column(): void
+    public function test_office_agents_see_progress_stages_independent_of_their_historical_office_mapping(): void
     {
         $accueil = Bureau::create(['code' => 'accueil', 'nom' => 'Accueil', 'is_active' => true, 'ordre' => 1]);
         $visas = Bureau::create(['code' => 'visas', 'nom' => 'Visas', 'is_active' => true, 'ordre' => 2]);
@@ -77,17 +77,17 @@ class KanbanBureauScopeTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Traitement');
-        $this->assertSame(1, $response->viewData('etapes')->count());
-        $this->assertSame($etapeTraitement->id, $response->viewData('etapes')->first()->id);
+        $this->assertSame(2, $response->viewData('etapes')->count());
+        $this->assertEqualsCanonicalizing([$etapeAnalyse->id, $etapeTraitement->id], $response->viewData('etapes')->pluck('id')->all());
         $this->assertFalse(
             $response->viewData('etapes')->contains(fn ($e) => $e->libelle === 'Réception')
         );
-        $this->assertFalse(
+        $this->assertTrue(
             $response->viewData('etapes')->contains(fn ($e) => $e->libelle === 'Analyse')
         );
     }
 
-    public function test_visas_agent_sees_analyse_and_validation_columns(): void
+    public function test_unused_legacy_validation_column_is_not_part_of_the_direct_circuit(): void
     {
         $visas = Bureau::create(['code' => 'visas2', 'nom' => 'Visas', 'is_active' => true, 'ordre' => 2]);
         $livre = Bureau::create(['code' => 'livre2', 'nom' => 'Livre', 'is_active' => true, 'ordre' => 3]);
@@ -126,7 +126,7 @@ class KanbanBureauScopeTest extends TestCase
         $response->assertOk();
         $this->assertSame(2, $response->viewData('etapes')->count());
         $this->assertEqualsCanonicalizing(
-            ['Analyse', 'Validation'],
+            ['Analyse', 'Traitement'],
             $response->viewData('etapes')->pluck('libelle')->all()
         );
     }

@@ -74,6 +74,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'agent_traitement' => [
                 'courrier.view',
                 'courrier.process',
+                'courrier.archive',
                 'courrier.attach',
                 'courrier.detach',
                 'chat.view',
