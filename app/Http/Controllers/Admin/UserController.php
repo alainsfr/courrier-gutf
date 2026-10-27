@@ -59,7 +59,7 @@ class UserController extends Controller
             'avatar' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        $user = User::create([
+        $user = User::forceCreate([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'locale' => $validated['locale'],
