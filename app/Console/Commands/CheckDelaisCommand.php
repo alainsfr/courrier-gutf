@@ -6,6 +6,8 @@ use App\Models\Courrier;
 use App\Models\User;
 use App\Notifications\CourrierEnRetardNotification;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 class CheckDelaisCommand extends Command
@@ -19,12 +21,7 @@ class CheckDelaisCommand extends Command
     {
         $dryRun = (bool) $this->option('dry-run');
 
-        $query = Courrier::query()
-            ->with(['workflowEtape:id,libelle', 'bureauActuel:id,nom'])
-            ->whereNull('archived_at')
-            ->where('is_late', false)
-            ->whereNotNull('date_limite')
-            ->where('date_limite', '<', now());
+        $query = $this->overdue()->with(['workflowEtape:id,libelle', 'bureauActuel:id,nom']);
 
         $courriers = $query->get();
 
@@ -51,39 +48,48 @@ class CheckDelaisCommand extends Command
                 continue;
             }
 
-            $courrier->forceFill(['is_late' => true])->save();
+            $notified += DB::transaction(function () use ($courrier) {
+                // Recontrôler après verrouillage : traitement/archivage ou autre passage concurrent.
+                $courrier = $this->overdue()->whereKey($courrier->id)->lockForUpdate()->first();
+                if (! $courrier) {
+                    return 0;
+                }
+                $courrier->forceFill(['is_late' => true])->save();
+                if (! $courrier->bureau_actuel_id) {
+                    return 0;
+                }
 
-            if (! $courrier->bureau_actuel_id) {
-                continue;
-            }
-
-            $agents = User::query()
-                ->where('bureau_id', $courrier->bureau_actuel_id)
-                ->where(function ($q) {
-                    $q->whereNull('is_active')->orWhere('is_active', true);
-                })
-                ->get();
-
-            if ($courrier->assigned_to_user_id) {
-                $assignee = User::query()
-                    ->whereKey($courrier->assigned_to_user_id)
+                $agents = User::query()
+                    ->where('bureau_id', $courrier->bureau_actuel_id)
                     ->where(function ($q) {
                         $q->whereNull('is_active')->orWhere('is_active', true);
                     })
-                    ->first();
+                    ->get();
 
-                if ($assignee && ! $agents->contains('id', $assignee->id)) {
-                    $agents->push($assignee);
+                if ($courrier->assigned_to_user_id) {
+                    $assignee = User::query()
+                        ->whereKey($courrier->assigned_to_user_id)
+                        ->where(function ($q) {
+                            $q->whereNull('is_active')->orWhere('is_active', true);
+                        })
+                        ->first();
+
+                    if ($assignee && ! $agents->contains('id', $assignee->id)) {
+                        $agents->push($assignee);
+                    }
                 }
-            }
 
-            if ($agents->isEmpty()) {
-                $this->warn("   → aucun agent actif pour le bureau #{$courrier->bureau_actuel_id}");
-                continue;
-            }
+                if ($agents->isEmpty()) {
+                    $this->warn("   → aucun agent actif pour le bureau #{$courrier->bureau_actuel_id}");
 
-            Notification::send($agents, new CourrierEnRetardNotification($courrier));
-            $notified += $agents->count();
+                    return 0;
+                }
+
+                // Le canal database et le marquage sont validés dans la même transaction.
+                Notification::send($agents, new CourrierEnRetardNotification($courrier));
+
+                return $agents->count();
+            }, 3);
         }
 
         if (! $dryRun) {
@@ -91,5 +97,12 @@ class CheckDelaisCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function overdue(): Builder
+    {
+        return Courrier::query()->whereNull('archived_at')->where('is_late', false)
+            ->whereNotNull('date_limite')->where('date_limite', '<', now())
+            ->whereHas('workflowEtape', fn (Builder $q) => $q->whereNotIn('ordre', [5, 6]));
     }
 }

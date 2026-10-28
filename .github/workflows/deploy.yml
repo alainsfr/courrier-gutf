@@ -39,6 +39,11 @@ jobs:
       - name: Install dependencies for verification
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Verify operational scripts
+        run: |
+          bash -n deploy/install-cron.sh deploy/run-operations.sh
+          bash tests/Operations/cron.sh
+
       - name: Verify application before deployment
         env:
           APP_ENV: testing
@@ -248,6 +253,9 @@ jobs:
           php artisan route:cache
           php artisan view:cache
           php artisan queue:restart
+
+          # Preserve the existing tasks belonging to other applications.
+          bash deploy/install-cron.sh "$DEPLOY_PATH/app" "$(command -v php)"
 
           echo "Deploy OK"
           EOF

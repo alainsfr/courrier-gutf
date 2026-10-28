@@ -43,7 +43,7 @@ Les rôles sont prédéfinis. Le super-administrateur les attribue lors de la cr
 
 Saisissez l’adresse électronique et le mot de passe, puis cliquez sur **Se connecter**. Sur un poste partagé, évitez l’option de mémorisation. Si le compte est désactivé, contactez le super-administrateur.
 
-**Mot de passe oublié ?** lance la récupération. La réception du message dépend de la configuration de messagerie du serveur. Vérifiez les indésirables, puis demandez une intervention si aucun message n’arrive.
+**Mot de passe oublié ?** lance la récupération. Saisissez l’adresse de votre compte actif, puis ouvrez le message reçu et choisissez un nouveau mot de passe. Le lien personnel expire après **60 minutes** et ne fonctionne qu’une fois. Vérifiez les indésirables si nécessaire. Sans demande de votre part, ignorez le message : votre mot de passe reste inchangé.
 
 ### Gérer son profil
 
