@@ -125,6 +125,12 @@
                     </div>
                 @endif
 
+                @if (request('reason') === 'inactive')
+                    <div role="status" class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        {{ __('session_ui.expired') }}
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login') }}" class="mt-8 space-y-5">
                     @csrf
 
@@ -148,11 +154,7 @@
                     </div>
 
                     <div class="flex items-center justify-between gap-3">
-                        <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-                            <input id="remember_me" name="remember" type="checkbox" value="1"
-                                   class="h-4 w-4 rounded border-slate-300 text-[#17384b] focus:ring-[#17384b]/30">
-                            {{ __('auth_ui.remember') }}
-                        </label>
+                        <span class="text-xs text-slate-500">{{ __('session_ui.login_hint', ['minutes' => config('session.idle_timeout')]) }}</span>
 
                         @if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}"

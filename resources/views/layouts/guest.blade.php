@@ -42,5 +42,6 @@
                 {{ $slot }}
             </div>
         </div>
+        <x-idle-session />
     </body>
 </html>

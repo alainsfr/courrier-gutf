@@ -35,6 +35,10 @@ return [
     // Idle timeout (minutes). Institutional default: 30.
     'lifetime' => (int) env('SESSION_LIFETIME', 30),
 
+    // Activité humaine uniquement : les appels automatiques ne repoussent pas ce délai.
+    'idle_timeout' => (int) env('SESSION_IDLE_TIMEOUT', 30),
+    'idle_warning_seconds' => (int) env('SESSION_IDLE_WARNING_SECONDS', 120),
+
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
     /*

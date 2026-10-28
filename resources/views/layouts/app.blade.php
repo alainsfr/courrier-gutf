@@ -120,6 +120,7 @@
     @endcan
 
     @stack('scripts')
+    <x-idle-session />
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

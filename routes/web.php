@@ -1,37 +1,40 @@
 <?php
 
-use App\Http\Controllers\SignaturePinController;
-use App\Http\Controllers\ParapheurController;
-use App\Http\Controllers\CourrierCommentController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\CourrierController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\AuditController;
-use App\Http\Controllers\MessagingController;
-use App\Http\Controllers\ChatWidgetController;
 use App\Http\Controllers\Admin\BackupController as AdminBackupController;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\BureauController as AdminBureauController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AuditController;
+use App\Http\Controllers\ChatWidgetController;
+use App\Http\Controllers\CourrierCommentController;
+use App\Http\Controllers\CourrierController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LanguageController;
-use App\Http\Controllers\WorkflowController;
+use App\Http\Controllers\MessagingController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ParapheurController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SignaturePinController;
 use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\WorkflowController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 
 Route::get('/', function () {
     return view('welcome');
 });
 
+Route::middleware(['auth', 'active'])->prefix('session')->name('session.')->group(function () {
+    Route::get('/status', [\App\Http\Controllers\SessionActivityController::class, 'status'])->name('status');
+    Route::post('/activity', [\App\Http\Controllers\SessionActivityController::class, 'update'])
+        ->middleware('throttle:30,1')->name('activity');
+});
+
 Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
     Route::get('/aide', \App\Http\Controllers\UserGuideController::class)->name('help');
-
-
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -268,4 +271,4 @@ Route::post('/locale', function (Request $request) {
     return app(LanguageController::class)->switch($locale);
 })->name('locale.set');
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

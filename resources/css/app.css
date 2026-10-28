@@ -14,6 +14,18 @@ body{
     background: var(--gutf-light);
 }
 
+.idle-session-dialog { width:min(30rem,calc(100vw - 2rem)); max-height:calc(100dvh - 2rem); overflow:auto; margin:auto; padding:1.75rem; border:1px solid #e2e8f0; border-radius:1.25rem; color:#0f172a; box-shadow:0 24px 70px #0f172a33; }
+.idle-session-dialog::backdrop { background:#0f172a80; backdrop-filter:blur(3px); }
+.idle-session-dialog h2 { margin:1rem 0 .75rem; font-size:1.2rem; font-weight:700; color:var(--gutf-primary); }
+.idle-session-dialog p { margin:0 0 1rem; font-size:.9rem; line-height:1.65; }
+.idle-session-dialog .idle-session-hint { color:#64748b; font-size:.8rem; }
+.idle-session-icon { display:grid; place-items:center; width:3rem; height:3rem; border-radius:1rem; background:color-mix(in srgb,var(--gutf-accent) 12%,white); color:var(--gutf-accent); }
+.idle-session-icon svg { width:1.6rem; height:1.6rem; }
+.idle-session-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:.75rem; margin-top:1.5rem; }
+.idle-session-actions form { margin:0; }
+[data-idle-error] { color:#be123c; }
+.session-expired body { visibility:hidden; }
+
 /* Courrier workspace: explicit areas avoid Bootstrap order utilities. */
 .app-topbar { display:flex; align-items:center; gap:1rem; min-height:4rem; }
 .courrier-card { min-width:0; border:1px solid #e2e8f0; border-radius:1rem; background:#fff; padding:1.5rem; box-shadow:0 2px 6px #17384b04; }

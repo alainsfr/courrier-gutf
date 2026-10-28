@@ -1,5 +1,6 @@
 import './bootstrap';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import './session-idle';
 
 // Prevent a second click while a normal form submission is in progress.
 document.querySelectorAll('form[data-submit-once]').forEach((form) => {
