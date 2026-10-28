@@ -14,7 +14,7 @@
                         </span>
                     @endif
                 </div>
-                <p class="mb-0 truncate text-sm text-gray-500">{{ $courrier->objet }}</p>
+                <p class="mb-0 break-words text-sm text-gray-500">{{ $courrier->objet }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 @can('update', $courrier)
@@ -42,7 +42,7 @@
                 'courrier-claimed' => __('courrier.claimed_ok'), 'courrier-corrected' => __('courrier.corrected_ok'),
                 'courrier-reassigned' => __('courrier.reassigned_ok'), 'courrier-created' => __('courrier.created_ok'),
                 'courrier-assigned' => __('courrier.assigned_ok'), 'courrier-processing-started' => __('courrier.processing_ok'),
-                'courrier-archived' => __('courrier.archived_ok'), default => session('status') } }}
+                'courrier-archived' => __('courrier.archived_ok'), 'attachment-uploaded' => __('ux.attachment_added'), default => session('status') } }}
         </div>
     @endif
 
@@ -76,12 +76,12 @@
     @endphp
 
     {{-- SPLIT-SCREEN plein viewport --}}
-    <div class="grid grid-cols-1 gap-4 lg:h-[calc(100vh-8rem)] lg:grid-cols-3 lg:gap-5 lg:overflow-hidden">
+    <div class="courrier-workspace">
 
         {{-- GAUCHE : VISIONNEUSE --}}
         <section id="document-viewer"
                  data-preview-expanded="0"
-                 class="order-2 flex h-[70vh] min-h-[420px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition lg:order-1 lg:col-span-2 lg:h-full lg:min-h-0">
+                 class="courrier-document flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div class="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 px-4 py-3">
                 <div class="min-w-0">
                     <div class="text-sm font-bold text-gray-800">{{ __('courrier.show_viewer_title') }}</div>
@@ -128,7 +128,6 @@
                         </p>
                         <div data-pdf-pages class="mx-auto w-full max-w-4xl"></div>
                     </div>
-                    @vite('resources/js/pdf-viewer.js')
                 @elseif($previewAttachment && $isImage && $previewUrl)
                     <div class="flex h-full items-center justify-center overflow-auto bg-slate-900 p-4">
                         <img
@@ -147,6 +146,7 @@
                     </div>
                 @else
                     <div class="flex h-full flex-col items-center justify-center gap-2 p-8 text-center text-gray-400">
+                        <svg class="mb-3 h-12 w-12 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h5M9 12h6M9 16h6"/></svg>
                         <div class="text-sm font-medium">{{ __('courrier.no_attachments') }}</div>
                         <div class="text-xs text-gray-500">{{ __('courrier.show_viewer_empty_hint') }}</div>
                     </div>
@@ -165,12 +165,181 @@
                 </div>
             @endif
         </section>
+        @if($previewAttachment)
+            @vite('resources/js/pdf-viewer.js')
+        @endif
 
         {{-- DROITE : CARTES --}}
-        <aside class="order-1 flex flex-col gap-4 lg:order-2 lg:col-span-1 lg:min-h-0 lg:overflow-y-auto">
+        <aside class="courrier-inspector">
+
+            {{-- Actions transfert --}}
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 class="mb-3 text-sm font-bold text-gray-900">{{ __('ux.next_action') }}</h2>
+
+                @if($canActOnBureau && ! $courrier->isArchived())
+                    <div class="space-y-2">
+                        @if($canClaim)
+                                <form data-submit-once method="POST" action="{{ route('courriers.claim', $courrier) }}">
+                                    @csrf
+                                    <x-buttons.primary type="submit" class="w-full">{{ __('courrier.claim') }}</x-buttons.primary>
+                                    <p class="mt-1.5 text-xs text-gray-500">{{ __('courrier.claim_hint') }}</p>
+                                </form>
+                        @endif
+                        @if($nextEtape && $canAdvance && ! $canClaim)
+                            <form data-submit-once method="POST" action="{{ $courrier->isAtOrdre(3) ? route('courriers.complete', $courrier) : route('courriers.transfer', $courrier) }}">
+                                @csrf
+                                <input type="hidden" name="nouvelle_etape_id" value="{{ $nextEtape->id }}">
+                                <input type="hidden" name="action_type" value="forward">
+                                <x-buttons.primary type="submit" class="w-full">
+                                    {{ match ((int) $nextEtape->ordre) { 3 => __('courrier.direct_start'), 5 => __('courrier.direct_complete'), 6 => __('courrier.archive'), default => __('courrier.show_action_validate') } }}
+                                </x-buttons.primary>
+                            </form>
+                        @endif
+
+                        @if($prevEtape && $canReturn)
+                            <details class="courrier-disclosure mt-3"><summary>{{ __('ux.other_actions') }}</summary><div class="space-y-3 p-3">
+                        @endif
+                        @if($prevEtape && $canReturn && $courrier->workflowEtape?->is_rejectable)
+                            <form data-submit-once method="POST" action="{{ route('courriers.transfer', $courrier) }}" class="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
+                                @csrf
+                                <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
+                                <input type="hidden" name="action_type" value="reject">
+                                <label class="mb-1 block text-[11px] font-semibold text-rose-700">{{ __('courrier.reject_reason') }}</label>
+                                <textarea name="note_metier" rows="2" required
+                                          class="mb-2 w-full rounded-md border border-rose-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200"
+                                          placeholder="{{ __('courrier.reject_reason') }}"></textarea>
+                                <x-buttons.danger type="submit" class="w-full">
+                                    {{ __('courrier.show_action_reject') }}
+                                </x-buttons.danger>
+                            </form>
+                        @endif
+
+                        @if($prevEtape && $canReturn)
+                            <form data-submit-once method="POST" action="{{ route('courriers.transfer', $courrier) }}">
+                                @csrf
+                                <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
+                                <input type="hidden" name="action_type" value="backward">
+                                <x-buttons.secondary type="submit" class="w-full">
+                                    {{ __('courrier.show_action_return') }}
+                                    <span class="text-[11px] font-normal text-gray-500">→ {{ $prevEtape->libelle }}</span>
+                                </x-buttons.secondary>
+                            </form>
+                        @endif
+
+                        @if($prevEtape && $canReturn)</div></details>@endif
+
+                        @if(! $canAdvance && ! $canReturn)
+                            <p class="mb-0 text-xs text-gray-500">{{ __('courrier.show_actions_none') }}</p>
+                        @endif
+                    </div>
+                @elseif($courrier->isArchived())
+                    <div class="rounded-xl bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
+                        {{ __('courrier.show_archived') }}
+                    </div>
+                @else
+                    <div class="rounded-xl border border-amber-100 bg-amber-50 px-3 py-3 text-xs text-amber-800">
+                        {{ __('courrier.show_actions_locked', ['bureau' => $courrier->bureauActuel?->nom ?? '—']) }}
+                    </div>
+                @endif
+
+                @can('reassign', $courrier)
+                    @if(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true))
+                        <div class="mt-3 border-t border-gray-100 pt-3">
+                            <x-buttons.secondary :href="route('courriers.reassignment', $courrier)" class="w-full">{{ __('courrier.reassign_title') }}</x-buttons.secondary>
+                        </div>
+                    @endif
+                @endcan
+            </div>
+
+            {{-- Métadonnées --}}
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div class="mb-4 flex items-center justify-between gap-2">
+                    <h2 class="m-0 text-sm font-bold text-gray-900">{{ __('courrier.show_meta_title') }}</h2>
+                    <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
+                          style="color: {{ $etapeColor }}; background: {{ $etapeColor }}18;">
+                        {{ $courrier->workflowEtape?->libelle ?? '—' }}
+                    </span>
+                </div>
+
+                <dl class="m-0 space-y-3">
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.show_tf') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm font-semibold text-gray-800">{{ $tfDisplay }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.subject') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm font-semibold leading-snug text-gray-800">{{ $courrier->objet }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.show_owner') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm font-semibold text-gray-800">{{ $proprietaire }}</dd>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
+                        <div>
+                            <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.type') }}</dt>
+                            <dd class="m-0 mt-0.5 text-xs font-semibold uppercase text-gray-700">{{ $courrier->type }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.show_bureau') }}</dt>
+                            <dd class="m-0 mt-0.5 text-xs font-semibold text-gray-700">{{ $courrier->bureauActuel?->nom ?? '—' }}</dd>
+                        </div>
+                    </div>
+                    <div>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.assigned_to') }}</dt>
+                        <dd class="m-0 mt-0.5 text-sm text-gray-700">{{ $courrier->assignedTo?->name ?? __('ux.unassigned') }}</dd>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                        <div><dt class="text-xs text-slate-500">{{ __('ux.received_on') }}</dt><dd class="mt-1 mb-0 text-sm font-semibold">{{ $courrier->date_reception?->format('d/m/Y') ?? '—' }}</dd></div>
+                        @if($courrier->date_limite && in_array($courrier->etapeOrdre(), [2, 3], true))
+                            <div><dt class="text-xs text-slate-500">{{ __('ux.deadline') }}</dt><dd class="mt-1 mb-0 text-sm font-semibold {{ $courrier->date_limite->isPast() ? 'text-rose-700' : 'text-slate-800' }}">{{ $courrier->date_limite->format('d/m/Y H:i') }} @if($courrier->date_limite->isPast())<span class="mt-1 block text-xs">{{ __('ux.late') }}</span>@endif</dd></div>
+                        @endif
+                    </div>
+                </dl>
+            </div>
+
+
+            <details class="courrier-disclosure bg-white">
+                <summary>{{ __('ux.details_title') }}</summary>
+                <dl class="m-0 space-y-3 p-4">
+                    @foreach(['reference_externe' => 'external_ref', 'description' => 'description', 'expediteur' => 'sender', 'destinataire' => 'recipient', 'tf' => 'field_tf', 'proprietaire' => 'field_proprietaire', 'requerant' => 'field_requerant', 'vendeur' => 'field_vendeur', 'etude_notariale' => 'field_etude', 'numero_acte' => 'field_numero_acte', 'numero_repertoire' => 'field_numero_repertoire', 'valeur_immeuble' => 'field_valeur', 'date_courrier' => 'date_mail', 'date_envoi' => 'date_sent'] as $field => $label)
+                        @if(filled($courrier->$field))
+                            <div><dt class="text-xs text-slate-500">{{ __('courrier.'.$label) }}</dt><dd class="mt-1 mb-0 whitespace-pre-wrap break-words text-sm text-slate-800">{{ in_array($field, ['date_courrier', 'date_envoi']) ? $courrier->$field->format('d/m/Y') : $courrier->$field }}</dd></div>
+                        @endif
+                    @endforeach
+                </dl>
+            </details>
+        </aside>
+        <div class="courrier-secondary">
+
+            <section class="courrier-card">
+                <h2 class="mb-4 text-sm font-bold text-slate-900">{{ __('courrier.attachments') }} <span class="font-normal text-slate-400">({{ $courrier->attachments->count() }})</span></h2>
+                <ul class="m-0 list-none space-y-3 p-0">
+                    @forelse($courrier->attachments as $attachment)
+                        <li class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2.5">
+                            <a class="min-w-0 break-all text-sm font-semibold text-slate-700" href="{{ route('courriers.show', [$courrier, 'att' => $attachment->id]) }}#document-viewer">{{ $attachment->original_name }}</a>
+                            <a class="text-xs font-semibold" href="{{ route('courriers.attachments.download', [$courrier, $attachment]) }}">{{ __('courrier.download') }}</a>
+                        </li>
+                    @empty
+                        <li class="text-sm text-slate-500">{{ __('courrier.no_attachments') }}</li>
+                    @endforelse
+                </ul>
+                @can('attach', $courrier)
+                    @if(! $courrier->isArchived())
+                        <form method="POST" action="{{ route('courriers.attachments.upload', $courrier) }}" enctype="multipart/form-data" class="mt-4 border-t border-slate-100 pt-4" data-submit-once>
+                            @csrf
+                            <label for="additional-document" class="mb-2 block text-sm font-semibold text-slate-700">{{ __('ux.add_document') }}</label>
+                            <input id="additional-document" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required class="courrier-file" aria-describedby="additional-document-help">
+                            <p id="additional-document-help" class="mt-2 mb-3 text-xs text-slate-500">{{ __('courrier.attachments_help') }}</p>
+                            @error('file')<p class="text-xs text-rose-700">{{ $message }}</p>@enderror
+                            <x-buttons.secondary type="submit">{{ __('ux.add_document') }}</x-buttons.secondary>
+                        </form>
+                    @endif
+                @endcan
+            </section>
 
             @if (! empty($pendingVisa))
-                <div class="rounded-xl border border-[#dc633a]/30 bg-gradient-to-br from-[#dc633a]/10 to-white p-5 shadow-sm">
+                <div class="rounded-xl border border-[#dc633a]/30 bg-gradient-to-br from-[#dc633a]/10 to-white p-6 shadow-sm">
                     <div class="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#dc633a]">
                         {{ __('parapheur.nav') }}
                     </div>
@@ -265,8 +434,8 @@
             @endif
 
             @if (empty($pendingVisa) && empty($hasPendingVisa) && ! ($courrier->isArchived() ?? false))
-                <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <h2 class="mb-1 text-sm font-bold text-gray-900">{{ __('parapheur.submit_title') }}</h2>
+                <details class="courrier-card courrier-disclosure" @if($errors->has("validator_id")) open @endif>
+                    <summary>{{ __('ux.visa_optional') }}</summary><div class="pt-4">
                     <p class="mb-3 text-xs text-gray-500">{{ __('parapheur.submit_hint') }}</p>
 
                     @if (($parapheurValidators ?? collect())->isEmpty())
@@ -294,123 +463,8 @@
                             </x-buttons.primary>
                         </form>
                     @endif
-                </div>
+                </div></details>
             @endif
-
-            {{-- Métadonnées --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                <div class="mb-4 flex items-center justify-between gap-2">
-                    <h2 class="m-0 text-sm font-bold text-gray-900">{{ __('courrier.show_meta_title') }}</h2>
-                    <span class="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
-                          style="color: {{ $etapeColor }}; background: {{ $etapeColor }}18;">
-                        {{ $courrier->workflowEtape?->libelle ?? '—' }}
-                    </span>
-                </div>
-
-                <dl class="m-0 space-y-3">
-                    <div>
-                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.show_tf') }}</dt>
-                        <dd class="m-0 mt-0.5 text-sm font-semibold text-gray-800">{{ $tfDisplay }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.subject') }}</dt>
-                        <dd class="m-0 mt-0.5 text-sm font-semibold leading-snug text-gray-800">{{ $courrier->objet }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.show_owner') }}</dt>
-                        <dd class="m-0 mt-0.5 text-sm font-semibold text-gray-800">{{ $proprietaire }}</dd>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-3">
-                        <div>
-                            <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.type') }}</dt>
-                            <dd class="m-0 mt-0.5 text-xs font-semibold uppercase text-gray-700">{{ $courrier->type }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.show_bureau') }}</dt>
-                            <dd class="m-0 mt-0.5 text-xs font-semibold text-gray-700">{{ $courrier->bureauActuel?->nom ?? '—' }}</dd>
-                        </div>
-                    </div>
-                    <div>
-                        <dt class="text-[10px] font-bold uppercase tracking-wider text-gray-400">{{ __('courrier.assigned_to') }}</dt>
-                        <dd class="m-0 mt-0.5 text-sm text-gray-700">{{ $courrier->assignedTo?->name ?? '—' }}</dd>
-                    </div>
-                </dl>
-            </div>
-
-            {{-- Actions transfert --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                <h2 class="mb-3 text-sm font-bold text-gray-900">{{ __('courrier.show_actions_title') }}</h2>
-
-                @if($canActOnBureau && ! $courrier->isArchived())
-                    <div class="space-y-2">
-                        @if($canClaim)
-                                <form method="POST" action="{{ route('courriers.claim', $courrier) }}">
-                                    @csrf
-                                    <x-buttons.primary type="submit" class="w-full">{{ __('courrier.claim') }}</x-buttons.primary>
-                                    <p class="mt-1.5 text-xs text-gray-500">{{ __('courrier.claim_hint') }}</p>
-                                </form>
-                        @endif
-                        @if($nextEtape && $canAdvance && ! $canClaim)
-                            <form method="POST" action="{{ $courrier->isAtOrdre(3) ? route('courriers.complete', $courrier) : route('courriers.transfer', $courrier) }}">
-                                @csrf
-                                <input type="hidden" name="nouvelle_etape_id" value="{{ $nextEtape->id }}">
-                                <input type="hidden" name="action_type" value="forward">
-                                <x-buttons.primary type="submit" class="w-full">
-                                    {{ match ((int) $nextEtape->ordre) { 3 => __('courrier.direct_start'), 5 => __('courrier.direct_complete'), 6 => __('courrier.archive'), default => __('courrier.show_action_validate') } }}
-                                    <span class="text-[11px] font-normal opacity-90">→ {{ $nextEtape->libelle }}</span>
-                                </x-buttons.primary>
-                            </form>
-                        @endif
-
-                        @if($prevEtape && $canReturn && $courrier->workflowEtape?->is_rejectable)
-                            <form method="POST" action="{{ route('courriers.transfer', $courrier) }}" class="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
-                                @csrf
-                                <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
-                                <input type="hidden" name="action_type" value="reject">
-                                <label class="mb-1 block text-[11px] font-semibold text-rose-700">{{ __('courrier.reject_reason') }}</label>
-                                <textarea name="note_metier" rows="2" required
-                                          class="mb-2 w-full rounded-md border border-rose-200 px-2.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200"
-                                          placeholder="{{ __('courrier.reject_reason') }}"></textarea>
-                                <x-buttons.danger type="submit" class="w-full">
-                                    {{ __('courrier.show_action_reject') }}
-                                </x-buttons.danger>
-                            </form>
-                        @endif
-
-                        @if($prevEtape && $canReturn)
-                            <form method="POST" action="{{ route('courriers.transfer', $courrier) }}">
-                                @csrf
-                                <input type="hidden" name="nouvelle_etape_id" value="{{ $prevEtape->id }}">
-                                <input type="hidden" name="action_type" value="backward">
-                                <x-buttons.secondary type="submit" class="w-full">
-                                    {{ __('courrier.show_action_return') }}
-                                    <span class="text-[11px] font-normal text-gray-500">→ {{ $prevEtape->libelle }}</span>
-                                </x-buttons.secondary>
-                            </form>
-                        @endif
-
-                        @if(! $canAdvance && ! $canReturn)
-                            <p class="mb-0 text-xs text-gray-500">{{ __('courrier.show_actions_none') }}</p>
-                        @endif
-                    </div>
-                @elseif($courrier->isArchived())
-                    <div class="rounded-xl bg-gray-50 px-3 py-4 text-center text-xs text-gray-500">
-                        {{ __('courrier.show_archived') }}
-                    </div>
-                @else
-                    <div class="rounded-xl border border-amber-100 bg-amber-50 px-3 py-3 text-xs text-amber-800">
-                        {{ __('courrier.show_actions_locked', ['bureau' => $courrier->bureauActuel?->nom ?? '—']) }}
-                    </div>
-                @endif
-
-                @can('reassign', $courrier)
-                    @if(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true))
-                        <div class="mt-3 border-t border-gray-100 pt-3">
-                            <x-buttons.secondary :href="route('courriers.reassignment', $courrier)" class="w-full">{{ __('courrier.reassign_title') }}</x-buttons.secondary>
-                        </div>
-                    @endif
-                @endcan
-            </div>
 
             {{-- Dossier & Courriers Liés --}}
             @php
@@ -418,7 +472,7 @@
                 $linkedParents = $courrier->parentCourrier ?? collect();
                 $allLinked = $linkedChildren->merge($linkedParents)->unique('id');
             @endphp
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-3 text-sm font-bold text-gray-900">{{ __('courrier.links_title') }}</h2>
 
                 <div class="mb-3 space-y-2">
@@ -461,7 +515,7 @@
             </div>
 
             {{-- Notes & Instructions Internes --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-4 text-sm font-bold text-gray-900">{{ __('courrier.comments_title') }}</h2>
 
                 <div class="mb-4 max-h-72 space-y-3 overflow-y-auto pe-1">
@@ -520,6 +574,6 @@
 
             {{-- Timeline --}}
             <x-courrier-timeline :histories="$courrier->histories" />
-        </aside>
+        </div>
     </div>
 </x-app-layout>

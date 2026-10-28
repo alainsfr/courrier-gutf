@@ -29,6 +29,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified', 'active'])->group(function () {
 
+    Route::get('/aide', \App\Http\Controllers\UserGuideController::class)->name('help');
+
 
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

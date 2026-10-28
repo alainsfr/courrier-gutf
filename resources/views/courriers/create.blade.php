@@ -1,188 +1,125 @@
-@php
-    $input = 'w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30';
-    $label = 'mb-1.5 block text-xs font-semibold text-gray-600';
-@endphp
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <h1 class="mb-1 text-lg font-bold text-gray-900">{{ __('courrier.create_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('courrier.create_subtitle') }}</p>
-            </div>
-            <a href="{{ route('courriers.index') }}"
-               class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-600 no-underline hover:bg-gray-50">
-                ← {{ __('courrier.back') }}
-            </a>
+            <div><h1 class="mb-1 text-lg font-bold text-gray-900">{{ __('courrier.create_title') }}</h1><p class="mb-0 text-sm text-gray-500">{{ __('ux.create_intro') }}</p></div>
+            <x-buttons.secondary :href="route('courriers.index')">← {{ __('courrier.back') }}</x-buttons.secondary>
         </div>
     </x-slot>
-
-    <x-form-errors class="mb-5" />
-
-    <form method="POST" action="{{ route('courriers.store') }}" enctype="multipart/form-data">
-        @csrf
-
-        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
-            {{-- Classification --}}
-            <section>
-                <h2 class="mb-5 text-lg font-semibold text-gray-900">{{ __('courrier.form_section_class') }}</h2>
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.type') }} <span class="text-rose-500">*</span></label>
-                        <select name="type" required class="{{ $input }}">
-                            <option value="entrant" @selected(old('type', 'entrant') === 'entrant')>{{ __('courrier.type_in') }}</option>
-                            <option value="sortant" @selected(old('type') === 'sortant')>{{ __('courrier.type_out') }}</option>
-                            <option value="interne" @selected(old('type') === 'interne')>{{ __('courrier.type_internal') }}</option>
-                        </select>
+    <div class="mx-auto max-w-6xl">
+        <x-form-errors class="mb-5" />
+        <p class="mb-5 text-sm text-slate-500">{{ __('ux.required_hint') }}</p>
+        <form method="POST" action="{{ route('courriers.store') }}" enctype="multipart/form-data" data-submit-once>
+            @csrf
+            <div class="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+                <section class="courrier-card">
+                    <div class="courrier-section-heading"><span>01</span><div><h2>{{ __('ux.identify') }}</h2><p>{{ __('ux.identify_hint') }}</p></div></div>
+                    <div class="grid gap-6 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label for="type" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ __('courrier.type') }} <span class="text-rose-600">*</span></label>
+                            <select id="type" name="type" required class="courrier-input" @if($errors->has('type')) aria-invalid="true" aria-describedby="type-error" @endif>
+                                @foreach(['entrant' => 'type_in', 'sortant' => 'type_out', 'interne' => 'type_internal'] as $value => $key)
+                                    <option value="{{ $value }}" @selected(old('type', 'entrant') === $value)>{{ __('courrier.'.$key) }}</option>
+                                @endforeach
+                            </select>
+                            @error('type')<p id="type-error" class="mt-1.5 text-xs text-rose-700">{{ $message }}</p>@enderror
+                        </div>
+                        <x-courrier-field name="objet" :label="__('courrier.subject')" :required="true" maxlength="255" :placeholder="__('courrier.field_objet_placeholder')" class="sm:col-span-2" />
+                        <x-courrier-field name="expediteur" :label="__('courrier.sender')" maxlength="255" />
+                        <x-courrier-field name="destinataire" :label="__('courrier.recipient')" maxlength="255" />
+                        <x-courrier-field name="date_reception" type="date" :label="__('courrier.date_received')" :value="now()->format('Y-m-d')" />
+                        <x-courrier-field name="reference_externe" :label="__('courrier.external_ref')" maxlength="100" />
                     </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_tf') }}</label>
-                        <input type="text" name="tf" value="{{ old('tf') }}" placeholder="{{ __('courrier.field_tf_placeholder') }}" class="{{ $input }}">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="{{ $label }}">{{ __('courrier.subject') }} <span class="text-rose-500">*</span></label>
-                        <input type="text" name="objet" value="{{ old('objet') }}" required placeholder="{{ __('courrier.field_objet_placeholder') }}" class="{{ $input }}">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="{{ $label }}">{{ __('courrier.description') }}</label>
-                        <textarea name="description" rows="2" placeholder="{{ __('courrier.field_description_placeholder') }}" class="{{ $input }}">{{ old('description') }}</textarea>
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.external_ref') }}</label>
-                        <input type="text" name="reference_externe" value="{{ old('reference_externe') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.date_mail') }}</label>
-                        <input type="date" name="date_courrier" value="{{ old('date_courrier', now()->format('Y-m-d')) }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.date_received') }}</label>
-                        <input type="date" name="date_reception" value="{{ old('date_reception', now()->format('Y-m-d')) }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.date_sent') }}</label>
-                        <input type="date" name="date_envoi" value="{{ old('date_envoi') }}" class="{{ $input }}">
-                    </div>
-                </div>
-            </section>
-
-            <hr class="my-8 border-gray-200">
-
-            {{-- Informations foncières --}}
-            <section>
-                <h2 class="mb-5 text-lg font-semibold text-gray-900">{{ __('courrier.form_section_foncier') }}</h2>
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.sender') }}</label>
-                        <input type="text" name="expediteur" value="{{ old('expediteur') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.recipient') }}</label>
-                        <input type="text" name="destinataire" value="{{ old('destinataire') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_proprietaire') }}</label>
-                        <input type="text" name="proprietaire" value="{{ old('proprietaire') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_requerant') }}</label>
-                        <input type="text" name="requerant" value="{{ old('requerant') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_vendeur') }}</label>
-                        <input type="text" name="vendeur" value="{{ old('vendeur') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_etude') }}</label>
-                        <input type="text" name="etude_notariale" value="{{ old('etude_notariale') }}" placeholder="{{ __('courrier.field_etude_placeholder') }}" class="{{ $input }}">
-                    </div>
-                </div>
-            </section>
-
-            <hr class="my-8 border-gray-200">
-
-            {{-- Acte --}}
-            <section>
-                <h2 class="mb-5 text-lg font-semibold text-gray-900">{{ __('courrier.form_section_acte') }}</h2>
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_numero_acte') }}</label>
-                        <input type="text" name="numero_acte" value="{{ old('numero_acte') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_numero_repertoire') }}</label>
-                        <input type="text" name="numero_repertoire" value="{{ old('numero_repertoire') }}" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.field_valeur') }}</label>
-                        <input type="number" step="0.01" min="0" name="valeur_immeuble" value="{{ old('valeur_immeuble') }}" placeholder="0.00" class="{{ $input }}">
-                    </div>
-                    <div>
-                        <label for="bureau-destinataire" class="{{ $label }}">{{ __('courrier.destination_office') }} <span class="text-rose-500">*</span></label>
-                        <select id="bureau-destinataire" name="bureau_actuel_id" required class="{{ $input }}">
-                            <option value="">{{ __('courrier.destination_office_choose') }}</option>
-                            @foreach($bureaux as $bureau)
-                                <option value="{{ $bureau->id }}" @selected((string) old('bureau_actuel_id') === (string) $bureau->id)>{{ $bureau->nom }}</option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1.5 text-xs text-gray-500">{{ __('courrier.form_assign_help') }}</p>
-                    </div>
-                    <div>
-                        <label class="{{ $label }}">{{ __('courrier.assign_to') }}</label>
-                        <select id="agent-destinataire" name="assigned_to_user_id" class="{{ $input }}">
-                            <option value="">{{ __('courrier.assign_none') }}</option>
-                            @foreach($agents as $a)
-                                <option value="{{ $a->id }}" data-bureau-id="{{ $a->bureau_id }}" @selected(old('assigned_to_user_id') == $a->id)>
-                                    {{ $a->name }} ({{ $a->email }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="{{ $label }}">{{ __('courrier.document_title') }}</label>
+                </section>
+                <section class="courrier-card">
+                    <div class="courrier-section-heading"><span>02</span><div><h2>{{ __('ux.route') }}</h2><p>{{ __('courrier.form_assign_help') }}</p></div></div>
+                    <div class="space-y-5">
+                        <div>
+                            <label for="bureau-destinataire" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ __('courrier.destination_office') }} <span class="text-rose-600">*</span></label>
+                            <select id="bureau-destinataire" name="bureau_actuel_id" required class="courrier-input" @if($errors->has('bureau_actuel_id')) aria-invalid="true" aria-describedby="bureau-error" @endif>
+                                <option value="">{{ __('courrier.destination_office_choose') }}</option>
+                                @foreach($bureaux as $bureau)
+                                    <option value="{{ $bureau->id }}" @selected((string) old('bureau_actuel_id') === (string) $bureau->id)>{{ $bureau->nom }}</option>
+                                @endforeach
+                            </select>
+                            @error('bureau_actuel_id')<p id="bureau-error" class="mt-1.5 text-xs text-rose-700">{{ $message }}</p>@enderror
+                        </div>
+                        <div>
+                            <label for="agent-destinataire" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ __('courrier.assign_to') }} <span class="font-normal text-slate-400">· {{ __('ux.optional') }}</span></label>
+                            <select id="agent-destinataire" name="assigned_to_user_id" class="courrier-input" aria-describedby="agent-help {{ $errors->has('assigned_to_user_id') ? 'agent-error' : '' }}" @if($errors->has('assigned_to_user_id')) aria-invalid="true" @endif>
+                                <option value="">{{ __('courrier.assign_none') }}</option>
+                                @foreach($agents as $agent)
+                                    <option value="{{ $agent->id }}" data-bureau-id="{{ $agent->bureau_id }}" @selected(old('assigned_to_user_id') == $agent->id)>{{ $agent->name }}</option>
+                                @endforeach
+                            </select>
+                            <p id="agent-help" class="mt-2 mb-0 text-xs text-slate-500">{{ __('ux.agent_hint') }}</p>
+                            @error('assigned_to_user_id')<p id="agent-error" class="mt-1.5 text-xs text-rose-700">{{ $message }}</p>@enderror
+                        </div>
                         @can('courrier.attach')
-                            <input type="file" name="document_file"
-                                   class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30">
-                            <p class="mt-1.5 mb-0 text-xs text-gray-400">{{ __('courrier.attachments_help') }}</p>
-                        @else
-                            <p class="mb-0 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                                {{ __('courrier.no_attach_permission') }}
-                            </p>
+                            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                                <label for="document_file" class="mb-2 block text-sm font-semibold text-slate-700">{{ __('courrier.document_title') }}</label>
+                                <input id="document_file" name="document_file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="courrier-file" aria-describedby="document-help {{ $errors->has('document_file') ? 'document-error' : '' }}" @if($errors->has('document_file')) aria-invalid="true" @endif>
+                                <p id="document-help" class="mt-2 mb-0 text-xs text-slate-500">{{ __('courrier.attachments_help') }}</p>
+                                @error('document_file')<p id="document-error" class="mt-1.5 text-xs text-rose-700">{{ $message }}</p>@enderror
+                                @if($errors->any())<p class="mt-2 mb-0 text-xs text-amber-800">{{ __('ux.reselect_file') }}</p>@endif
+                            </div>
                         @endcan
                     </div>
-                </div>
-            </section>
-
-            <div class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-6">
-                <p class="mb-0 max-w-md text-xs text-gray-500">{{ __('courrier.form_workflow_hint') }}</p>
+                </section>
+                <section class="courrier-card xl:col-span-2">
+                    <div class="courrier-section-heading"><span>03</span><div><h2>{{ __('ux.details') }}</h2><p>{{ __('ux.details_hint') }}</p></div></div>
+                    @php
+                        $groups = [
+                            'correspondence' => ['description' => ['description', 'textarea'], 'date_courrier' => ['date_mail', 'date'], 'date_envoi' => ['date_sent', 'date']],
+                            'property' => ['tf' => ['field_tf', 'text'], 'proprietaire' => ['field_proprietaire', 'text'], 'requerant' => ['field_requerant', 'text'], 'vendeur' => ['field_vendeur', 'text'], 'etude_notariale' => ['field_etude', 'text']],
+                            'deed' => ['numero_acte' => ['field_numero_acte', 'text'], 'numero_repertoire' => ['field_numero_repertoire', 'text'], 'valeur_immeuble' => ['field_valeur', 'number']],
+                        ];
+                    @endphp
+                    <div class="space-y-3">
+                        @foreach($groups as $group => $fields)
+                            @php($expanded = collect(array_keys($fields))->contains(fn ($field) => $errors->has($field) || filled(old($field))))
+                            <details class="courrier-disclosure" @if($expanded) open @endif>
+                                <summary>{{ __('ux.'.$group) }} <span>{{ __('ux.optional') }}</span></summary>
+                                <div class="grid gap-6 p-4 sm:grid-cols-2 sm:p-5">
+                                    @foreach($fields as $name => [$key, $type])
+                                        @if($type === 'number')
+                                            <x-courrier-field :name="$name" :label="__('courrier.'.$key)" type="number" min="0" step="0.01" />
+                                        @else
+                                            <x-courrier-field :name="$name" :label="__('courrier.'.$key)" :type="$type" :class="$type === 'textarea' ? 'sm:col-span-2' : ''" />
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </details>
+                        @endforeach
+                    </div>
+                </section>
+            </div>
+            <div class="courrier-form-footer">
+                <p>{{ __('courrier.form_workflow_hint') }}</p>
                 <div class="flex flex-wrap gap-2">
-                    <x-buttons.secondary :href="route('courriers.index')">
-                        {{ __('courrier.cancel') }}
-                    </x-buttons.secondary>
-                    <x-buttons.primary type="submit">
-                        {{ __('courrier.save') }}
-                    </x-buttons.primary>
+                    <x-buttons.secondary :href="route('courriers.index')">{{ __('courrier.cancel') }}</x-buttons.secondary>
+                    <x-buttons.primary type="submit" data-busy-label="{{ __('ux.saving') }}">{{ __('courrier.save') }}</x-buttons.primary>
                 </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
     @push('scripts')
-    <script>
-        (() => {
-            const office = document.getElementById('bureau-destinataire');
-            const agent = document.getElementById('agent-destinataire');
-            const filterAgents = () => {
-                for (const option of agent.options) {
-                    if (!option.value) continue;
-                    const available = option.dataset.bureauId === office.value;
-                    option.hidden = !available;
-                    option.disabled = !available;
-                    if (!available && option.selected) agent.value = '';
-                }
-                agent.disabled = !office.value;
-            };
-            office.addEventListener('change', filterAgents);
-            filterAgents();
-        })();
-    </script>
+        <script>
+            (() => {
+                const office = document.getElementById('bureau-destinataire');
+                const agent = document.getElementById('agent-destinataire');
+                const filterAgents = () => {
+                    for (const option of agent.options) {
+                        if (!option.value) continue;
+                        const available = option.dataset.bureauId === office.value;
+                        option.hidden = !available;
+                        option.disabled = !available;
+                        if (!available && option.selected) agent.value = '';
+                    }
+                    agent.disabled = !office.value;
+                };
+                office.addEventListener('change', filterAgents);
+                filterAgents();
+            })();
+        </script>
     @endpush
 </x-app-layout>

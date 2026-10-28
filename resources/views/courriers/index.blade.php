@@ -115,16 +115,16 @@
             <input type="hidden" name="sort" value="{{ $filters['sort'] }}">
             <input type="hidden" name="per_page" value="{{ $filters['per_page'] }}">
 
-            <div class="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 xl:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
                 <div class="xl:col-span-2">
-                    <label class="{{ $label }}">{{ __('courrier.filters.search') }}</label>
-                    <input type="search" name="q" value="{{ $filters['q'] }}" class="{{ $field }}"
-                           placeholder="{{ __('courrier.filters.search_placeholder') }}" autofocus>
+                    <label for="register-q-1" class="{{ $label }}">{{ __('courrier.filters.search') }}</label>
+                    <input id="register-q-1" type="search" name="q" value="{{ $filters['q'] }}" class="{{ $field }}"
+                           placeholder="{{ __('courrier.filters.search_placeholder') }}">
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.type') }}</label>
-                    <select name="type" class="{{ $field }}">
+                    <label for="register-type-1" class="{{ $label }}">{{ __('courrier.filters.type') }}</label>
+                    <select id="register-type-1" name="type" class="{{ $field }}">
                         <option value="">{{ __('courrier.filters.all') }}</option>
                         <option value="entrant" @selected($filters['type'] === 'entrant')>{{ __('courrier.type_in') }}</option>
                         <option value="sortant" @selected($filters['type'] === 'sortant')>{{ __('courrier.type_out') }}</option>
@@ -133,8 +133,8 @@
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.etape') }}</label>
-                    <select name="workflow_etape_id" class="{{ $field }}">
+                    <label for="register-workflow_etape_id-1" class="{{ $label }}">{{ __('courrier.filters.etape') }}</label>
+                    <select id="register-workflow_etape_id-1" name="workflow_etape_id" class="{{ $field }}">
                         <option value="">{{ __('courrier.filters.all') }}</option>
                         @foreach ($etapes as $etape)
                             <option value="{{ $etape->id }}" @selected((string) $filters['workflow_etape_id'] === (string) $etape->id)>
@@ -145,8 +145,8 @@
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.bureau') }}</label>
-                    <select name="bureau_actuel_id" class="{{ $field }}">
+                    <label for="register-bureau_actuel_id-1" class="{{ $label }}">{{ __('courrier.filters.bureau') }}</label>
+                    <select id="register-bureau_actuel_id-1" name="bureau_actuel_id" class="{{ $field }}">
                         <option value="">{{ __('courrier.filters.all') }}</option>
                         @foreach ($bureaux as $bureau)
                             <option value="{{ $bureau->id }}" @selected((string) $filters['bureau_actuel_id'] === (string) $bureau->id)>
@@ -157,8 +157,8 @@
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.assigned_to') }}</label>
-                    <select name="assigned_to" class="{{ $field }}">
+                    <label for="register-assigned_to-1" class="{{ $label }}">{{ __('courrier.filters.assigned_to') }}</label>
+                    <select id="register-assigned_to-1" name="assigned_to" class="{{ $field }}">
                         <option value="">{{ __('courrier.filters.all') }}</option>
                         <option value="unassigned" @selected($filters['assigned_to'] === 'unassigned')>{{ __('courrier.register_chip_unassigned') }}</option>
                         @foreach ($agentsList as $u)
@@ -170,8 +170,8 @@
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.attachments') }}</label>
-                    <select name="has_attachments" class="{{ $field }}">
+                    <label for="register-has_attachments-1" class="{{ $label }}">{{ __('courrier.filters.attachments') }}</label>
+                    <select id="register-has_attachments-1" name="has_attachments" class="{{ $field }}">
                         <option value="">{{ __('courrier.filters.all') }}</option>
                         <option value="yes" @selected($filters['has_attachments'] === 'yes')>{{ __('courrier.filters.attachments_yes') }}</option>
                         <option value="no" @selected($filters['has_attachments'] === 'no')>{{ __('courrier.filters.attachments_no') }}</option>
@@ -179,16 +179,16 @@
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.sla') }}</label>
-                    <select name="is_late" class="{{ $field }}">
+                    <label for="register-is_late-1" class="{{ $label }}">{{ __('courrier.filters.sla') }}</label>
+                    <select id="register-is_late-1" name="is_late" class="{{ $field }}">
                         <option value="">{{ __('courrier.filters.all') }}</option>
                         <option value="1" @selected($filters['is_late'] === '1')>{{ __('courrier.register_chip_late') }}</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.archived') }}</label>
-                    <select name="archived" class="{{ $field }}">
+                    <label for="register-archived-1" class="{{ $label }}">{{ __('courrier.filters.archived') }}</label>
+                    <select id="register-archived-1" name="archived" class="{{ $field }}">
                         <option value="active" @selected($filters['archived'] === 'active')>{{ __('courrier.filters.archived_active') }}</option>
                         <option value="archived" @selected($filters['archived'] === 'archived')>{{ __('courrier.filters.archived_only') }}</option>
                         <option value="all" @selected($filters['archived'] === 'all')>{{ __('courrier.filters.archived_all') }}</option>
@@ -196,19 +196,19 @@
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.date_from') }}</label>
-                    <input type="date" name="date_from" class="{{ $field }}" value="{{ $filters['date_from'] }}">
+                    <label for="register-date_from-1" class="{{ $label }}">{{ __('courrier.filters.date_from') }}</label>
+                    <input id="register-date_from-1" type="date" name="date_from" class="{{ $field }}" value="{{ $filters['date_from'] }}">
                 </div>
 
                 <div>
-                    <label class="{{ $label }}">{{ __('courrier.filters.date_to') }}</label>
-                    <input type="date" name="date_to" class="{{ $field }}" value="{{ $filters['date_to'] }}">
+                    <label for="register-date_to-1" class="{{ $label }}">{{ __('courrier.filters.date_to') }}</label>
+                    <input id="register-date_to-1" type="date" name="date_to" class="{{ $field }}" value="{{ $filters['date_to'] }}">
                 </div>
 
                 @if ($isAdmin)
                     <div>
-                        <label class="{{ $label }}">{{ __('courrier.filters.scope') }}</label>
-                        <select name="scope" class="{{ $field }}">
+                        <label for="register-scope-1" class="{{ $label }}">{{ __('courrier.filters.scope') }}</label>
+                        <select id="register-scope-1" name="scope" class="{{ $field }}">
                             <option value="all" @selected($filters['scope'] === 'all')>{{ __('courrier.filters.scope_all') }}</option>
                             <option value="mine" @selected($filters['scope'] === 'mine')>{{ __('courrier.filters.scope_mine') }}</option>
                         </select>
@@ -233,8 +233,8 @@
                     @endif
                 @endforeach
                 <div class="min-w-[16rem] flex-1">
-                    <label class="{{ $label }}">{{ __('courrier.filters.search') }}</label>
-                    <input type="search" name="q" value="{{ $filters['q'] }}" class="{{ $field }}"
+                    <label for="register-q-2" class="{{ $label }}">{{ __('courrier.filters.search') }}</label>
+                    <input id="register-q-2" type="search" name="q" value="{{ $filters['q'] }}" class="{{ $field }}"
                            placeholder="{{ __('courrier.filters.search_placeholder') }}">
                 </div>
                 <x-buttons.primary type="submit">{{ __('courrier.filters.apply') }}</x-buttons.primary>
@@ -262,8 +262,8 @@
                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                 @endif
             @endforeach
-            <label class="text-xs font-semibold text-gray-500">{{ __('courrier.register_sort') }}</label>
-            <select name="sort" class="rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-sm" onchange="this.form.submit()">
+            <label for="register-sort-1" class="text-xs font-semibold text-gray-500">{{ __('courrier.register_sort') }}</label>
+            <select id="register-sort-1" name="sort" class="rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-sm" onchange="this.form.submit()">
                 <option value="recent" @selected($filters['sort'] === 'recent')>{{ __('courrier.register_sort_recent') }}</option>
                 <option value="oldest" @selected($filters['sort'] === 'oldest')>{{ __('courrier.register_sort_oldest') }}</option>
                 <option value="deadline" @selected($filters['sort'] === 'deadline')>{{ __('courrier.register_sort_deadline') }}</option>
@@ -281,7 +281,7 @@
     {{-- Desktop table --}}
     <div class="hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:block">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <table class="courrier-register-table min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50">
                     <tr class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400">
                         <th class="px-4 py-3">{{ __('courrier.ref') }}</th>
@@ -417,7 +417,7 @@
                 <div class="flex items-start justify-between gap-2">
                     <div>
                         <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="font-bold text-gray-900">{{ $c->reference_interne }}</span>
+                            <span class="whitespace-nowrap font-bold text-gray-900">{{ $c->reference_interne }}</span>
                             @if ($c->is_late)
                                 <span class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
                                     {{ __('courrier.kanban_late') }}

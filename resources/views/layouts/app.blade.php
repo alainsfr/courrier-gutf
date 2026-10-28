@@ -30,8 +30,8 @@
 
     <div class="min-h-screen lg:pl-72">
         {{-- Header --}}
-        <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
-            <div class="flex min-h-16 items-center gap-3 px-4 py-2.5 sm:px-6">
+        <header class="md:sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+            <div class="app-topbar px-4 py-2.5 sm:px-6">
                 <button type="button"
                         class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 lg:hidden"
                         data-sidebar-open aria-label="Ouvrir le menu">
@@ -40,7 +40,7 @@
                     </svg>
                 </button>
 
-                <div class="min-w-0 flex-1">
+                <div class="app-page-heading min-w-0 flex-1">
                     @isset($header)
                         <div class="min-w-0 [&_h1]:mb-0 [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-slate-900 sm:[&_h1]:text-lg">
                             {{ $header }}
@@ -52,7 +52,7 @@
                     @endisset
                 </div>
 
-                <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+                <div class="app-account-tools flex shrink-0 items-center gap-1 sm:gap-2">
                     <x-locale-switcher />
 
                     <a href="{{ route('notifications.index') }}"
@@ -142,6 +142,13 @@
             openBtns.forEach((btn) => btn.addEventListener('click', openSidebar));
             closeBtns.forEach((btn) => btn.addEventListener('click', closeSidebar));
             overlay?.addEventListener('click', closeSidebar);
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    closeSidebar();
+                    profileDropdown?.classList.add('hidden');
+                    profileToggle?.setAttribute('aria-expanded', 'false');
+                }
+            });
 
             const profileRoot = document.querySelector('[data-profile-menu]');
             const profileToggle = profileRoot?.querySelector('[data-profile-toggle]');
