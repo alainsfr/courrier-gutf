@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'register_title' => 'Créer un compte', 'register_intro' => 'Renseignez vos informations pour créer votre compte.',
+    'password_confirm' => 'Confirmer le mot de passe', 'already_registered' => 'Déjà inscrit ? Se connecter',
     'language' => 'Langue', 'per_page' => 'Résultats par page',
     'workspace' => 'Espace de travail', 'skip' => 'Aller au contenu', 'breadcrumb' => 'Fil d’Ariane',
     'dashboard' => 'Tableau de bord', 'register' => 'Registre des courriers', 'processing' => 'Espace de traitement',

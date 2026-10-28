@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'register_title' => 'Create an account', 'register_intro' => 'Enter your details to create your account.',
+    'password_confirm' => 'Confirm password', 'already_registered' => 'Already registered? Sign in',
     'language' => 'Language', 'per_page' => 'Results per page',
     'workspace' => 'Workspace', 'skip' => 'Skip to content', 'breadcrumb' => 'Breadcrumb',
     'dashboard' => 'Dashboard', 'register' => 'Mail register', 'processing' => 'Processing workspace',

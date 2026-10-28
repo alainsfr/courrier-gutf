@@ -58,7 +58,7 @@
                 @else
                     <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
                           style="background: var(--gutf-primary)">
-                        G
+                        {{ mb_strtoupper(mb_substr($appLabel, 0, 1)) }}
                     </span>
                 @endif
                 <span class="text-sm font-semibold tracking-wide" style="color: var(--gutf-primary)">{{ $appLabel }}</span>
