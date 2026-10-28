@@ -6,7 +6,7 @@ l’identité du dossier et la lecture du document. Le registre et les rapports 
 entrées distinctes dans le menu.
 
 Le manuel en français est accessible aux utilisateurs connectés et actifs à `/aide`.
-Son sommaire contient 22 chapitres. Le PDF imprimable possède 21 pages, un sommaire
+Son sommaire contient 22 chapitres. Le PDF imprimable possède 22 pages, un sommaire
 cliquable et des signets. Les quatre captures proviennent d’une base de test isolée
 et ne contiennent que des données fictives.
 
@@ -29,8 +29,10 @@ et ne contiennent que des données fictives.
 - Fiche et formulaire à 390 px : absence de débordement horizontal ; champ objet
   obligatoire ; visionneuse agrandie et fermeture vérifiées.
 - Manuel : 22 chapitres, quatre images chargées, 22 signets dans le PDF ; mise en page
-  contrôlée après rendu des 21 pages.
+  contrôlée après rendu des 22 pages.
 - Aucun courrier fictif n’est inséré dans les bases de l’application locale ou hébergée.
 
-La prévention du double clic côté navigateur facilite la saisie ; elle ne constitue
-pas une garantie d’idempotence métier ou d’unicité des références en concurrence.
+La prévention du double clic est complétée par un identifiant de formulaire unique
+et un contrôle des informations côté serveur. Le compteur de références est verrouillé
+en transaction. Les formulaires anciens sans identifiant restent compatibles, mais
+ne bénéficient pas de la déduplication des renvois.

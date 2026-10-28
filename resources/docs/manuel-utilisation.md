@@ -51,7 +51,7 @@ Le menu portant votre nom propose **Mon Profil** et **Déconnexion**. Dans le pr
 
 Le sélecteur **FR / EN** change la langue de l’interface. Ce manuel est en français.
 
-Le PIN comporte **quatre chiffres**. Il est distinct du mot de passe de connexion. Ne partagez ni l’un ni l’autre. Déconnectez-vous lorsque vous quittez votre poste.
+Le PIN comporte **quatre chiffres**. Pour le créer ou le remplacer, saisissez également votre mot de passe actuel dans le formulaire du PIN. Il est distinct du mot de passe de connexion. Ne partagez ni l’un ni l’autre. Déconnectez-vous lorsque vous quittez votre poste.
 
 ## 04. Se repérer dans l’interface
 
@@ -86,6 +86,8 @@ Les compteurs dépendent du périmètre de l’utilisateur et des règles de cha
 **Obligatoires :** type, objet et bureau destinataire. La date de réception est proposée au jour de saisie ; corrigez-la si la réception réelle est différente.
 
 Le courrier devient immédiatement disponible au bureau destinataire à l’état **À traiter**. Aucun passage obligatoire par une succession de bureaux n’est prévu.
+
+Si vous renvoyez le même formulaire sans changer ses informations, l’application ouvre le dossier déjà enregistré. Pour enregistrer un autre courrier, ouvrez un nouveau formulaire. Réutiliser un formulaire déjà enregistré avec des informations différentes est refusé.
 
 Après une erreur, les informations saisies sont conservées et les rubriques contenant des valeurs ou erreurs s’ouvrent. Sélectionnez de nouveau le fichier avant d’enregistrer.
 
@@ -178,7 +180,7 @@ Si le dossier a changé entre-temps, rechargez la fiche, relisez les valeurs act
 
 ## 10. Ajouter, consulter et télécharger les documents
 
-Formats proposés : **PDF, JPG et PNG**, avec une limite de **10 Mo par fichier**. Privilégiez un PDF lisible, correctement orienté et comprenant toutes les pages.
+Formats proposés : **PDF, JPG et PNG**, avec une limite de **10 Mo par fichier**. Le contenu réel doit correspondre au format annoncé : renommer un fichier ne le transforme pas en PDF ou en image. Privilégiez un PDF lisible, correctement orienté et comprenant toutes les pages.
 
 ### Ajouter une pièce
 
@@ -210,7 +212,7 @@ Dans **Courriers liés**, saisissez la référence interne à rapprocher, puis *
 
 **Historique** présente les événements : création, prise en charge, étapes, réaffectation, corrections et opérations sur les pièces. Les corrections peuvent afficher les valeurs avant et après ; les motifs expliquent l’intervention.
 
-Le profil Consultation ne peut pas corriger ni faire avancer le traitement. Certaines fonctions de collaboration peuvent néanmoins lui être proposées sur les dossiers qu’il peut consulter.
+Le profil Consultation ne peut pas corriger ni faire avancer le traitement. Il peut publier des notes sur les dossiers autorisés, mais ne peut ni ajouter des liens entre courriers ni demander un visa. Ces deux actions sont réservées aux profils habilités et aux dossiers non archivés.
 
 ## 12. Utiliser l’Espace de Traitement
 
@@ -264,7 +266,9 @@ Dans une fiche non archivée, ouvrez **Demander un visa (facultatif)**. Choisiss
 4. Pour refuser, indiquez un commentaire explicite et validez le refus.
 5. Vérifiez la confirmation.
 
-Seul le destinataire peut traiter son visa en attente. Configurez d’abord le PIN depuis **Mon Profil** si nécessaire.
+Seul le destinataire peut traiter son visa en attente. Configurez d’abord le PIN depuis **Mon Profil** si nécessaire, en confirmant votre mot de passe actuel.
+
+Après **cinq PIN incorrects**, l’approbation est bloquée pendant **dix minutes** pour le compte, même sur un autre visa. Attendez la fin du délai ou redéfinissez votre PIN dans le profil avec votre mot de passe. Aucun PIN saisi ne doit être envoyé au support.
 
 Approuver ou refuser enregistre la décision du parapheur ; cela ne termine ni n’archive automatiquement le courrier. Le bureau poursuit les opérations correspondantes. Un refus de visa se distingue d’un retour à une étape précédente.
 
@@ -393,7 +397,7 @@ Examinez les retards, les affectations, les courriers sans agent, les visas en a
 | Modification simultanée | Recharger la fiche et repartir des valeurs actuelles |
 | Fichier refusé | Vérifier format, limite de 10 Mo et limites du serveur ; sélectionner de nouveau le fichier |
 | Aperçu absent | Essayer le téléchargement, vérifier le fichier et signaler sa référence |
-| PIN refusé | Vérifier le PIN personnel de quatre chiffres ; ne pas utiliser le mot de passe |
+| PIN refusé | Vérifier les quatre chiffres ; après cinq échecs, attendre dix minutes ou redéfinir le PIN avec son mot de passe |
 | Visa approuvé, dossier toujours en traitement | Le visa ne clôture pas ; utiliser l’action métier quand le travail est terminé |
 | Archive absente de la liste | Inclure les archives et vérifier le périmètre d’accès |
 | Export en échec | Réduire la période puis faire contrôler les ressources du serveur |

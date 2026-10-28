@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
@@ -19,6 +19,8 @@ class RolesAndPermissionsSeeder extends Seeder
             // Courrier
             'courrier.view',
             'courrier.create',
+            'courrier.visa.submit',
+            'courrier.link',
             'courrier.update',
             'courrier.reassign',
             'courrier.assign',
@@ -28,7 +30,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'courrier.validate',
             'courrier.archive',
             'courrier.export',
-            
+
             // Chat
             'chat.view',
             'chat.send',
@@ -62,7 +64,8 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
 
             'agent_courrier' => [
-                'courrier.view',
+                'courrier.visa.submit',
+                'courrier.link',                'courrier.view',
                 'courrier.create',
                 'courrier.update',
                 'courrier.reassign',
@@ -76,7 +79,8 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
 
             'agent_traitement' => [
-                'courrier.view',
+                'courrier.visa.submit',
+                'courrier.link',                'courrier.view',
                 'courrier.process',
                 'courrier.update',
                 'courrier.archive',
@@ -99,13 +103,14 @@ class RolesAndPermissionsSeeder extends Seeder
                 'courrier.view',
                 'chat.view',
                 'chat.send',
-                
+
                 // 'courrier.export', // optionnel
             ],
 
             // Direction : lecture + pilotage (rapports)
             'directeur' => [
-                'courrier.view',
+                'courrier.visa.submit',
+                'courrier.link',                'courrier.view',
                 'courrier.export',
                 'chat.view',
                 'chat.send',

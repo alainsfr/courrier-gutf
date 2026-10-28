@@ -42,6 +42,7 @@
                 'courrier-claimed' => __('courrier.claimed_ok'), 'courrier-corrected' => __('courrier.corrected_ok'),
                 'courrier-reassigned' => __('courrier.reassigned_ok'), 'courrier-created' => __('courrier.created_ok'),
                 'courrier-assigned' => __('courrier.assigned_ok'), 'courrier-processing-started' => __('courrier.processing_ok'),
+                'courrier-already-created' => __('courrier.already_created'),
                 'courrier-archived' => __('courrier.archived_ok'), 'attachment-uploaded' => __('ux.attachment_added'), default => session('status') } }}
         </div>
     @endif
@@ -397,7 +398,7 @@
                                            autocomplete="one-time-code"
                                            class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-center text-lg tracking-[0.4em] focus:border-[#17384b] focus:outline-none focus:ring-2 focus:ring-[#17384b]/20"
                                            placeholder="••••"
-                                           value="{{ old('signature_pin') }}">
+                                           >
                                     @error('signature_pin')
                                         <p class="mt-2 mb-0 text-xs text-rose-600">{{ $message }}</p>
                                     @enderror
@@ -424,16 +425,13 @@
                 @if ($errors->has('signature_pin'))
                     <script>
                         document.addEventListener('DOMContentLoaded', function () {
-                            var el = document.getElementById('visa-pin-modal');
-                            if (el && window.bootstrap) {
-                                window.bootstrap.Modal.getOrCreateInstance(el).show();
-                            }
+                            document.querySelector('[data-bs-target="#visa-pin-modal"]')?.click();
                         });
                     </script>
                 @endif
             @endif
 
-            @if (empty($pendingVisa) && empty($hasPendingVisa) && ! ($courrier->isArchived() ?? false))
+            @if (empty($pendingVisa) && empty($hasPendingVisa) && ! $courrier->isArchived() && auth()->user()->can('submitVisa', $courrier))
                 <details class="courrier-card courrier-disclosure" @if($errors->has("validator_id")) open @endif>
                     <summary>{{ __('ux.visa_optional') }}</summary><div class="pt-4">
                     <p class="mb-3 text-xs text-gray-500">{{ __('parapheur.submit_hint') }}</p>
@@ -495,6 +493,7 @@
                     @endforelse
                 </div>
 
+                @if(! $courrier->isArchived() && auth()->user()->can('link', $courrier))
                 <form method="POST" action="{{ route('courriers.links.store', $courrier) }}" class="border-t border-gray-100 pt-3">
                     @csrf
                     <label for="link_reference" class="mb-1.5 block text-[11px] font-bold uppercase tracking-wide text-gray-400">
@@ -512,6 +511,7 @@
                         <p class="mt-1.5 mb-0 text-xs text-rose-600">{{ $message }}</p>
                     @enderror
                 </form>
+                @endif
             </div>
 
             {{-- Notes & Instructions Internes --}}

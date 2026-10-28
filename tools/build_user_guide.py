@@ -181,7 +181,7 @@ story.append(toc)
 story.append(Spacer(1,20))
 story.append(p('Mode d’emploi : commencez par les chapitres 1 à 4, puis suivez le parcours correspondant à votre rôle. Les chapitres 17 à 19 s’adressent principalement aux responsables. Le dépannage et l’aide-mémoire sont en fin de guide.',small))
 
-groups=[[1],[2],[3,4],[5],[6],[7],[8,9],[10,11],[12,13],[14,15],[16,17],[18,19],[20],[21],[22]]
+groups=[[1],[2],[3,4],[5],[6],[7],[8,9],[10,11],[12,13],[14],[15,16],[17],[18,19],[20],[21],[22]]
 figure_number=0
 for group in groups:
     story.extend([NextPageTemplate('portrait'),PageBreak()])

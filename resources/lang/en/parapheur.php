@@ -40,4 +40,5 @@ return [
     'pin_invalid' => 'Invalid PIN code.',
     'pin_not_set' => 'No PIN configured on your profile.',
     'pin_configure' => 'Set up my PIN',
+    'pin_locked' => 'Too many incorrect PINs. Try again in 10 minutes or reset your PIN in your profile using your password.',
 ];

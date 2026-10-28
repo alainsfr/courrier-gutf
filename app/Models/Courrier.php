@@ -10,11 +10,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Courrier extends Model
 {
+    protected $hidden = ['submission_key', 'submission_hash'];
+
     public const ETAPE_RECEPTION = 1;
+
     public const ETAPE_ANALYSE = 2;
+
     public const ETAPE_TRAITEMENT = 3;
+
     public const ETAPE_VALIDATION = 4;
+
     public const ETAPE_SORTIE = 5;
+
     public const ETAPE_ARCHIVAGE = 6;
 
     protected $fillable = [

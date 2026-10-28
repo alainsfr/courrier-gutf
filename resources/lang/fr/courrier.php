@@ -313,4 +313,7 @@ return [
     'show_actions_locked' => 'Actions réservées aux agents du bureau : :bureau.',
     'show_archived' => 'Dossier archivé — actions clôturées.',
     'show_transfer_ok' => 'Avancement du traitement enregistré.',
+    'document_invalid' => 'Le fichier doit contenir un document PDF ou une image JPG/PNG valide, correspondant à son extension.',
+    'submission_used' => 'Ce formulaire a déjà été utilisé avec des informations différentes. Ouvrez un nouveau formulaire pour créer un autre courrier.',
+    'already_created' => 'Ce courrier avait déjà été enregistré. Son dossier existant a été ouvert.',
 ];

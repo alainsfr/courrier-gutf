@@ -90,4 +90,21 @@ class CourrierLinkTest extends TestCase
             $this->parent->fresh()->linkedCourriers->contains('id', $this->child->id)
         );
     }
+
+    public function test_read_only_user_cannot_change_links_on_a_visible_dossier(): void
+    {
+        $this->agent->syncRoles(['consultation']);
+        $this->actingAs($this->agent)->get(route('courriers.show', $this->parent))->assertOk()
+            ->assertDontSee('action="'.route('courriers.links.store', $this->parent).'"', false);
+        $this->post(route('courriers.links.store', $this->parent), ['reference' => $this->child->reference_interne])->assertForbidden();
+        $this->assertDatabaseCount('courrier_links', 0);
+    }
+
+    public function test_even_an_administrator_cannot_add_a_link_to_an_archived_source(): void
+    {
+        $this->parent->update(['archived_at' => now()]);
+        $this->agent->assignRole('super-admin');
+        $this->actingAs($this->agent)->post(route('courriers.links.store', $this->parent), ['reference' => $this->child->reference_interne])->assertUnprocessable();
+        $this->assertDatabaseCount('courrier_links', 0);
+    }
 }

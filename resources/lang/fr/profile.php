@@ -50,4 +50,5 @@ return [
     'pin_required' => 'Le code PIN est obligatoire.',
     'pin_digits' => 'Le code PIN doit contenir exactement 4 chiffres.',
     'pin_confirmation' => 'La confirmation du PIN ne correspond pas.',
+    'pin_password_help' => 'Votre mot de passe actuel est requis pour créer ou remplacer le PIN.',
 ];

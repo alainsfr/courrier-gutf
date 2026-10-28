@@ -44,7 +44,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->appendToGroup('web', SetLocale::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->dontFlash(['signature_pin', 'signature_pin_confirmation', 'pin_password']);
     })
     ->create();
 

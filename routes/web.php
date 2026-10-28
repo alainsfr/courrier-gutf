@@ -206,7 +206,7 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::put('/profile/signature-pin', [SignaturePinController::class, 'update'])->name('profile.signature-pin.update');
+    Route::put('/profile/signature-pin', [SignaturePinController::class, 'update'])->middleware('throttle:6,1')->name('profile.signature-pin.update');
     // Suppression de compte désactivée (application institutionnelle).
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 

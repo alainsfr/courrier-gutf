@@ -82,4 +82,36 @@ class ParapheurSubmissionTest extends TestCase
             'status' => ParapheurVisa::STATUS_PENDING,
         ]);
     }
+
+    public function test_read_only_user_cannot_request_a_visa_even_when_the_courrier_is_visible(): void
+    {
+        $this->agent->syncRoles(['consultation']);
+        $this->actingAs($this->agent)->get(route('courriers.show', $this->courrier))->assertOk()
+            ->assertDontSee('action="'.route('courriers.parapheur.submit', $this->courrier).'"', false);
+        $this->post(route('courriers.parapheur.submit', $this->courrier), ['validator_id' => $this->directeur->id])->assertForbidden();
+        $this->assertDatabaseCount('parapheur_visas', 0);
+    }
+
+    public function test_disabled_validator_is_rejected(): void
+    {
+        $this->directeur->update(['is_active' => false]);
+        $this->actingAs($this->agent)->post(route('courriers.parapheur.submit', $this->courrier), ['validator_id' => $this->directeur->id])
+            ->assertSessionHasErrors('validator_id');
+        $this->assertDatabaseCount('parapheur_visas', 0);
+    }
+
+    public function test_repeated_submission_has_only_one_pending_visa(): void
+    {
+        $this->actingAs($this->agent)->post(route('courriers.parapheur.submit', $this->courrier), ['validator_id' => $this->directeur->id])->assertRedirect();
+        $this->post(route('courriers.parapheur.submit', $this->courrier), ['validator_id' => $this->directeur->id])->assertSessionHasErrors('validator_id');
+        $this->assertDatabaseCount('parapheur_visas', 1);
+    }
+
+    public function test_even_an_administrator_cannot_submit_an_archived_dossier(): void
+    {
+        $this->courrier->update(['archived_at' => now()]);
+        $this->agent->assignRole('super-admin');
+        $this->actingAs($this->agent)->post(route('courriers.parapheur.submit', $this->courrier), ['validator_id' => $this->directeur->id])->assertUnprocessable();
+        $this->assertDatabaseCount('parapheur_visas', 0);
+    }
 }

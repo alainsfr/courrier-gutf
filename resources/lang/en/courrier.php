@@ -311,4 +311,7 @@ return [
     'show_actions_locked' => 'Actions reserved for agents of bureau: :bureau.',
     'show_archived' => 'Archived file — actions closed.',
     'show_transfer_ok' => 'Processing progress saved.',
+    'document_invalid' => 'The file must contain a valid PDF document or JPG/PNG image matching its extension.',
+    'submission_used' => 'This form was already used with different information. Open a new form to create another mail item.',
+    'already_created' => 'This mail was already registered. Its existing case has been opened.',
 ];

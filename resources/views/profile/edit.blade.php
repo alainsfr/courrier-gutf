@@ -189,6 +189,11 @@
             @method('PUT')
 
             <div>
+                <label class="{{ $label }}" for="pin_password">{{ __('profile.current_password') }}</label>
+                <input id="pin_password" name="pin_password" type="password" required autocomplete="current-password" class="{{ $input }}">
+                <p class="mt-1.5 mb-4 text-xs text-gray-500">{{ __('profile.pin_password_help') }}</p>
+            </div>
+            <div>
                 <label class="{{ $label }}" for="signature_pin">{{ __('profile.pin_label') }}</label>
                 <input
                     id="signature_pin"

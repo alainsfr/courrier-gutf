@@ -171,7 +171,7 @@ class ApplicationE2ETest extends TestCase
             'proprietaire' => 'Société Test E2E',
             'expediteur' => 'Notaire E2E',
             'date_reception' => now()->toDateString(),
-            'document_file' => UploadedFile::fake()->create('dossier-e2e.pdf', 120, 'application/pdf'),
+            'document_file' => UploadedFile::fake()->createWithContent('dossier-e2e.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"),
         ]);
 
         $courrier = Courrier::query()->latest('id')->first();

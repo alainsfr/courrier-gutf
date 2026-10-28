@@ -7,9 +7,13 @@
     </x-slot>
     <div class="mx-auto max-w-6xl">
         <x-form-errors class="mb-5" />
+        @error('submission_key')
+            <a href="{{ route('courriers.create') }}" class="mb-4 inline-block text-sm font-semibold underline">{{ __('courrier.new') }}</a>
+        @enderror
         <p class="mb-5 text-sm text-slate-500">{{ __('ux.required_hint') }}</p>
         <form method="POST" action="{{ route('courriers.store') }}" enctype="multipart/form-data" data-submit-once>
             @csrf
+            <input type="hidden" name="submission_key" value="{{ old('submission_key', (string) \Illuminate\Support\Str::uuid()) }}">
             <div class="grid items-start gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
                 <section class="courrier-card">
                     <div class="courrier-section-heading"><span>01</span><div><h2>{{ __('ux.identify') }}</h2><p>{{ __('ux.identify_hint') }}</p></div></div>

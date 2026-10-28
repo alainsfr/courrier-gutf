@@ -59,6 +59,16 @@ class CourrierPolicy
         return $user->can('courrier.create');
     }
 
+    public function submitVisa(User $user, Courrier $courrier): bool
+    {
+        return $user->can('courrier.visa.submit') && ! $courrier->isArchived() && $this->view($user, $courrier);
+    }
+
+    public function link(User $user, Courrier $courrier): bool
+    {
+        return $user->can('courrier.link') && ! $courrier->isArchived() && $this->view($user, $courrier);
+    }
+
     public function assign(User $user, Courrier $courrier): bool
     {
         if (! $user->can('courrier.assign')) {
@@ -147,7 +157,7 @@ class CourrierPolicy
 
     public function attach(User $user, Courrier $courrier): bool
     {
-        if (! $user->can('courrier.attach')) {
+        if ($courrier->isArchived() || ! $user->can('courrier.attach')) {
             return false;
         }
 
@@ -156,7 +166,7 @@ class CourrierPolicy
 
     public function detach(User $user, Courrier $courrier): bool
     {
-        if (! $user->can('courrier.detach')) {
+        if ($courrier->isArchived() || ! $user->can('courrier.detach')) {
             return false;
         }
 

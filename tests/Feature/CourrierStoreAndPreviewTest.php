@@ -129,7 +129,7 @@ class CourrierStoreAndPreviewTest extends TestCase
 
     public function test_store_accepts_pdf_even_when_browser_sends_octet_stream_mime(): void
     {
-        $pdf = UploadedFile::fake()->create('scan.pdf', 100, 'application/octet-stream');
+        $pdf = UploadedFile::fake()->createWithContent('scan.pdf', "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n")->mimeType('application/octet-stream');
 
         $response = $this->actingAs($this->agent)->post(route('courriers.store'), [
             'bureau_actuel_id' => $this->agent->bureau_id,

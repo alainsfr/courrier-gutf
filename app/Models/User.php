@@ -12,7 +12,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * @var array<int, string>
@@ -37,6 +37,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'signature_pin',
         'remember_token',
+        'signature_pin_attempts',
+        'signature_pin_locked_until',
     ];
 
     /**
@@ -49,6 +51,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'last_login_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'signature_pin_attempts' => 'integer',
+            'signature_pin_locked_until' => 'datetime',
         ];
     }
 

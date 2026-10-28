@@ -12,6 +12,20 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-test-only
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_DATABASE: courrier_concurrency_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-test-only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,6 +46,23 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
         run: php vendor/bin/phpunit --do-not-cache-result
+
+      - name: Verify concurrent registrations and PIN protection on MySQL
+        env:
+          APP_ENV: testing
+          APP_KEY: "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: courrier_concurrency_test
+          DB_USERNAME: root
+          DB_PASSWORD: ci-test-only
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+          MAIL_MAILER: array
+          BROADCAST_CONNECTION: "null"
+        run: php tests/Concurrency/registration.php
 
   deploy:
     needs: verify

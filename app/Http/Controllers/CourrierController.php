@@ -3,20 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Exports\CourriersWorkbookExport;
-use App\Models\ParapheurVisa;
+use App\Http\Requests\CorrectCourrierRequest;
 use App\Models\Bureau;
 use App\Models\Courrier;
 use App\Models\CourrierAttachment;
 use App\Models\CourrierHistory;
+use App\Models\ParapheurVisa;
 use App\Models\User;
 use App\Models\WorkflowEtape;
-use App\Services\CourrierQueryService;
-use App\Services\AuditService;
-use App\Services\WorkflowService;
-use App\Services\CourrierManagementService;
-use App\Http\Requests\CorrectCourrierRequest;
 use App\Notifications\CourrierStatusNotification;
-use RuntimeException;
+use App\Rules\CourrierDocument;
+use App\Services\AuditService;
+use App\Services\CourrierManagementService;
+use App\Services\CourrierQueryService;
+use App\Services\CourrierReferenceService;
+use App\Services\WorkflowService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
+use RuntimeException;
 
 class CourrierController extends Controller
 {
@@ -135,9 +137,10 @@ class CourrierController extends Controller
         $this->authorize('export', Courrier::class);
 
         $rows = $this->queryService->buildFilteredQuery($request)->get();
+
         return Excel::download(
             new CourriersWorkbookExport($rows),
-            'courriers_' . now()->format('Ymd_His') . '.xlsx'
+            'courriers_'.now()->format('Ymd_His').'.xlsx'
         );
     }
 
@@ -150,29 +153,29 @@ class CourrierController extends Controller
         $filtersHuman = [];
 
         if ($q = trim((string) $request->query('q'))) {
-            $filtersHuman[] = __('courrier.filters.search') . ': ' . $q;
+            $filtersHuman[] = __('courrier.filters.search').': '.$q;
         }
         if ($type = $request->query('type')) {
-            $filtersHuman[] = __('courrier.filters.type') . ': ' . strtoupper($type);
+            $filtersHuman[] = __('courrier.filters.type').': '.strtoupper($type);
         }
         if ($etapeId = $request->query('workflow_etape_id')) {
             $etape = WorkflowEtape::find($etapeId);
-            $filtersHuman[] = __('courrier.filters.etape') . ': ' . ($etape?->libelle ?? $etapeId);
+            $filtersHuman[] = __('courrier.filters.etape').': '.($etape?->libelle ?? $etapeId);
         }
         if ($request->query('has_attachments') === 'yes') {
-            $filtersHuman[] = __('courrier.filters.attachments') . ': ' . __('courrier.filters.attachments_yes');
+            $filtersHuman[] = __('courrier.filters.attachments').': '.__('courrier.filters.attachments_yes');
         }
         if ($request->query('has_attachments') === 'no') {
-            $filtersHuman[] = __('courrier.filters.attachments') . ': ' . __('courrier.filters.attachments_no');
+            $filtersHuman[] = __('courrier.filters.attachments').': '.__('courrier.filters.attachments_no');
         }
         if ($assigned = $request->query('assigned_to')) {
             $u = User::find($assigned);
-            $filtersHuman[] = __('courrier.filters.assigned_to') . ': ' . ($u ? $u->name : 'ID ' . $assigned);
+            $filtersHuman[] = __('courrier.filters.assigned_to').': '.($u ? $u->name : 'ID '.$assigned);
         }
 
         if ($request->query('date_from') || $request->query('date_to')) {
-            $filtersHuman[] = __('courrier.export_period') . ': ' .
-                ($request->query('date_from') ?: '—') . ' → ' .
+            $filtersHuman[] = __('courrier.export_period').': '.
+                ($request->query('date_from') ?: '—').' → '.
                 ($request->query('date_to') ?: '—');
         }
 
@@ -181,7 +184,7 @@ class CourrierController extends Controller
             'filtersHuman' => $filtersHuman,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->download('courriers_' . now()->format('Ymd_His') . '.pdf');
+        return $pdf->download('courriers_'.now()->format('Ymd_His').'.pdf');
     }
 
     /* =========================================================
@@ -223,16 +226,32 @@ class CourrierController extends Controller
             'bureau_actuel_id' => ['required', 'integer', Rule::exists('bureaux', 'id')->where('is_active', true)],
             'assigned_to_user_id' => ['nullable', 'integer', Rule::exists('users', 'id')
                 ->where('bureau_id', $request->input('bureau_actuel_id'))->where('is_active', true)],
-            'document_file' => ['nullable', 'file', 'max:10240', 'extensions:pdf,jpg,jpeg,png'],
+            'document_file' => ['bail', 'nullable', 'file', 'max:10240', new CourrierDocument],
+            'submission_key' => ['nullable', 'uuid'],
         ]);
 
-        unset($validated['document_file']);
+        $submissionKey = $validated['submission_key'] ?? (string) Str::uuid();
+        unset($validated['document_file'], $validated['submission_key']);
+        ksort($validated);
+        $fileHash = $request->file('document_file') ? hash_file('sha256', $request->file('document_file')->getRealPath()) : null;
+        $submissionHash = hash('sha256', json_encode([$validated, $fileHash], JSON_THROW_ON_ERROR));
 
         if (! empty($validated['assigned_to_user_id']) && ! User::findOrFail($validated['assigned_to_user_id'])->can('courrier.process')) {
             throw ValidationException::withMessages(['assigned_to_user_id' => __('courrier.agent_invalid')]);
         }
 
-        $courrier = DB::transaction(function () use ($validated, $request) {
+        [$courrier, $created] = DB::transaction(function () use ($validated, $request, $submissionKey, $submissionHash) {
+            $actor = User::lockForUpdate()->findOrFail($request->user()->id);
+            abort_unless($actor->is_active && $actor->can('create', Courrier::class), 403);
+            $existing = Courrier::where('submission_key', $submissionKey)->first();
+            if ($existing) {
+                abort_unless((int) $existing->created_by_user_id === (int) $actor->id, 403);
+                if (! hash_equals((string) $existing->submission_hash, $submissionHash)) {
+                    throw ValidationException::withMessages(['submission_key' => __('courrier.submission_used')]);
+                }
+
+                return [$existing, false];
+            }
             $etapeInitiale = WorkflowEtape::query()
                 ->with('bureau:id,nom,code')
                 ->where('ordre', Courrier::ETAPE_ANALYSE)
@@ -248,20 +267,16 @@ class CourrierController extends Controller
             $bureauDestinataire = Bureau::where('is_active', true)->findOrFail($validated['bureau_actuel_id']);
 
             $year = now()->year;
-            $seq = (Courrier::where('type', $validated['type'])->where('year', $year)->max('seq') ?? 0) + 1;
-            $prefix = match ($validated['type']) {
-                'sortant' => 'SOR',
-                'interne' => 'INT',
-                default => 'ENT',
-            };
+            $reference = app(CourrierReferenceService::class)->next($validated['type'], $year);
 
             $etapeLabel = $etapeInitiale->libelle;
 
-            $courrier = Courrier::create([
+            $courrier = Courrier::forceCreate([
                 ...$validated,
                 'year' => $year,
-                'seq' => $seq,
-                'reference_interne' => sprintf('GUTF-%s-%d-%06d', $prefix, $year, $seq),
+                ...$reference,
+                'submission_key' => $submissionKey,
+                'submission_hash' => $submissionHash,
                 'created_by_user_id' => Auth::id(),
                 'workflow_etape_id' => $etapeInitiale->id,
                 'bureau_actuel_id' => $bureauDestinataire->id,
@@ -304,8 +319,12 @@ class CourrierController extends Controller
                 $this->storeUploadAttachment($courrier, $file);
             }
 
-            return $courrier;
-        });
+            return [$courrier, true];
+        }, 5);
+
+        if (! $created) {
+            return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-already-created');
+        }
 
         $recipients = User::where('bureau_id', $courrier->bureau_actuel_id)->where('is_active', true)->get()
             ->filter(fn (User $recipient) => $recipient->id !== Auth::id() && $recipient->can('view', $courrier));
@@ -411,6 +430,7 @@ class CourrierController extends Controller
     public function claim(Request $request, Courrier $courrier, CourrierManagementService $management): RedirectResponse
     {
         $management->claim($courrier, $request->user());
+
         return back()->with('status', 'courrier-claimed');
     }
 
@@ -418,6 +438,7 @@ class CourrierController extends Controller
     {
         $this->authorize('update', $courrier);
         abort_unless(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true), 403);
+
         return view('courriers.edit', ['courrier' => $courrier, 'version' => $management->version($courrier)]);
     }
 
@@ -425,6 +446,7 @@ class CourrierController extends Controller
     {
         $data = $request->validated();
         $management->correct($courrier, $request->user(), $data, $data['reason'], $data['version']);
+
         return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-corrected');
     }
 
@@ -432,6 +454,7 @@ class CourrierController extends Controller
     {
         $this->authorize('reassign', $courrier);
         abort_unless(! $courrier->isArchived() && in_array($courrier->etapeOrdre(), [2, 3], true), 403);
+
         return view('courriers.reassign', [
             'courrier' => $courrier, 'version' => $management->version($courrier),
             'bureaux' => Bureau::where('is_active', true)->orderBy('ordre')->get(),
@@ -455,6 +478,7 @@ class CourrierController extends Controller
         $this->notifyUsers($recipients->all(), __('notifications.courrier_assigned_title'),
             __('notifications.courrier_assigned_msg', ['ref' => $current->reference_interne]),
             route('courriers.show', $current), ['type' => 'assigned', 'courrier_id' => $current->id]);
+
         return redirect()->route('courriers.show', $courrier)->with('status', 'courrier-reassigned');
     }
 
@@ -467,33 +491,29 @@ class CourrierController extends Controller
 
     public function submitToParapheur(Request $request, Courrier $courrier): RedirectResponse
     {
-        $this->authorize('view', $courrier);
-
-        if ($courrier->visas()->pending()->exists()) {
-            return back()->withErrors([
-                'validator_id' => __('parapheur.submit_already_pending'),
-            ]);
-        }
-
+        $this->authorize('submitVisa', $courrier);
         $validated = $request->validate([
-            'validator_id' => [
-                'required',
-                'integer',
-                'exists:users,id',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    $validator = User::query()->find($value);
-                    if (! $validator || ! $validator->hasAnyRole(['directeur', 'super-admin'])) {
-                        $fail(__('parapheur.submit_invalid_validator'));
-                    }
-                },
-            ],
+            'validator_id' => ['required', 'integer', function (string $attribute, mixed $value, \Closure $fail): void {
+                $validator = User::where('is_active', true)->find($value);
+                if (! $validator || ! $validator->hasAnyRole(['directeur', 'super-admin'])) {
+                    $fail(__('parapheur.submit_invalid_validator'));
+                }
+            }],
         ]);
 
-        ParapheurVisa::query()->create([
-            'courrier_id' => $courrier->id,
-            'validator_id' => (int) $validated['validator_id'],
-            'status' => ParapheurVisa::STATUS_PENDING,
-        ]);
+        DB::transaction(function () use ($courrier, $validated) {
+            $current = Courrier::lockForUpdate()->findOrFail($courrier->id);
+            $this->authorize('submitVisa', $current);
+            abort_if($current->isArchived(), 422);
+            if ($current->visas()->pending()->exists()) {
+                throw ValidationException::withMessages(['validator_id' => __('parapheur.submit_already_pending')]);
+            }
+            ParapheurVisa::create([
+                'courrier_id' => $current->id,
+                'validator_id' => (int) $validated['validator_id'],
+                'status' => ParapheurVisa::STATUS_PENDING,
+            ]);
+        }, 5);
 
         return redirect()
             ->route('courriers.show', $courrier)
@@ -502,7 +522,8 @@ class CourrierController extends Controller
 
     public function linkCourrier(Request $request, Courrier $courrier): RedirectResponse
     {
-        $this->authorize('view', $courrier);
+        $this->authorize('link', $courrier);
+        abort_if($courrier->isArchived(), 422);
 
         $validated = $request->validate([
             'reference' => ['required', 'string', 'max:100'],
@@ -527,7 +548,13 @@ class CourrierController extends Controller
 
         $this->authorize('view', $child);
 
-        $courrier->linkedCourriers()->syncWithoutDetaching([$child->id]);
+        DB::transaction(function () use ($courrier, $child) {
+            $current = Courrier::lockForUpdate()->findOrFail($courrier->id);
+            $this->authorize('link', $current);
+            abort_if($current->isArchived(), 422);
+            $this->authorize('view', $child->fresh());
+            $current->linkedCourriers()->syncWithoutDetaching([$child->id]);
+        }, 5);
 
         return redirect()
             ->route('courriers.show', $courrier)
@@ -580,6 +607,7 @@ class CourrierController extends Controller
                 'metadata' => ['before' => ['agent' => $oldAgent], 'after' => ['agent' => $assignee->name]],
                 'created_at' => now(),
             ]);
+
             return $assignee;
         });
 
@@ -734,12 +762,15 @@ class CourrierController extends Controller
         $this->authorize('attach', $courrier);
 
         $request->validate([
-            'file' => ['required', 'file', 'max:10240', 'extensions:pdf,jpg,jpeg,png'],
+            'file' => ['bail', 'required', 'file', 'max:10240', new CourrierDocument],
         ]);
 
-        if ($file = $request->file('file')) {
-            $this->storeUploadAttachment($courrier, $file);
-        }
+        DB::transaction(function () use ($courrier, $request) {
+            $current = Courrier::lockForUpdate()->findOrFail($courrier->id);
+            $this->authorize('attach', $current);
+            abort_if($current->isArchived(), 422);
+            $this->storeUploadAttachment($current, $request->file('file'));
+        }, 5);
 
         return back()->with('status', 'attachment-uploaded');
     }
@@ -809,18 +840,19 @@ class CourrierController extends Controller
         $this->authorize('detach', $courrier);
         abort_unless((int) $attachment->courrier_id === (int) $courrier->id, 404);
 
-        $relative = $attachment->resolvedStoragePath();
-        if ($relative) {
-            Storage::disk('local')->delete($relative);
-        }
-
-        $attachment->delete();
-
-        $etapeLabel = $courrier->workflowEtape?->libelle;
-
-        $this->auditService->log($courrier, 'attachment_deleted', $etapeLabel, $etapeLabel, [
-            'file' => $attachment->original_name,
-        ]);
+        DB::transaction(function () use ($courrier, $attachment) {
+            $current = Courrier::lockForUpdate()->findOrFail($courrier->id);
+            $this->authorize('detach', $current);
+            abort_if($current->isArchived(), 422);
+            $file = CourrierAttachment::where('courrier_id', $current->id)->lockForUpdate()->findOrFail($attachment->id);
+            $relative = $file->resolvedStoragePath();
+            $file->delete();
+            $etapeLabel = $current->workflowEtape?->libelle;
+            $this->auditService->log($current, 'attachment_deleted', $etapeLabel, $etapeLabel, ['file' => $file->original_name]);
+            if ($relative) {
+                DB::afterCommit(fn () => Storage::disk('local')->delete($relative));
+            }
+        }, 5);
 
         return back()->with('status', 'attachment-deleted');
     }

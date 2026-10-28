@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\ParapheurVisa;
+use App\Services\SignaturePinService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class ParapheurController extends Controller
@@ -33,31 +33,10 @@ class ParapheurController extends Controller
     public function approve(Request $request, ParapheurVisa $visa): RedirectResponse
     {
         $this->ensureOwnsPendingVisa($request, $visa);
+        $validated = $request->validate(['signature_pin' => ['required', 'digits:4']]);
+        app(SignaturePinService::class)->approve($request->user(), $visa, $validated['signature_pin']);
 
-        $validated = $request->validate([
-            'signature_pin' => ['required', 'digits:4'],
-        ]);
-
-        $user = $request->user();
-
-        if (! $user->signature_pin || ! Hash::check($validated['signature_pin'], $user->signature_pin)) {
-            return back()
-                ->withInput()
-                ->withErrors(['signature_pin' => __('parapheur.pin_invalid')]);
-        }
-
-        $digitalHash = hash('sha256', $visa->id.$user->id.now()->toISOString());
-
-        $visa->forceFill([
-            'status' => ParapheurVisa::STATUS_APPROVED,
-            'comment' => $request->input('comment'),
-            'signed_at' => now(),
-            'digital_hash' => $digitalHash,
-        ])->save();
-
-        return redirect()
-            ->route('courriers.show', $visa->courrier_id)
-            ->with('status', __('parapheur.approved'));
+        return redirect()->route('courriers.show', $visa->courrier_id)->with('status', __('parapheur.approved'));
     }
 
     public function reject(Request $request, ParapheurVisa $visa): RedirectResponse
@@ -68,11 +47,13 @@ class ParapheurController extends Controller
             'comment' => ['required', 'string', 'max:5000'],
         ]);
 
-        $visa->forceFill([
-            'status' => ParapheurVisa::STATUS_REJECTED,
-            'comment' => trim($validated['comment']),
-            'signed_at' => now(),
-        ])->save();
+        $updated = ParapheurVisa::whereKey($visa->id)
+            ->where('validator_id', $request->user()->id)->pending()->update([
+                'status' => ParapheurVisa::STATUS_REJECTED,
+                'comment' => trim($validated['comment']),
+                'signed_at' => now(),
+            ]);
+        abort_unless($updated === 1, 404);
 
         return redirect()
             ->route('courriers.show', $visa->courrier_id)
