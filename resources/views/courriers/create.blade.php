@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div><h1 class="mb-1 text-lg font-bold text-gray-900">{{ __('courrier.create_title') }}</h1><p class="mb-0 text-sm text-gray-500">{{ __('ux.create_intro') }}</p></div>
+            <div><h1 class="mb-1 text-lg font-bold text-slate-900">{{ __('courrier.create_title') }}</h1><p class="mb-0 text-sm text-slate-500">{{ __('ux.create_intro') }}</p></div>
             <x-buttons.secondary :href="route('courriers.index')">← {{ __('courrier.back') }}</x-buttons.secondary>
         </div>
     </x-slot>
@@ -61,7 +61,7 @@
                         @can('courrier.attach')
                             <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                                 <label for="document_file" class="mb-2 block text-sm font-semibold text-slate-700">{{ __('courrier.document_title') }}</label>
-                                <input id="document_file" name="document_file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="courrier-file" aria-describedby="document-help {{ $errors->has('document_file') ? 'document-error' : '' }}" @if($errors->has('document_file')) aria-invalid="true" @endif>
+                                <input id="document_file" name="document_file" type="file" accept=".pdf,.jpg,.jpeg,.png" class="ui-input courrier-file" aria-describedby="document-help {{ $errors->has('document_file') ? 'document-error' : '' }}" @if($errors->has('document_file')) aria-invalid="true" @endif>
                                 <p id="document-help" class="mt-2 mb-0 text-xs text-slate-500">{{ __('courrier.attachments_help') }}</p>
                                 @error('document_file')<p id="document-error" class="mt-1.5 text-xs text-rose-700">{{ $message }}</p>@enderror
                                 @if($errors->any())<p class="mt-2 mb-0 text-xs text-amber-800">{{ __('ux.reselect_file') }}</p>@endif

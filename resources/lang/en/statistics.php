@@ -9,7 +9,7 @@ return [
     'treated_this_month' => 'Mail processed this month',
     'treated_this_month_hint' => 'Archived dossiers in the current month',
     'late_count' => 'Overdue mail',
-    'late_count_hint' => 'Active dossiers with is_late = yes',
+    'late_count_hint' => 'Active cases past their processing deadline',
     'total_in_bureaux' => 'Mail in circulation',
     'total_in_bureaux_hint' => 'Current distribution by office',
 

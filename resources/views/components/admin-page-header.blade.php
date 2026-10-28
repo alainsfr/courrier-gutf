@@ -13,12 +13,12 @@
             {{ __('nav.administration') }}
         </a>
         @if ($title)
-            <h1 class="truncate text-lg font-bold text-gray-900">{{ $title }}</h1>
+            <h1 class="truncate text-lg font-bold text-slate-900">{{ $title }}</h1>
         @endif
         @if ($subtitle)
-            <p class="mb-0 text-sm text-gray-500">{{ $subtitle }}</p>
+            <p class="mb-0 text-sm text-slate-500">{{ $subtitle }}</p>
         @elseif ($slot->isNotEmpty())
-            <div class="text-sm text-gray-500">{{ $slot }}</div>
+            <div class="text-sm text-slate-500">{{ $slot }}</div>
         @endif
     </div>
     @isset($actions)

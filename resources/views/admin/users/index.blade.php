@@ -1,6 +1,6 @@
 @php
-    $field = 'w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-1';
-    $label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
+    $field = 'ui-input';
+    $label = 'ui-label';
 @endphp
 
 <x-app-layout>
@@ -15,18 +15,18 @@
     </x-slot>
 
     @if (session('status'))
-        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div class="mb-4 ui-alert ui-alert-success">
             {{ session('status') }}
         </div>
     @endif
 
     <x-form-errors />
 
-    <div class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="mb-4 ui-card p-4 shadow-sm">
         <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div class="min-w-0 flex-1">
-                <label class="{{ $label }}">{{ __('users.search') }}</label>
-                <input name="q" value="{{ $q }}" class="{{ $field }}" placeholder="{{ __('users.search_placeholder') }}">
+                <label class="{{ $label }}" for="ui-q">{{ __('users.search') }}</label>
+                <input id="ui-q" name="q" value="{{ $q }}" class="{{ $field }}" placeholder="{{ __('users.search_placeholder') }}">
             </div>
             <div class="flex gap-2">
                 <x-buttons.primary type="submit">
@@ -39,11 +39,11 @@
         </form>
     </div>
 
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <div class="overflow-hidden ui-card shadow-sm">
+        <div class="overflow-x-auto ui-table-scroll">
+            <table class="ui-table min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <th class="px-4 py-3">{{ __('users.name') }}</th>
                         <th class="px-4 py-3">{{ __('users.email') }}</th>
                         <th class="px-4 py-3">{{ __('users.role') }}</th>
@@ -53,33 +53,33 @@
                         <th class="px-4 py-3 text-right">{{ __('users.actions') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-slate-100">
                     @forelse($users as $u)
-                        <tr class="hover:bg-gray-50/80">
+                        <tr class="hover:bg-slate-50/80">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     <x-user-avatar :user="$u" size="sm" />
                                     <div>
-                                        <div class="font-semibold text-gray-900">{{ $u->name }}</div>
-                                        <div class="text-xs text-gray-400">#{{ $u->id }}</div>
+                                        <div class="font-semibold text-slate-900">{{ $u->name }}</div>
+                                        <div class="text-xs text-slate-400">#{{ $u->id }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-gray-700">{{ $u->email }}</td>
+                            <td class="px-4 py-3 text-slate-700">{{ $u->email }}</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
                                     {{ __('users.roles.'.($u->getRoleNames()->first() ?? 'none')) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-gray-600">{{ $u->bureau?->nom ?? '—' }}</td>
-                            <td class="px-4 py-3 text-gray-600">
+                            <td class="px-4 py-3 text-slate-600">{{ $u->bureau?->nom ?? '—' }}</td>
+                            <td class="px-4 py-3 text-slate-600">
                                 @if ($u->last_login_ip)
-                                    <div class="font-mono text-xs text-gray-800">{{ $u->last_login_ip }}</div>
+                                    <div class="font-mono text-xs text-slate-800">{{ $u->last_login_ip }}</div>
                                     @if ($u->last_login_at)
-                                        <div class="text-xs text-gray-400">{{ $u->last_login_at->format('d/m/Y H:i') }}</div>
+                                        <div class="text-xs text-slate-400">{{ $u->last_login_at->format('d/m/Y H:i') }}</div>
                                     @endif
                                 @else
-                                    <span class="text-xs text-gray-400">{{ __('users.last_login_never') }}</span>
+                                    <span class="text-xs text-slate-400">{{ __('users.last_login_never') }}</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3">
@@ -108,7 +108,7 @@
                                         </form>
                                     @endif
                                     <a href="{{ route('admin.users.edit', $u) }}"
-                                       class="text-sm font-semibold text-[#17384b] no-underline hover:underline">
+                                       class="text-sm font-semibold text-brand no-underline hover:underline">
                                         {{ __('users.edit') }}
                                     </a>
                                 </div>

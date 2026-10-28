@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'reference' => 'Mail reference', 'action' => 'Action', 'date_from' => 'From', 'date_to' => 'To',
     'title' => 'Audit Log',
     'actions' => [
         'claimed' => 'Ownership taken', 'details_updated' => 'Information corrected',

@@ -9,7 +9,7 @@ return [
     'treated_this_month' => 'Courriers traités ce mois',
     'treated_this_month_hint' => 'Dossiers archivés sur le mois en cours',
     'late_count' => 'Courriers en retard',
-    'late_count_hint' => 'Dossiers actifs avec is_late = oui',
+    'late_count_hint' => 'Dossiers actifs dont le délai de traitement est dépassé',
     'total_in_bureaux' => 'Courriers en circulation',
     'total_in_bureaux_hint' => 'Répartition actuelle par bureau',
 

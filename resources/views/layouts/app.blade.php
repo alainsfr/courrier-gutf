@@ -6,6 +6,20 @@
     $primary = $brand['primary_color'] ?? '#17384b';
     $accent = $brand['accent_color'] ?? '#dc633a';
     $appLabel = $brand['app_name'] ?? config('app.name', 'COURRIER GUTF');
+    $uiSection = match (true) {
+        request()->routeIs('admin.*') => 'administration',
+        request()->routeIs('courriers.kanban') => 'processing',
+        request()->routeIs('courriers.search') => 'search',
+        request()->routeIs('courriers.*') => 'register',
+        request()->routeIs('messages.*') => 'messages',
+        request()->routeIs('statistics.*') => 'reports',
+        request()->routeIs('parapheur.*') => 'visa',
+        request()->routeIs('notifications.*') => 'notifications',
+        request()->routeIs('profile.*') => 'profile',
+        request()->routeIs('audit.*') => 'audit',
+        request()->routeIs('help') => 'help',
+        default => 'dashboard',
+    };
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -25,31 +39,29 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-gray-50 text-slate-900 antialiased">
+<body class="ui-app min-h-screen antialiased" data-error-fields='@json($errors->keys())' data-table-hint="{{ __('ui.table_hint') }}" data-table-region="{{ __('ui.table_region') }}">
+    <a href="#main-content" class="ui-skip-link">{{ __('ui.skip') }}</a>
     @include('layouts.navigation')
 
-    <div class="min-h-screen lg:pl-72">
+    <div id="app-content" class="min-h-screen lg:pl-72">
         {{-- Header --}}
-        <header class="md:sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+        <header class="ui-topbar">
             <div class="app-topbar px-4 py-2.5 sm:px-6">
                 <button type="button"
                         class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 lg:hidden"
-                        data-sidebar-open aria-label="Ouvrir le menu">
+                        data-sidebar-open aria-label="{{ __('ui.workspace') }}" aria-controls="app-sidebar" aria-expanded="false">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-5 w-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                     </svg>
                 </button>
 
-                <div class="app-page-heading min-w-0 flex-1">
-                    @isset($header)
-                        <div class="min-w-0 [&_h1]:mb-0 [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-slate-900 sm:[&_h1]:text-lg">
-                            {{ $header }}
-                        </div>
-                    @else
-                        <h1 class="truncate text-base font-bold text-slate-900 sm:text-lg">
-                            {{ $appLabel }}
-                        </h1>
-                    @endisset
+                <div class="ui-context">
+                    <span class="ui-context-label">{{ $appLabel }}</span>
+                    <nav class="ui-breadcrumb" aria-label="{{ __('ui.breadcrumb') }}">
+                        <a href="{{ route('dashboard') }}">{{ __('ui.workspace') }}</a>
+                        <span aria-hidden="true">/</span>
+                        <span aria-current="page">{{ __('ui.'.$uiSection) }}</span>
+                    </nav>
                 </div>
 
                 <div class="app-account-tools flex shrink-0 items-center gap-1 sm:gap-2">
@@ -69,7 +81,7 @@
 
                     <div class="relative" data-profile-menu>
                         <button type="button"
-                                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1.5 pl-1.5 pr-2.5 text-left hover:bg-slate-50"
+                                class="inline-flex items-center gap-2 ui-card py-1.5 pl-1.5 pr-2.5 text-left hover:bg-slate-50"
                                 data-profile-toggle aria-expanded="false" aria-haspopup="true">
                             <x-user-avatar :user="$authUser" size="sm" />
                             <span class="hidden max-w-[9rem] truncate text-sm font-semibold sm:inline" style="color: var(--gutf-primary)">
@@ -109,7 +121,10 @@
             </div>
         </header>
 
-        <main class="px-4 py-6 sm:px-6 lg:px-8">
+        <main id="main-content" class="ui-main" tabindex="-1">
+            @isset($header)
+                <div class="app-page-heading">{{ $header }}</div>
+            @endisset
             {{ $slot }}
         </main>
     </div>
@@ -121,6 +136,7 @@
 
     @stack('scripts')
     <x-idle-session />
+    <x-confirm-dialog />
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -128,24 +144,54 @@
             const overlay = document.getElementById('sidebar-overlay');
             const openBtns = document.querySelectorAll('[data-sidebar-open]');
             const closeBtns = document.querySelectorAll('[data-sidebar-close]');
+            const content = document.getElementById('app-content');
+            const desktop = window.matchMedia('(min-width: 1024px)');
+            let sidebarOpen = false;
+            let sidebarTrigger = null;
 
-            const openSidebar = () => {
+            const openSidebar = (event) => {
+                if (desktop.matches) return;
+                sidebarTrigger = event.currentTarget;
+                sidebarOpen = true;
+                sidebar.inert = false;
+                content.inert = true;
+                sidebar.setAttribute('role', 'dialog');
+                sidebar.setAttribute('aria-modal', 'true');
                 sidebar?.classList.remove('-translate-x-full');
                 overlay?.classList.remove('opacity-0', 'pointer-events-none');
                 document.body.classList.add('overflow-hidden');
+                openBtns.forEach((button) => button.setAttribute('aria-expanded', 'true'));
+                sidebar?.querySelector('a')?.focus();
             };
-            const closeSidebar = () => {
+            const closeSidebar = (restoreFocus = true) => {
+                const wasOpen = sidebarOpen;
+                sidebarOpen = false;
+                sidebar.inert = !desktop.matches;
+                content.inert = false;
+                sidebar.removeAttribute('role');
+                sidebar.removeAttribute('aria-modal');
                 sidebar?.classList.add('-translate-x-full');
                 overlay?.classList.add('opacity-0', 'pointer-events-none');
                 document.body.classList.remove('overflow-hidden');
+                openBtns.forEach((button) => button.setAttribute('aria-expanded', 'false'));
+                if (wasOpen && restoreFocus) sidebarTrigger?.focus();
             };
+            sidebar.inert = !desktop.matches;
+            desktop.addEventListener('change', () => closeSidebar(false));
 
             openBtns.forEach((btn) => btn.addEventListener('click', openSidebar));
             closeBtns.forEach((btn) => btn.addEventListener('click', closeSidebar));
             overlay?.addEventListener('click', closeSidebar);
             document.addEventListener('keydown', (event) => {
+                if (sidebarOpen && event.key === 'Tab') {
+                    const targets = [...sidebar.querySelectorAll('a[href], button:not(:disabled)')].filter((element) => element.getClientRects().length);
+                    const first = targets[0], last = targets[targets.length - 1];
+                    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+                    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+                }
                 if (event.key === 'Escape') {
-                    closeSidebar();
+                    if (sidebarOpen) closeSidebar();
+                    if (profileToggle?.getAttribute('aria-expanded') === 'true') profileToggle.focus();
                     profileDropdown?.classList.add('hidden');
                     profileToggle?.setAttribute('aria-expanded', 'false');
                 }

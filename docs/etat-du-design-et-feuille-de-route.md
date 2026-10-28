@@ -1,75 +1,66 @@
 # État du design et travaux restants
 
-Analyse du 28 octobre 2026, après la mise en service des e-mails et des tâches automatiques.
+Mise à jour du 28 octobre 2026.
 
-## Conclusion
+## Harmonisation réalisée
 
-L'harmonisation est **partielle**. L'application possède une identité reconnaissable
-(bleu profond, orange, navigation latérale, en-tête, avatars et composants communs),
-mais ne dispose pas encore d'un système de présentation appliqué à tous les modules.
-La modernisation du parcours courrier ne constitue pas une refonte intégrale.
+Le socle visuel est commun aux écrans de courrier, tableau de bord, recherche,
+parapheur, messagerie, statistiques, notifications, audit, administration,
+profil et authentification. Les supports imprimés et les e-mails conservent
+leur présentation adaptée à leur support.
 
-Ce constat repose sur l'examen des gabarits, composants, styles et scripts.
-Il ne remplace pas une recette visuelle exhaustive de chaque état sur chaque appareil.
+- Palette de marque configurable, typographie système sans téléchargement de
+  polices externes, surfaces, bordures, arrondis, espacements et focus communs.
+- Une famille de boutons, champs, labels, erreurs, cartes et tableaux. Les anciens
+  composants de boutons délèguent aux composants canoniques.
+- Titres dans le contenu, barre de compte compacte, fil d’Ariane, repère de page
+  active, lien d’évitement et navigation mobile avec confinement du focus.
+- Connexion et récupération dans une même présentation ; les pages de compte
+  partagent les champs et commandes de l’application.
+- Confirmations, signature et membres d’un groupe dans des dialogues natifs ;
+  annulation au clavier et focus gérés sans modifier les contrôles métier.
+- Tableaux contenus dans leur zone de défilement, indication de défilement et
+  accès clavier quand nécessaire. Le registre conserve ses cartes sur téléphone.
+- Suppression des feuilles et scripts Bootstrap globaux : leurs utilitaires
+  d’espacement entraient en conflit avec Tailwind. Le dialogue de signature
+  utilise maintenant la même infrastructure native que les autres dialogues.
 
-## Constats vérifiables
+## Vérifications
 
-| Domaine | État et exemples |
-|---|---|
-| Navigation et identité | Socle partagé dans `layouts/app.blade.php`, paramètres de marque et variables `--gutf-primary`/`--gutf-accent`. |
-| Parcours courrier | Enregistrement guidé, prochaine action mise en avant, aperçu, rubriques secondaires et adaptations mobiles déjà réalisés. |
-| Boutons | Deux familles coexistent : `components/primary-button.blade.php` utilise fond gris, capitales et petits caractères ; `components/buttons/primary.blade.php` utilise la marque, une autre taille et un autre arrondi. |
-| Champs et erreurs | Le parcours courrier dispose de `courrier-field`/`courrier-input`, tandis que l'administration répète ses propres classes de champs, avec des accents bleus distincts de la marque. Les pages de compte utilisent encore d'autres composants. |
-| Couleurs | Les paramètres de marque sont partagés, mais des valeurs fixes restent dans des gabarits et les styles de messagerie/connexion. Une modification de la couleur principale n'est donc pas appliquée partout. |
-| Typographie | La connexion utilise Fraunces/Outfit chargées depuis Google Fonts ; Tailwind déclare Figtree ; des écrans héritent des réglages système/Bootstrap. |
-| Cartes et titres | En-têtes, sous-titres, espacements, ombres, arrondis et position des actions sont encore définis écran par écran. |
-| États d'interface | Il existe un composant d'état vide, mais les confirmations, erreurs, chargements, dialogues et messages ne suivent pas tous une convention commune. |
-| Styles techniques | Bootstrap et Tailwind sont chargés ensemble. Leur coexistence exige des vérifications : certaines classes communes ont déjà nécessité des dispositions explicites dans le parcours courrier. |
-| Mobile et accessibilité | Des vérifications ont été réalisées sur le parcours principal. Une revue complète de l'administration, recherche, rapports, messagerie, clavier, contrastes et zoom reste à faire. |
+La suite complète comporte 159 tests. Le contrôle de rendu couvre 24 écrans
+avec données, l’unicité des identifiants HTML et les cibles des labels.
+Les contrôles métier, autorisations et sessions restent couverts.
 
-## Ordre de réalisation proposé
+La recette navigateur isolée utilise des comptes et dossiers fictifs : bureau et
+petit écran de 390 pixels, registre, formulaires courrier et administration,
+profil, recherche, statistiques, audit, sauvegardes, messagerie et dialogues.
+Les données de démonstration ne sont pas ajoutées en production.
 
-1. **Sessions et confidentialité** : expiration sur activité humaine, contrôle serveur,
-   avertissement, plusieurs onglets, refus des anciennes reconnexions persistantes.
-   La valeur serveur héritée était de 120 minutes et les sondages prolongeaient la
-   session. La correction conserve la politique de 30 minutes, distincte des appels
-   automatiques, et nécessite une reconnexion après changement du cookie serveur.
-2. **Fondations visuelles** : formaliser palette, couleurs d'état, typographie,
-   espacements, arrondis, largeurs de contenu et tailles des commandes. Consolider
-   les composants existants au lieu d'ajouter une troisième famille.
-3. **Composants partagés** : unifier boutons, champs, labels, aides, erreurs,
-   cartes, en-têtes, filtres, tableaux, pagination, badges, dialogues et confirmations.
-   Les changements doivent préserver les droits, validations et parcours métier.
-4. **Reprise des écrans** : tableau de bord et registre, recherche et fiche,
-   administration, parapheur, messagerie, rapports, profil et récupération.
-   Vérifier aussi les listes vides, erreurs, états désactivés et chargements.
-5. **Recette de l'expérience** : bureau et téléphone, petit écran, zoom à 200 %,
-   clavier, focus, contrastes, débordements et tableaux, documents volumineux.
-   Actualiser les captures du manuel après stabilisation du design.
+Ces contrôles ne constituent pas une certification WCAG ni une vérification de
+toutes les combinaisons d’appareil, document et contenu. La validation avec les
+utilisateurs du client demeure nécessaire.
 
 ## Autres travaux avant une exploitation définitive
 
-- Tester une restauration complète de données actuelles dans un environnement
-  séparé ; valider une copie de sauvegarde hors serveur et les alertes de sauvegarde.
-- Ajouter une surveillance externe de disponibilité et un destinataire d'alerte
-  choisi par le responsable. Le contrôle de console actuel ne constitue pas cette surveillance.
-- Vérifier les recherches et exports sur un volume représentatif, les documents
-  volumineux et les comportements lorsque le réseau ralentit.
-- Faire accepter le parcours par chaque rôle concerné avec le client, puis mettre
-  le manuel et la fiche de recette en accord avec les décisions finales.
+- Tester une restauration complète dans un environnement séparé et valider une
+  copie hors serveur ainsi que les alertes de sauvegarde.
+- Ajouter une surveillance externe de disponibilité et choisir le destinataire
+  des alertes. Le contrôle de console actuel ne constitue pas cette surveillance.
+- Vérifier recherches, exports et documents sur un volume représentatif, ainsi
+  que les comportements lorsque le réseau ralentit.
+- Faire accepter le parcours par chaque rôle concerné avec le client.
 
-## Documentation de fin de développement
+Les e-mails réels, la récupération de mot de passe et le planificateur ont déjà
+été vérifiés. L’expiration après 30 minutes d’inactivité humaine est contrôlée
+côté serveur, indépendamment des sondages automatiques.
 
-À la demande de l'utilisateur, les mises à jour du manuel d'utilisation et la
-création du manuel technique de l'administrateur sont regroupées en fin de
-développement. Les notes de travail de `docs/` servent à conserver les décisions
-entre-temps ; elles ne constituent pas le manuel technique final.
+## Documentation en fin de développement
 
-Le manuel technique final devra couvrir l'architecture, les prérequis Linux,
-l'installation, la configuration, les rôles et droits, les mises à jour,
-les sessions, SMTP, le planificateur et les files, les sauvegardes/restaurations,
-les journaux, la supervision, le dépannage et les procédures d'exploitation.
+À la demande de l’utilisateur, l’actualisation du manuel d’utilisation et la
+création du manuel technique administrateur sont regroupées en fin de
+développement. Les notes de docs/ conservent les décisions intermédiaires.
+Les sources et captures du manuel existant ne sont pas régénérées dans ce lot.
 
-Les e-mails réels, la récupération et le déclenchement du planificateur ont déjà
-été vérifiés. La sauvegarde réalisée au déploiement ne prouve pas qu'une restauration
-complète a été testée.
+Le manuel technique final couvrira architecture, prérequis Linux, installation,
+configuration, rôles, mises à jour, sessions, SMTP, planificateur et files,
+sauvegardes/restaurations, journaux, supervision et dépannage.

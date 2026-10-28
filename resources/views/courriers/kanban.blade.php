@@ -2,8 +2,8 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="mb-1 text-lg font-bold text-gray-900">{{ __('courrier.kanban_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">
+                <h1 class="mb-1 text-lg font-bold text-slate-900">{{ __('courrier.kanban_title') }}</h1>
+                <p class="mb-0 text-sm text-slate-500">
                     @if($bureau)
                         {{ __('courrier.kanban_bureau', ['bureau' => $bureau->nom]) }}
                     @else
@@ -15,7 +15,7 @@
                 @if($isAdmin && $bureaux->isNotEmpty())
                     <form method="GET" action="{{ route('courriers.kanban') }}" class="m-0">
                         <select name="bureau_id"
-                                class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#17384b] focus:outline-none focus:ring-4 focus:ring-[#17384b]/10"
+                                class="ui-input rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand-soft"
                                 onchange="this.form.submit()">
                             <option value="">{{ __('courrier.kanban_all_bureaux') }}</option>
                             @foreach($bureaux as $b)
@@ -25,7 +25,7 @@
                     </form>
                 @endif
                 <a href="{{ route('courriers.index') }}"
-                   class="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-600 no-underline hover:bg-gray-50">
+                   class="ui-card px-3 py-2 text-sm font-semibold text-slate-600 no-underline hover:bg-slate-50">
                     {{ __('courrier.kanban_list_view') }}
                 </a>
             </div>
@@ -47,12 +47,12 @@
                     $color = $etape->ui_color ?: '#64748B';
                 @endphp
 
-                <section class="kanban-column snap-start flex w-[300px] min-w-[300px] flex-1 flex-col rounded-xl border border-gray-200 bg-gray-100/50"
+                <section class="kanban-column snap-start flex w-[300px] min-w-[300px] flex-1 flex-col rounded-xl border border-slate-200 bg-slate-100/50"
                          data-etape-id="{{ $etape->id }}"
                          data-etape-ordre="{{ $etape->ordre }}"
                          data-rejectable="{{ $etape->is_rejectable ? '1' : '0' }}">
 
-                    <header class="sticky top-0 z-10 rounded-t-xl border-b border-gray-200/80 bg-white/80 px-3 py-3 backdrop-blur"
+                    <header class="sticky top-0 z-10 rounded-t-xl border-b border-slate-200/80 bg-white/80 px-3 py-3 backdrop-blur"
                             style="border-top: 3px solid {{ $color }};">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex min-w-0 items-center gap-2">
@@ -61,13 +61,13 @@
                                     <i data-lucide="{{ $etape->ui_icon ?: 'circle' }}" class="h-4 w-4"></i>
                                 </span>
                                 <div class="min-w-0">
-                                    <div class="truncate text-sm font-bold text-gray-800">{{ $etape->libelle }}</div>
-                                    <div class="truncate text-[11px] text-gray-500">
+                                    <div class="truncate text-sm font-bold text-slate-800">{{ $etape->libelle }}</div>
+                                    <div class="truncate text-[11px] text-slate-500">
                                         {{ (int) $etape->ordre < 5 ? $etape->delai_jours.'j' : __('courrier.direct_same_office') }}
                                     </div>
                                 </div>
                             </div>
-                            <span class="column-count inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full border border-gray-200 bg-white px-2 text-xs font-bold text-gray-600">
+                            <span class="column-count inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full border border-slate-200 bg-white px-2 text-xs font-bold text-slate-600">
                                 {{ $cards->count() }}
                             </span>
                         </div>
@@ -79,7 +79,7 @@
                          style="max-height: calc(100vh - 14rem);">
 
                         @forelse($cards as $c)
-                            <article class="kanban-card group cursor-grab rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md active:cursor-grabbing {{ $c->is_late ? 'border-rose-300 ring-1 ring-rose-100' : 'border-gray-200' }}"
+                            <article class="kanban-card group cursor-grab rounded-lg border bg-white p-3 shadow-sm transition hover:shadow-md active:cursor-grabbing {{ $c->is_late ? 'border-rose-300 ring-1 ring-rose-100' : 'border-slate-200' }}"
                                      data-courrier-id="{{ $c->id }}"
                                      data-can-move="{{ auth()->user()->can('transfer', $c) ? '1' : '0' }}"
                                      data-etape-id="{{ $etape->id }}"
@@ -87,7 +87,7 @@
                                      data-rejectable="{{ $etape->is_rejectable ? '1' : '0' }}">
                                 <div class="mb-2 flex items-start justify-between gap-2">
                                     <a href="{{ route('courriers.show', $c) }}"
-                                       class="text-[11px] font-bold tracking-wide text-gray-500 no-underline hover:text-gray-800">
+                                       class="text-[11px] font-bold tracking-wide text-slate-500 no-underline hover:text-slate-800">
                                         {{ $c->reference_interne }}
                                     </a>
                                     <div class="flex shrink-0 flex-col items-end gap-1">
@@ -102,19 +102,19 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="mb-2 line-clamp-2 text-sm font-semibold leading-snug text-gray-800">
+                                <div class="mb-2 line-clamp-2 text-sm font-semibold leading-snug text-slate-800">
                                     {{ $c->objet }}
                                 </div>
-                                <div class="flex items-center justify-between gap-2 text-[11px] text-gray-500">
+                                <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500">
                                     <span class="truncate">
                                         {{ $c->assignedTo?->name ?? '—' }}
                                     </span>
-                                    <span class="shrink-0 rounded-full border border-gray-100 bg-gray-50 px-2 py-0.5">
+                                    <span class="shrink-0 rounded-full border border-slate-100 bg-slate-50 px-2 py-0.5">
                                         {{ $c->workflowEtape?->libelle ?? '—' }}
                                     </span>
                                 </div>
                                 @if($c->date_limite)
-                                    <div class="mt-2 text-[10px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-gray-400' }}">
+                                    <div class="mt-2 text-[10px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-slate-400' }}">
                                         SLA : {{ $c->date_limite->format('d/m/Y') }}
                                     </div>
                                 @endif
@@ -134,9 +134,9 @@
                     </div>
                 </section>
             @empty
-                <div class="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center">
-                    <p class="mb-1 text-sm font-semibold text-gray-800">{{ __('courrier.kanban_no_columns') }}</p>
-                    <p class="mb-0 max-w-md text-xs text-gray-500">{{ __('courrier.kanban_no_columns_hint') }}</p>
+                <div class="flex w-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+                    <p class="mb-1 text-sm font-semibold text-slate-800">{{ __('courrier.kanban_no_columns') }}</p>
+                    <p class="mb-0 max-w-md text-xs text-slate-500">{{ __('courrier.kanban_no_columns_hint') }}</p>
                 </div>
             @endforelse
         </div>
@@ -148,7 +148,7 @@
             <h3 class="mb-1 text-lg font-bold text-slate-800">{{ __('courrier.kanban_reject_title') }}</h3>
             <p class="mb-3 text-sm text-slate-500">{{ __('courrier.kanban_reject_help') }}</p>
             <textarea id="reject-note" rows="3"
-                      class="mb-4 w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1"
+                      class="ui-input mb-4"
                       placeholder="{{ __('courrier.reject_reason') }}"></textarea>
             <div class="flex justify-end gap-2">
                 <x-buttons.secondary type="button" id="reject-cancel">

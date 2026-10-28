@@ -12,8 +12,12 @@ export default {
 
     theme: {
         extend: {
+            colors: {
+                brand: {DEFAULT: 'var(--gutf-primary)', soft: 'color-mix(in srgb,var(--gutf-primary) 10%,white)'},
+                accent: {DEFAULT: 'var(--gutf-accent)', soft: 'color-mix(in srgb,var(--gutf-accent) 10%,white)'},
+            },
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Segoe UI', ...defaultTheme.fontFamily.sans],
             },
         },
     },

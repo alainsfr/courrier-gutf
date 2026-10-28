@@ -1,14 +1,14 @@
 @php
-    $field = 'w-full border border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-1';
-    $label = 'mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-gray-400';
+    $field = 'ui-input';
+    $label = 'ui-label';
 @endphp
 
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="mb-1 text-lg font-bold text-gray-900">{{ __('courrier.search_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('courrier.search_subtitle') }}</p>
+                <h1 class="mb-1 text-lg font-bold text-slate-900">{{ __('courrier.search_title') }}</h1>
+                <p class="mb-0 text-sm text-slate-500">{{ __('courrier.search_subtitle') }}</p>
             </div>
             <x-buttons.secondary :href="route('courriers.kanban')">
                 {{ __('Espace de Traitement') }}
@@ -18,20 +18,20 @@
 
     {{-- Formulaire multicritère --}}
     <form method="GET" action="{{ route('courriers.search') }}"
-          class="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          class="mb-6 ui-card p-6 shadow-sm">
         <input type="hidden" name="search" value="1">
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div>
-                <label class="{{ $label }}">{{ __('courrier.search_tf') }}</label>
-                <input type="text" name="tf" value="{{ $filters['tf'] }}"
+                <label class="{{ $label }}" for="ui-tf">{{ __('courrier.search_tf') }}</label>
+                <input id="ui-tf" type="text" name="tf" value="{{ $filters['tf'] }}"
                        placeholder="{{ __('courrier.search_tf_placeholder') }}"
                        class="{{ $field }}">
             </div>
 
             <div>
-                <label class="{{ $label }}">{{ __('courrier.filters.type') }}</label>
-                <select name="type" class="{{ $field }}">
+                <label class="{{ $label }}" for="ui-type">{{ __('courrier.filters.type') }}</label>
+                <select id="ui-type" name="type" class="{{ $field }}">
                     <option value="">{{ __('courrier.filters.all') }}</option>
                     <option value="entrant" @selected($filters['type'] === 'entrant')>{{ __('courrier.type_in') }}</option>
                     <option value="sortant" @selected($filters['type'] === 'sortant')>{{ __('courrier.type_out') }}</option>
@@ -40,8 +40,8 @@
             </div>
 
             <div>
-                <label class="{{ $label }}">{{ __('courrier.show_bureau') }}</label>
-                <select name="bureau_actuel_id" class="{{ $field }}">
+                <label class="{{ $label }}" for="ui-bureau_actuel_id">{{ __('courrier.show_bureau') }}</label>
+                <select id="ui-bureau_actuel_id" name="bureau_actuel_id" class="{{ $field }}">
                     <option value="">{{ __('courrier.filters.all') }}</option>
                     @foreach($bureaux as $bureau)
                         <option value="{{ $bureau->id }}" @selected($filters['bureau_actuel_id'] == $bureau->id)>
@@ -52,24 +52,24 @@
             </div>
 
             <div>
-                <label class="{{ $label }}">{{ __('courrier.filters.date_from') }}</label>
-                <input type="date" name="date_from" value="{{ $filters['date_from'] }}" class="{{ $field }}">
+                <label class="{{ $label }}" for="ui-date_from">{{ __('courrier.filters.date_from') }}</label>
+                <input id="ui-date_from" type="date" name="date_from" value="{{ $filters['date_from'] }}" class="{{ $field }}">
             </div>
 
             <div>
-                <label class="{{ $label }}">{{ __('courrier.filters.date_to') }}</label>
-                <input type="date" name="date_to" value="{{ $filters['date_to'] }}" class="{{ $field }}">
+                <label class="{{ $label }}" for="ui-date_to">{{ __('courrier.filters.date_to') }}</label>
+                <input id="ui-date_to" type="date" name="date_to" value="{{ $filters['date_to'] }}" class="{{ $field }}">
             </div>
 
             <div class="md:col-span-2 xl:col-span-1">
-                <label class="{{ $label }}">{{ __('courrier.search_global') }}</label>
-                <input type="text" name="q" value="{{ $filters['q'] }}"
+                <label class="{{ $label }}" for="ui-q">{{ __('courrier.search_global') }}</label>
+                <input id="ui-q" type="text" name="q" value="{{ $filters['q'] }}"
                        placeholder="{{ __('courrier.search_global_placeholder') }}"
                        class="{{ $field }}">
             </div>
         </div>
 
-        <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-5">
+        <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-5">
             <x-buttons.primary type="submit">
                 {{ __('courrier.search_submit') }}
             </x-buttons.primary>
@@ -81,17 +81,17 @@
 
     {{-- Résultats --}}
     @if($courriers !== null)
-        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div class="flex items-center justify-between border-b border-gray-200 px-5 py-3.5">
-                <h2 class="m-0 text-sm font-bold text-gray-900">{{ __('courrier.search_results') }}</h2>
-                <span class="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+        <div class="overflow-hidden ui-card shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+                <h2 class="m-0 text-sm font-bold text-slate-900">{{ __('courrier.search_results') }}</h2>
+                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
                     {{ $courriers->total() }} {{ __('courrier.search_hits') }}
                 </span>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-[11px] uppercase tracking-wider text-gray-500">
+            <div class="overflow-x-auto ui-table-scroll">
+                <table class="ui-table min-w-full text-left text-sm">
+                    <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500">
                         <tr>
                             <th class="px-5 py-3 font-bold">{{ __('courrier.ref') }}</th>
                             <th class="px-5 py-3 font-bold">{{ __('courrier.search_tf') }}</th>
@@ -103,20 +103,20 @@
                             <th class="px-5 py-3 text-end font-bold">{{ __('courrier.actions') }}</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-slate-200">
                         @forelse($courriers as $c)
-                            <tr class="transition hover:bg-gray-50">
-                                <td class="px-5 py-3.5 font-semibold text-gray-800">{{ $c->reference_interne }}</td>
-                                <td class="px-5 py-3.5 text-gray-600">{{ $c->tf ?: ($c->reference_externe ?: '—') }}</td>
-                                <td class="max-w-[240px] truncate px-5 py-3.5 text-gray-700" title="{{ $c->objet }}">
+                            <tr class="transition hover:bg-slate-50">
+                                <td class="px-5 py-3.5 font-semibold text-slate-800">{{ $c->reference_interne }}</td>
+                                <td class="px-5 py-3.5 text-slate-600">{{ $c->tf ?: ($c->reference_externe ?: '—') }}</td>
+                                <td class="max-w-[240px] truncate px-5 py-3.5 text-slate-700" title="{{ $c->objet }}">
                                     {{ $c->objet }}
                                 </td>
                                 <td class="px-5 py-3.5">
-                                    <span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-gray-600">
+                                    <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-600">
                                         {{ $c->type }}
                                     </span>
                                 </td>
-                                <td class="px-5 py-3.5 text-gray-600">
+                                <td class="px-5 py-3.5 text-slate-600">
                                     {{ $c->bureauActuel?->nom ?? '—' }}
                                 </td>
                                 <td class="px-5 py-3.5">
@@ -130,7 +130,7 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3.5 text-gray-500">
+                                <td class="px-5 py-3.5 text-slate-500">
                                     {{ optional($c->date_reception ?? $c->date_courrier)->format('d/m/Y') ?: '—' }}
                                 </td>
                                 <td class="px-5 py-3.5 text-end">
@@ -160,13 +160,13 @@
             </div>
 
             @if($courriers->hasPages())
-                <div class="border-t border-gray-200 px-5 py-3">
+                <div class="border-t border-slate-200 px-5 py-3">
                     {{ $courriers->links() }}
                 </div>
             @endif
         </div>
     @else
-        <div class="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-12 text-center text-sm text-gray-500 shadow-sm">
+        <div class="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center text-sm text-slate-500 shadow-sm">
             {{ __('courrier.search_hint') }}
         </div>
     @endif

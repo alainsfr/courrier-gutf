@@ -15,17 +15,12 @@
     @if (! empty($brandFaviconUrl))
         <link rel="icon" href="{{ $brandFaviconUrl }}">
     @endif
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         :root {
             --gutf-primary: {{ $primary }};
             --gutf-accent: {{ $accent }};
         }
-        .font-display { font-family: "Fraunces", Georgia, serif; }
-        .font-ui { font-family: "Outfit", system-ui, sans-serif; }
         @keyframes fade-up {
             from { opacity: 0; transform: translateY(14px); }
             to { opacity: 1; transform: translateY(0); }
@@ -42,7 +37,7 @@
         }
     </style>
 </head>
-<body class="font-ui min-h-screen bg-[#f3f5f7] text-slate-900 antialiased">
+<body class="ui-public min-h-screen bg-[#f3f5f7] text-slate-900 antialiased">
     <div class="relative flex min-h-screen flex-col overflow-hidden">
         {{-- Atmosphere --}}
         <div class="pointer-events-none absolute inset-0" aria-hidden="true">

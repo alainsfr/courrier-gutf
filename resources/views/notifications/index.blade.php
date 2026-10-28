@@ -1,6 +1,6 @@
 @php
     $typeMeta = [
-        'assigned' => ['label' => __('notifications.type_assigned'), 'bg' => 'bg-[#17384b]/10', 'text' => 'text-[#17384b]'],
+        'assigned' => ['label' => __('notifications.type_assigned'), 'bg' => 'bg-brand-soft', 'text' => 'text-brand'],
         'validation' => ['label' => __('notifications.type_validation'), 'bg' => 'bg-amber-50', 'text' => 'text-amber-700'],
         'validated' => ['label' => __('notifications.type_validated'), 'bg' => 'bg-emerald-50', 'text' => 'text-emerald-700'],
         'rejected' => ['label' => __('notifications.type_rejected'), 'bg' => 'bg-rose-50', 'text' => 'text-rose-700'],
@@ -12,8 +12,8 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="text-lg font-bold text-gray-900">{{ __('notifications.title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">{{ __('notifications.subtitle') }}</p>
+                <h1 class="text-lg font-bold text-slate-900">{{ __('notifications.title') }}</h1>
+                <p class="mb-0 text-sm text-slate-500">{{ __('notifications.subtitle') }}</p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
@@ -34,19 +34,19 @@
     </x-slot>
 
     @if (session('status'))
-        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div class="mb-4 ui-alert ui-alert-success">
             {{ session('status') }}
         </div>
     @endif
 
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-5">
         {{-- Non lues --}}
-        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm xl:col-span-3">
-            <div class="flex items-center justify-between gap-3 border-b border-gray-200 px-5 py-4">
-                <h2 class="mb-0 text-sm font-bold text-gray-900">{{ __('notifications.unread') }}</h2>
+        <section class="overflow-hidden ui-card shadow-sm xl:col-span-3">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                <h2 class="mb-0 text-sm font-bold text-slate-900">{{ __('notifications.unread') }}</h2>
             </div>
 
-            <div class="divide-y divide-gray-100">
+            <div class="divide-y divide-slate-100">
                 @forelse ($unread as $n)
                     @php
                         $type = $n->data['type'] ?? null;
@@ -70,13 +70,13 @@
 
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <h3 class="mb-0 text-sm font-semibold text-gray-900">{{ $n->data['title'] ?? '—' }}</h3>
+                                <h3 class="mb-0 text-sm font-semibold text-slate-900">{{ $n->data['title'] ?? '—' }}</h3>
                                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide {{ $meta['bg'] }} {{ $meta['text'] }}">
                                     {{ $meta['label'] }}
                                 </span>
                             </div>
-                            <p class="mb-0 mt-1 text-sm text-gray-600">{{ $n->data['message'] ?? '' }}</p>
-                            <p class="mb-0 mt-1.5 text-xs text-gray-400">{{ $n->created_at?->diffForHumans() }}</p>
+                            <p class="mb-0 mt-1 text-sm text-slate-600">{{ $n->data['message'] ?? '' }}</p>
+                            <p class="mb-0 mt-1.5 text-xs text-slate-400">{{ $n->created_at?->diffForHumans() }}</p>
 
                             <div class="mt-3 flex flex-wrap gap-2">
                                 @if ($hasUrl)
@@ -105,29 +105,29 @@
             </div>
 
             @if ($unread->hasPages())
-                <div class="border-t border-gray-100 px-5 py-3">{{ $unread->links() }}</div>
+                <div class="border-t border-slate-100 px-5 py-3">{{ $unread->links() }}</div>
             @endif
         </section>
 
         {{-- Lues --}}
-        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm xl:col-span-2">
-            <div class="border-b border-gray-200 px-5 py-4">
-                <h2 class="mb-0 text-sm font-bold text-gray-900">{{ __('notifications.read') }}</h2>
+        <section class="overflow-hidden ui-card shadow-sm xl:col-span-2">
+            <div class="border-b border-slate-200 px-5 py-4">
+                <h2 class="mb-0 text-sm font-bold text-slate-900">{{ __('notifications.read') }}</h2>
             </div>
 
-            <div class="divide-y divide-gray-100">
+            <div class="divide-y divide-slate-100">
                 @forelse ($read as $n)
                     @php $hasUrl = ! empty($n->data['url']); @endphp
                     <article class="px-5 py-3.5">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
-                                <p class="mb-0 text-sm font-semibold text-gray-800">{{ $n->data['title'] ?? '—' }}</p>
-                                <p class="mb-0 mt-1 text-xs text-gray-500 line-clamp-2">{{ $n->data['message'] ?? '' }}</p>
-                                <p class="mb-0 mt-1.5 text-[11px] text-gray-400">{{ $n->created_at?->diffForHumans() }}</p>
+                                <p class="mb-0 text-sm font-semibold text-slate-800">{{ $n->data['title'] ?? '—' }}</p>
+                                <p class="mb-0 mt-1 text-xs text-slate-500 line-clamp-2">{{ $n->data['message'] ?? '' }}</p>
+                                <p class="mb-0 mt-1.5 text-[11px] text-slate-400">{{ $n->created_at?->diffForHumans() }}</p>
                             </div>
                             @if ($hasUrl)
                                 <a href="{{ route('notifications.open', $n->id) }}"
-                                   class="shrink-0 text-xs font-semibold text-[#dc633a] no-underline hover:underline">
+                                   class="shrink-0 text-xs font-semibold text-accent no-underline hover:underline">
                                     {{ __('notifications.open') }}
                                 </a>
                             @endif
@@ -141,7 +141,7 @@
             </div>
 
             @if ($read->hasPages())
-                <div class="border-t border-gray-100 px-5 py-3">{{ $read->links() }}</div>
+                <div class="border-t border-slate-100 px-5 py-3">{{ $read->links() }}</div>
             @endif
         </section>
     </div>

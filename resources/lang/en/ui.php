@@ -1,0 +1,23 @@
+<?php
+
+return [
+    'language' => 'Language', 'per_page' => 'Results per page',
+    'workspace' => 'Workspace', 'skip' => 'Skip to content', 'breadcrumb' => 'Breadcrumb',
+    'dashboard' => 'Dashboard', 'register' => 'Mail register', 'processing' => 'Processing workspace',
+    'search' => 'Advanced search', 'messages' => 'Messages', 'reports' => 'Statistics and reports',
+    'administration' => 'Administration', 'visa' => 'Approval desk', 'profile' => 'My profile',
+    'notifications' => 'Notifications', 'audit' => 'Audit log', 'help' => 'Help and user guide',
+    'table_hint' => 'Scroll the table to see the other columns.',
+    'table_region' => 'Horizontally scrollable results table',
+    'confirm_title' => 'Confirm action', 'confirm' => 'Confirm', 'cancel' => 'Cancel',
+    'auth_title' => 'Your mail, in the right hands.',
+    'auth_intro' => 'Register, assign and track each case through processing and archiving by the responsible office.',
+    'auth_workspace' => 'Your secure mail management workspace',
+    'auth_step_one' => 'Register and assign', 'auth_step_two' => 'Take ownership and process', 'auth_step_three' => 'Complete and archive',
+    'confirm_password_title' => 'Confirm your identity',
+    'confirm_password_intro' => 'Enter your password to continue with this action.',
+    'verify_title' => 'Verify your email address',
+    'verify_intro' => 'Open the verification link sent to your address. You can request another message if needed.',
+    'verification_sent' => 'A new verification link has been sent to you.',
+    'verification_resend' => 'Resend verification link',
+];

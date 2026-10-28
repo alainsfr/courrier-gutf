@@ -1,6 +1,6 @@
 <x-guest-layout>
     <h1 class="mb-3 text-xl font-semibold text-slate-900">{{ __('auth_mail.request_title') }}</h1>
-    <div class="mb-4 text-sm text-gray-600">
+    <div class="mb-4 text-sm text-slate-600">
         {{ __('auth_mail.request_intro') }}
     </div>
 

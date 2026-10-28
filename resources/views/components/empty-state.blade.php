@@ -4,7 +4,7 @@
 ])
 
 <div {{ $attributes->merge(['class' => 'flex flex-col items-center justify-center px-4 py-10 text-center']) }}>
-    <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+    <div class="ui-empty-icon mb-3 flex h-12 w-12 items-center justify-center">
         @isset($icon)
             {{ $icon }}
         @else
@@ -14,10 +14,10 @@
         @endisset
     </div>
 
-    <h3 class="m-0 text-sm font-semibold text-gray-900">{{ $title }}</h3>
+    <h3 class="ui-empty-title m-0">{{ $title }}</h3>
 
     @if($description)
-        <p class="mb-0 mt-1 max-w-sm text-sm text-gray-500">{{ $description }}</p>
+        <p class="mb-0 mt-1 max-w-sm text-sm text-slate-500">{{ $description }}</p>
     @endif
 
     @if($slot->isNotEmpty())

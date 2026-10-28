@@ -1,5 +1,5 @@
 @php
-    $input = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30';
+    $input = 'ui-input';
 @endphp
 
 <x-app-layout>
@@ -14,18 +14,18 @@
     </x-slot>
 
     @if (session('status'))
-        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <div class="mb-4 ui-alert ui-alert-success">
             {{ session('status') }}
         </div>
     @endif
 
     <x-form-errors />
 
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <div class="overflow-hidden ui-card shadow-sm">
+        <div class="overflow-x-auto ui-table-scroll">
+            <table class="ui-table min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <th class="px-4 py-3">{{ __('bureaux.nom') }}</th>
                         <th class="px-4 py-3">{{ __('bureaux.code') }}</th>
                         <th class="px-4 py-3">{{ __('bureaux.description') }}</th>
@@ -34,17 +34,17 @@
                         <th class="px-4 py-3 text-right">{{ __('bureaux.actions') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-slate-100">
                     @forelse($bureaux as $b)
-                        <tr class="hover:bg-gray-50/80">
-                            <td class="px-4 py-3 font-semibold text-gray-900">{{ $b->nom }}</td>
+                        <tr class="hover:bg-slate-50/80">
+                            <td class="px-4 py-3 font-semibold text-slate-900">{{ $b->nom }}</td>
                             <td class="px-4 py-3">
                                 <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-700">{{ $b->code }}</code>
                             </td>
-                            <td class="max-w-xs truncate px-4 py-3 text-gray-600">
+                            <td class="max-w-xs truncate px-4 py-3 text-slate-600">
                                 {{ $b->description ? \Illuminate\Support\Str::limit($b->description, 80) : '—' }}
                             </td>
-                            <td class="px-4 py-3 text-gray-700">{{ $b->users_count }}</td>
+                            <td class="px-4 py-3 text-slate-700">{{ $b->users_count }}</td>
                             <td class="px-4 py-3">
                                 @if($b->is_active)
                                     <span class="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{{ __('bureaux.active') }}</span>
@@ -54,7 +54,7 @@
                             </td>
                             <td class="px-4 py-3 text-right">
                                 <a href="{{ route('admin.bureaux.edit', $b) }}"
-                                   class="text-sm font-semibold text-[#17384b] no-underline hover:underline">
+                                   class="text-sm font-semibold text-brand no-underline hover:underline">
                                     {{ __('bureaux.edit') }}
                                 </a>
                             </td>

@@ -1,10 +1,11 @@
 import './bootstrap';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './session-idle';
+import './ui';
 
 // Prevent a second click while a normal form submission is in progress.
 document.querySelectorAll('form[data-submit-once]').forEach((form) => {
     form.addEventListener('submit', (event) => {
+        if (event.defaultPrevented) return;
         if (form.dataset.submitting === '1') {
             event.preventDefault();
             return;

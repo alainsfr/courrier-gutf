@@ -47,7 +47,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-4 w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
                 </button>
                 <div class="min-w-0">
-                    <div class="truncate text-sm font-bold text-[#17384b]" id="widgetChatTitle">—</div>
+                    <div class="truncate text-sm font-bold text-brand" id="widgetChatTitle">—</div>
                 </div>
             </div>
             <button type="button" class="chat-icon-btn" id="widgetChatCloseBtn" aria-label="{{ __('chat.close') }}">
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="max-w-[85%]">
                     ${!isMe && senderName ? `<div class="mb-0.5 px-1 text-[10px] font-semibold text-slate-400">${escapeHtml(senderName)}</div>` : ''}
                     <div class="rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm ${isMe
-                        ? 'rounded-br-md bg-[#17384b] text-white'
+                        ? 'rounded-br-md bg-brand text-white'
                         : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'}">
                         <div style="white-space:pre-line">${escapeHtml(body)}</div>
                     </div>

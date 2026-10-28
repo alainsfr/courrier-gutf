@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'reference' => 'Référence courrier', 'action' => 'Action', 'date_from' => 'Du', 'date_to' => 'Au',
     'title' => 'Journal d’audit',
     'actions' => [
         'claimed' => 'Prise en charge', 'details_updated' => 'Correction des informations',

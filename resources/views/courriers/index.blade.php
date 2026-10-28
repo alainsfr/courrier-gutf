@@ -1,10 +1,10 @@
 @php
-    $field = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-[#17384b] focus:outline-none focus:ring-2 focus:ring-[#17384b]/20';
-    $label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
+    $field = 'ui-input';
+    $label = 'ui-label';
 
     $chipBase = 'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold no-underline transition';
-    $chipIdle = 'border-gray-200 bg-white text-gray-600 hover:border-[#17384b]/30 hover:text-[#17384b]';
-    $chipActive = 'border-[#17384b] bg-[#17384b] text-white';
+    $chipIdle = 'border-slate-200 bg-white text-slate-600 hover:border-brand-soft hover:text-brand';
+    $chipActive = 'border-brand bg-brand text-white';
 
     $qs = fn (array $overrides = []) => array_filter(
         array_merge($filters, $overrides),
@@ -19,11 +19,11 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div class="min-w-0">
-                <p class="mb-0.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#dc633a]">
+                <p class="mb-0.5 text-xs font-semibold uppercase tracking-[0.14em] text-accent">
                     {{ __('courrier.register_eyebrow') }}
                 </p>
-                <h1 class="truncate text-lg font-bold text-gray-900">{{ __('courrier.register_title') }}</h1>
-                <p class="mb-0 text-sm text-gray-500">
+                <h1 class="truncate text-lg font-bold text-slate-900">{{ __('courrier.register_title') }}</h1>
+                <p class="mb-0 text-sm text-slate-500">
                     {{ trans_choice('courrier.register_results', $courriers->total(), ['count' => number_format($courriers->total())]) }}
                 </p>
             </div>
@@ -44,7 +44,7 @@
                     </x-buttons.secondary>
                 @endcan
                 @can('courrier.create')
-                    <x-buttons.primary :href="route('courriers.create')">
+                    <x-buttons.primary :href="route('courriers.create')" class="order-first sm:order-none">
                         + {{ __('courrier.new') }}
                     </x-buttons.primary>
                 @endcan
@@ -89,18 +89,18 @@
     </div>
 
     {{-- Filtres --}}
-    <div class="mb-5 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" data-register-filters>
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-3.5">
+    <div class="mb-5 overflow-hidden ui-card shadow-sm" data-register-filters>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
             <div class="flex items-center gap-2">
-                <h2 class="mb-0 text-sm font-bold text-gray-900">{{ __('courrier.register_filters') }}</h2>
+                <h2 class="mb-0 text-sm font-bold text-slate-900">{{ __('courrier.register_filters') }}</h2>
                 @if ($activeFilterCount > 0)
-                    <span class="inline-flex items-center rounded-full bg-[#dc633a]/10 px-2 py-0.5 text-[11px] font-bold text-[#dc633a]">
+                    <span class="inline-flex items-center rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-accent">
                         {{ $activeFilterCount }}
                     </span>
                 @endif
             </div>
             <button type="button"
-                    class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#17384b] hover:bg-slate-50"
+                    class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand hover:bg-slate-50"
                     data-filters-toggle
                     aria-expanded="{{ $filtersOpen ? 'true' : 'false' }}">
                 <span data-filters-label>{{ $filtersOpen ? __('courrier.register_filters_hide') : __('courrier.register_filters_show') }}</span>
@@ -218,7 +218,7 @@
                 @endif
             </div>
 
-            <div class="flex flex-wrap gap-2 border-t border-gray-100 px-5 py-4">
+            <div class="flex flex-wrap gap-2 border-t border-slate-100 px-5 py-4">
                 <x-buttons.primary type="submit">{{ __('courrier.filters.apply') }}</x-buttons.primary>
                 <x-buttons.secondary :href="route('courriers.index')">{{ __('courrier.filters.reset') }}</x-buttons.secondary>
             </div>
@@ -244,7 +244,7 @@
 
     {{-- Toolbar résultats --}}
     <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <p class="mb-0 text-sm text-gray-500">
+        <p class="mb-0 text-sm text-slate-500">
             @if ($courriers->total() > 0)
                 {{ __('courrier.register_showing', [
                     'from' => $courriers->firstItem(),
@@ -262,15 +262,15 @@
                     <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                 @endif
             @endforeach
-            <label for="register-sort-1" class="text-xs font-semibold text-gray-500">{{ __('courrier.register_sort') }}</label>
-            <select id="register-sort-1" name="sort" class="rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-sm" onchange="this.form.submit()">
+            <label for="register-sort-1" class="text-xs font-semibold text-slate-500">{{ __('courrier.register_sort') }}</label>
+            <select id="register-sort-1" name="sort" class="ui-input rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm" onchange="this.form.submit()">
                 <option value="recent" @selected($filters['sort'] === 'recent')>{{ __('courrier.register_sort_recent') }}</option>
                 <option value="oldest" @selected($filters['sort'] === 'oldest')>{{ __('courrier.register_sort_oldest') }}</option>
                 <option value="deadline" @selected($filters['sort'] === 'deadline')>{{ __('courrier.register_sort_deadline') }}</option>
                 <option value="updated" @selected($filters['sort'] === 'updated')>{{ __('courrier.register_sort_updated') }}</option>
                 <option value="ref" @selected($filters['sort'] === 'ref')>{{ __('courrier.register_sort_ref') }}</option>
             </select>
-            <select name="per_page" class="rounded-lg border border-gray-300 bg-white px-2.5 py-2 text-sm" onchange="this.form.submit()">
+            <select name="per_page" aria-label="{{ __('ui.per_page') }}" class="ui-input rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm" onchange="this.form.submit()">
                 <option value="10" @selected((int) $filters['per_page'] === 10)>10</option>
                 <option value="20" @selected((int) $filters['per_page'] === 20)>20</option>
                 <option value="50" @selected((int) $filters['per_page'] === 50)>50</option>
@@ -279,11 +279,11 @@
     </div>
 
     {{-- Desktop table --}}
-    <div class="hidden overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:block">
-        <div class="overflow-x-auto">
-            <table class="courrier-register-table min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr class="text-left text-[11px] font-bold uppercase tracking-wider text-gray-400">
+    <div class="hidden overflow-hidden ui-card shadow-sm md:block">
+        <div class="overflow-x-auto ui-table-scroll">
+            <table class="ui-table courrier-register-table min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50">
+                    <tr class="text-left text-[11px] font-bold uppercase tracking-wider text-slate-400">
                         <th class="px-4 py-3">{{ __('courrier.ref') }}</th>
                         <th class="px-4 py-3">{{ __('courrier.type') }}</th>
                         <th class="px-4 py-3">{{ __('courrier.subject') }}</th>
@@ -294,7 +294,7 @@
                         <th class="px-4 py-3 text-right">{{ __('courrier.actions') }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-slate-100">
                     @forelse ($courriers as $c)
                         @php
                             $date = $c->date_reception?->format('d/m/Y')
@@ -311,20 +311,20 @@
                             onclick="window.location='{{ route('courriers.show', $c) }}'">
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap items-center gap-1.5">
-                                    <span class="font-semibold text-gray-900">{{ $c->reference_interne }}</span>
+                                    <span class="font-semibold text-slate-900">{{ $c->reference_interne }}</span>
                                     @if ($c->is_late)
                                         <span class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-700">
                                             {{ __('courrier.kanban_late') }}
                                         </span>
                                     @endif
                                     @if (($c->attachments_count ?? 0) > 0)
-                                        <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">
+                                        <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
                                             {{ $c->attachments_count }} PJ
                                         </span>
                                     @endif
                                 </div>
                                 @if ($c->tf || $c->reference_externe)
-                                    <div class="mt-0.5 text-[11px] text-gray-400">
+                                    <div class="mt-0.5 text-[11px] text-slate-400">
                                         {{ $c->tf ?: $c->reference_externe }}
                                     </div>
                                 @endif
@@ -335,23 +335,23 @@
                                 </span>
                             </td>
                             <td class="max-w-xs px-4 py-3">
-                                <div class="truncate font-medium text-gray-800" title="{{ $c->objet }}">
+                                <div class="truncate font-medium text-slate-800" title="{{ $c->objet }}">
                                     {{ \Illuminate\Support\Str::limit($c->objet, 55) }}
                                 </div>
                                 @if ($c->expediteur || $c->destinataire || $c->proprietaire)
-                                    <div class="mt-0.5 truncate text-xs text-gray-400">
+                                    <div class="mt-0.5 truncate text-xs text-slate-400">
                                         {{ $c->proprietaire ?: ($c->expediteur ?: $c->destinataire) }}
                                     </div>
                                 @endif
                             </td>
                             <td class="px-4 py-3">
                                 @if ($c->bureauActuel)
-                                    <span class="inline-flex items-center gap-1.5 text-gray-700">
+                                    <span class="inline-flex items-center gap-1.5 text-slate-700">
                                         <span class="inline-block h-2 w-2 rounded-full" style="background: {{ $c->bureauActuel->color ?: '#94a3b8' }}"></span>
                                         {{ $c->bureauActuel->nom }}
                                     </span>
                                 @else
-                                    <span class="text-gray-400">—</span>
+                                    <span class="text-slate-400">—</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3">
@@ -360,13 +360,13 @@
                                     {{ $c->workflowEtape?->libelle ?? '—' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-gray-600">
+                            <td class="px-4 py-3 text-slate-600">
                                 {{ $c->assignedTo?->name ?? '—' }}
                             </td>
-                            <td class="px-4 py-3 tabular-nums text-gray-500">
+                            <td class="px-4 py-3 tabular-nums text-slate-500">
                                 {{ $date ?? '—' }}
                                 @if ($c->date_limite)
-                                    <div class="text-[11px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-gray-400' }}">
+                                    <div class="text-[11px] {{ $c->is_late ? 'font-semibold text-rose-600' : 'text-slate-400' }}">
                                         {{ __('courrier.register_deadline') }} {{ $c->date_limite->format('d/m/Y') }}
                                     </div>
                                 @endif
@@ -413,24 +413,24 @@
                 };
             @endphp
             <a href="{{ route('courriers.show', $c) }}"
-               class="block rounded-xl border {{ $c->is_late ? 'border-rose-200' : 'border-gray-200' }} bg-white p-4 shadow-sm no-underline transition active:scale-[0.99]">
+               class="block rounded-xl border {{ $c->is_late ? 'border-rose-200' : 'border-slate-200' }} bg-white p-4 shadow-sm no-underline transition active:scale-[0.99]">
                 <div class="flex items-start justify-between gap-2">
                     <div>
                         <div class="flex flex-wrap items-center gap-1.5">
-                            <span class="whitespace-nowrap font-bold text-gray-900">{{ $c->reference_interne }}</span>
+                            <span class="whitespace-nowrap font-bold text-slate-900">{{ $c->reference_interne }}</span>
                             @if ($c->is_late)
                                 <span class="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
                                     {{ __('courrier.kanban_late') }}
                                 </span>
                             @endif
                         </div>
-                        <p class="mb-0 mt-1 text-sm font-medium text-gray-800">{{ \Illuminate\Support\Str::limit($c->objet, 70) }}</p>
+                        <p class="mb-0 mt-1 text-sm font-medium text-slate-800">{{ \Illuminate\Support\Str::limit($c->objet, 70) }}</p>
                     </div>
                     <span class="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-slate-600">
                         {{ $typeLabel }}
                     </span>
                 </div>
-                <div class="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+                <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
                     <span class="inline-flex rounded-md px-2 py-0.5 font-semibold"
                           style="color: {{ $c->workflowEtape?->ui_color ?? '#64748B' }}; background: {{ ($c->workflowEtape?->ui_color ?? '#64748B') }}18;">
                         {{ $c->workflowEtape?->libelle ?? '—' }}
@@ -445,7 +445,7 @@
                 </div>
             </a>
         @empty
-            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="ui-card p-6 shadow-sm">
                 <x-empty-state
                     :title="__('courrier.empty')"
                     :description="__('courrier.register_empty_hint')"

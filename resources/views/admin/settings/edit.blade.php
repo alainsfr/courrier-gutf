@@ -1,6 +1,6 @@
 @php
-    $input = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition focus:border-[var(--gutf-primary)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--gutf-primary)_25%,transparent)]';
-    $label = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500';
+    $input = 'ui-input';
+    $label = 'ui-label';
     $previewAppName = old('app_name', $settings['app_name']);
     $previewTagline = old('app_tagline', $settings['app_tagline']);
     $previewPrimary = old('primary_color', $settings['primary_color']);
@@ -13,7 +13,7 @@
     </x-slot>
 
     @if (session('status'))
-        <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
+        <div class="mb-4 ui-alert ui-alert-success" role="status">
             {{ session('status') }}
         </div>
     @endif
@@ -25,9 +25,9 @@
         @method('PUT')
 
         <div class="grid gap-6 xl:grid-cols-3">
-            <section class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm xl:col-span-2">
-                <h2 class="mb-1 text-sm font-bold text-gray-900">{{ __('settings.branding') }}</h2>
-                <p class="mb-4 text-xs text-gray-400">{{ __('settings.branding_help') }}</p>
+            <section class="ui-card p-6 shadow-sm xl:col-span-2">
+                <h2 class="mb-1 text-sm font-bold text-slate-900">{{ __('settings.branding') }}</h2>
+                <p class="mb-4 text-xs text-slate-400">{{ __('settings.branding_help') }}</p>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="sm:col-span-2">
                         <label class="{{ $label }}" for="app_name">{{ __('settings.app_name') }}</label>
@@ -45,19 +45,19 @@
                     <div>
                         <label class="{{ $label }}" for="logo">{{ __('settings.logo') }}</label>
                         @if ($logoUrl)
-                            <div class="mb-2 flex items-center gap-3 rounded-lg border border-gray-100 bg-slate-50 p-2">
-                                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-gray-200 p-1.5">
+                            <div class="mb-2 flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
+                                <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200 p-1.5">
                                     <img src="{{ $logoUrl }}" alt="{{ __('settings.logo') }}" class="h-full w-full object-contain">
                                 </span>
-                                <span class="text-xs text-gray-500">{{ __('settings.current_file') }}</span>
+                                <span class="text-xs text-slate-500">{{ __('settings.current_file') }}</span>
                             </div>
                         @endif
                         <input id="logo" type="file" name="logo" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
                                class="{{ $input }} @error('logo') border-rose-400 @enderror">
-                        <p class="mt-1 text-xs text-gray-400">{{ __('settings.logo_help') }}</p>
+                        <p class="mt-1 text-xs text-slate-400">{{ __('settings.logo_help') }}</p>
                         <x-input-error class="mt-1" :messages="$errors->get('logo')" />
                         @if ($logoUrl)
-                            <label class="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                            <label class="mt-2 flex items-center gap-2 text-xs text-slate-600">
                                 <input type="checkbox" name="remove_logo" value="1" @checked(old('remove_logo'))>
                                 {{ __('settings.remove_logo') }}
                             </label>
@@ -67,17 +67,17 @@
                     <div>
                         <label class="{{ $label }}" for="favicon">{{ __('settings.favicon') }}</label>
                         @if ($faviconUrl)
-                            <div class="mb-2 flex items-center gap-3 rounded-lg border border-gray-100 bg-slate-50 p-2">
+                            <div class="mb-2 flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
                                 <img src="{{ $faviconUrl }}" alt="{{ __('settings.favicon') }}" class="h-10 w-10 rounded bg-white object-contain p-1">
-                                <span class="text-xs text-gray-500">{{ __('settings.current_file') }}</span>
+                                <span class="text-xs text-slate-500">{{ __('settings.current_file') }}</span>
                             </div>
                         @endif
                         <input id="favicon" type="file" name="favicon" accept=".png,.jpg,.jpeg,.webp,.ico,image/png,image/jpeg,image/webp,image/x-icon"
                                class="{{ $input }} @error('favicon') border-rose-400 @enderror">
-                        <p class="mt-1 text-xs text-gray-400">{{ __('settings.favicon_help') }}</p>
+                        <p class="mt-1 text-xs text-slate-400">{{ __('settings.favicon_help') }}</p>
                         <x-input-error class="mt-1" :messages="$errors->get('favicon')" />
                         @if ($faviconUrl)
-                            <label class="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                            <label class="mt-2 flex items-center gap-2 text-xs text-slate-600">
                                 <input type="checkbox" name="remove_favicon" value="1" @checked(old('remove_favicon'))>
                                 {{ __('settings.remove_favicon') }}
                             </label>
@@ -86,12 +86,12 @@
                 </div>
             </section>
 
-            <aside class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 class="mb-4 text-sm font-bold text-gray-900">{{ __('settings.preview') }}</h2>
-                <div class="rounded-xl border border-gray-100 bg-slate-50 p-4">
+            <aside class="ui-card p-6 shadow-sm">
+                <h2 class="mb-4 text-sm font-bold text-slate-900">{{ __('settings.preview') }}</h2>
+                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
                     <div class="flex items-center gap-3">
                         @if ($logoUrl)
-                            <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-gray-200 p-1.5">
+                            <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200 p-1.5">
                                 <img src="{{ $logoUrl }}" alt="logo" class="h-full w-full object-contain">
                             </span>
                         @else
@@ -102,7 +102,7 @@
                         @endif
                         <div class="min-w-0">
                             <div class="truncate text-sm font-bold" style="color: {{ $previewPrimary }}">{{ $previewAppName }}</div>
-                            <div class="truncate text-xs text-gray-400">{{ $previewTagline }}</div>
+                            <div class="truncate text-xs text-slate-400">{{ $previewTagline }}</div>
                         </div>
                     </div>
                     <div class="mt-4 flex gap-2">
@@ -110,7 +110,7 @@
                         <span class="h-8 flex-1 rounded-lg" style="background: {{ $previewAccent }}"></span>
                     </div>
                     @if ($faviconUrl)
-                        <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                        <div class="mt-3 flex items-center gap-2 text-xs text-slate-500">
                             <img src="{{ $faviconUrl }}" alt="" class="h-4 w-4 object-contain">
                             {{ __('settings.favicon') }}
                         </div>
@@ -119,9 +119,9 @@
             </aside>
         </div>
 
-        <section class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-1 text-sm font-bold text-gray-900">{{ __('settings.identity') }}</h2>
-            <p class="mb-4 text-xs text-gray-400">{{ __('settings.identity_help') }}</p>
+        <section class="ui-card p-6 shadow-sm">
+            <h2 class="mb-1 text-sm font-bold text-slate-900">{{ __('settings.identity') }}</h2>
+            <p class="mb-4 text-xs text-slate-400">{{ __('settings.identity_help') }}</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="{{ $label }}" for="country">{{ __('settings.country') }}</label>
@@ -148,15 +148,15 @@
             </div>
         </section>
 
-        <section class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-1 text-sm font-bold text-gray-900">{{ __('settings.theme') }}</h2>
-            <p class="mb-4 text-xs text-gray-400">{{ __('settings.theme_help') }}</p>
+        <section class="ui-card p-6 shadow-sm">
+            <h2 class="mb-1 text-sm font-bold text-slate-900">{{ __('settings.theme') }}</h2>
+            <p class="mb-4 text-xs text-slate-400">{{ __('settings.theme_help') }}</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label class="{{ $label }}" for="primary_color">{{ __('settings.primary_color') }}</label>
                     <div class="flex items-center gap-3">
                         <input type="color" value="{{ $previewPrimary }}"
-                               class="h-11 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1"
+                               class="h-11 w-14 cursor-pointer rounded border border-slate-300 bg-white p-1"
                                oninput="document.getElementById('primary_color').value=this.value"
                                aria-label="{{ __('settings.primary_color') }}">
                         <input id="primary_color" class="{{ $input }} @error('primary_color') border-rose-400 @enderror" name="primary_color"
@@ -170,7 +170,7 @@
                     <label class="{{ $label }}" for="accent_color">{{ __('settings.accent_color') }}</label>
                     <div class="flex items-center gap-3">
                         <input type="color" value="{{ $previewAccent }}"
-                               class="h-11 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1"
+                               class="h-11 w-14 cursor-pointer rounded border border-slate-300 bg-white p-1"
                                oninput="document.getElementById('accent_color').value=this.value"
                                aria-label="{{ __('settings.accent_color') }}">
                         <input id="accent_color" class="{{ $input }} @error('accent_color') border-rose-400 @enderror" name="accent_color"

@@ -36,8 +36,9 @@
      aria-hidden="true"></div>
 
 <aside id="app-sidebar"
+       aria-label="{{ __('ui.workspace') }}"
        class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0">
-    <div class="flex h-16 items-center gap-2 border-b border-slate-100 px-4">
+    <div class="flex h-16 lg:h-[4.5rem] items-center gap-2 border-b border-slate-100 px-4">
         <a href="{{ route('dashboard') }}" class="min-w-0 flex-1 no-underline">
             <x-brand-mark
                 :logo-url="$brandLogoUrl ?? null"
@@ -59,6 +60,7 @@
         <p class="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{{ __('Menu') }}</p>
 
         <a href="{{ route('dashboard') }}"
+           @if(request()->routeIs('dashboard')) aria-current="page" @endif
            class="{{ $linkBase }} {{ request()->routeIs('dashboard') ? $linkActive : $linkIdle }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
@@ -73,7 +75,8 @@
                 <span>{{ __('ux.register') }}</span>
             </a>
             <a href="{{ route('courriers.kanban') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('courriers.kanban') ? $linkActive : $linkIdle }}">
+               @if(request()->routeIs('courriers.kanban')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('courriers.kanban') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125Z" />
                 </svg>
@@ -81,7 +84,8 @@
             </a>
 
             <a href="{{ route('courriers.search') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('courriers.search') ? $linkActive : $linkIdle }}">
+               @if(request()->routeIs('courriers.search')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('courriers.search') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
@@ -90,6 +94,7 @@
         @endcan
 
         <a href="{{ route('parapheur.index') }}"
+           @if(request()->routeIs('parapheur.*')) aria-current="page" @endif
            class="{{ $linkBase }} {{ request()->routeIs('parapheur.*') ? $linkActive : $linkIdle }}">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -102,7 +107,8 @@
 
         @can('chat.view')
             <a href="{{ route('messages.index') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('messages.*') ? $linkActive : $linkIdle }}">
+               @if(request()->routeIs('messages.*')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('messages.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.63m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h.008M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 0 1-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8Z" />
                 </svg>
@@ -115,7 +121,8 @@
 
         @hasanyrole('super-admin|directeur')
             @can('courrier.view')
-                <a href="{{ route('statistics.index') }}" class="{{ $linkBase }} {{ request()->routeIs('statistics.*') ? $linkActive : $linkIdle }}">
+                <a href="{{ route('statistics.index') }}" @if(request()->routeIs('statistics.*')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('statistics.*') ? $linkActive : $linkIdle }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><path d="M4 4v16h17M8 16v-5M13 16V7M18 16v-8"/></svg><span>{{ __('ux.reports') }}</span>
                 </a>
             @endcan
@@ -123,7 +130,8 @@
         @role('super-admin')
             <p class="mb-2 mt-5 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{{ __('Gouvernance') }}</p>
             <a href="{{ route('admin.index') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('admin.*') ? $linkActive : $linkIdle }}">
+               @if(request()->routeIs('admin.*')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('admin.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.174.1.31.245.41.41.112.183.164.39.146.599l-.213 1.281c-.09.542-.56.94-1.11.94h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281a1.125 1.125 0 0 0-.645-.87 1.125 1.125 0 0 1-.41-.41 1.125 1.125 0 0 1-.146-.599l.213-1.281ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z" />
                 </svg>
@@ -133,14 +141,16 @@
 
         @can('auditor.view')
             <a href="{{ route('audit.index') }}"
-               class="{{ $linkBase }} {{ request()->routeIs('audit.*') ? $linkActive : $linkIdle }}">
+               @if(request()->routeIs('audit.*')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('audit.*') ? $linkActive : $linkIdle }}">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="h-[18px] w-[18px] shrink-0">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
                 <span>{{ __("Journal d'audit") }}</span>
             </a>
         @endcan
-        <a href="{{ route('help') }}" class="{{ $linkBase }} {{ request()->routeIs('help') ? $linkActive : $linkIdle }}">
+        <a href="{{ route('help') }}" @if(request()->routeIs('help')) aria-current="page" @endif
+           class="{{ $linkBase }} {{ request()->routeIs('help') ? $linkActive : $linkIdle }}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-[18px] w-[18px] shrink-0" aria-hidden="true"><path d="M4 4h7a3 3 0 0 1 3 3v14a3 3 0 0 0-3-3H4zM14 7a3 3 0 0 1 3-3h3v14h-3a3 3 0 0 0-3 3"/></svg>
             <span>{{ __('ux.manual') }}</span>
         </a>
