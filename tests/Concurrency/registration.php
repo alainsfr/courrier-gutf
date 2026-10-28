@@ -9,6 +9,10 @@ use App\Models\Courrier;
 use App\Models\ParapheurVisa;
 use App\Models\User;
 use App\Services\SignaturePinService;
+use App\Services\AccountRecoveryService;
+use App\Models\AccountRecovery;
+use Illuminate\Support\Facades\Password;
+use App\Http\Controllers\Auth\NewPasswordController;
 use Database\Seeders\BureauSeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Database\Seeders\WorkflowEtapesSeeder;
@@ -59,6 +63,16 @@ if (($argv[1] ?? '') === 'worker') {
             $request = Request::create('/', 'POST', ['validator_id' => User::where('email', 'director@example.test')->value('id')]);
             $request->setUserResolver(fn () => $actor);
             $app->make(CourrierController::class)->submitToParapheur($request, Courrier::findOrFail($key));
+        } elseif ($mode === 'recover' || $mode === 'wrong-recovery') {
+            echo $app->make(AccountRecoveryService::class)->redeem($actor->email, $key, 'ConcurrentReset!2026') ? 'ok' : 'validation';
+            exit;
+        } elseif ($mode === 'email-recovery') {
+            $request = Request::create('/reset-password', 'POST', ['email' => $actor->email, 'token' => $key,
+                'password' => 'ConcurrentEmailReset!2026', 'password_confirmation' => 'ConcurrentEmailReset!2026']);
+            $request->setLaravelSession($app['session']->driver());
+            $response = $app->make(NewPasswordController::class)->store($request);
+            echo $response->getTargetUrl() === route('login') ? 'ok' : 'validation';
+            exit;
         }
         echo 'ok';
     } catch (ValidationException) {
@@ -145,3 +159,24 @@ sort($results);
 check($results === ['ok', 'validation', 'validation', 'validation'], 'Concurrent submissions did not produce one pending visa.');
 check($courrier->visas()->pending()->count() === 1, 'Duplicate pending visas exist.');
 echo "PASS: one pending visa per dossier\n";
+
+$recovery = $app->make(AccountRecoveryService::class);
+$issued = $recovery->issue($actors[0]);
+$results = parallel(array_fill(0, 4, ['recover', $actors[0]->id, $issued['code']]));
+sort($results);
+check($results === ['ok', 'validation', 'validation', 'validation'], 'A recovery code was consumed more than once.');
+check(AccountRecovery::findOrFail($issued['grant']->id)->used_at !== null, 'Recovery consumption was not recorded.');
+$issued = $recovery->issue($actors[0]->fresh());
+check(parallel(array_fill(0, 7, ['wrong-recovery', $actors[0]->id, 'incorrect'])) === array_fill(0, 7, 'validation'), 'Incorrect recovery code was accepted.');
+check($issued['grant']->fresh()->attempts === 5 && $issued['grant']->fresh()->revoked_at !== null, 'Parallel recovery attempts lost an increment.');
+echo "PASS: single-use recovery codes and parallel attempt limits\n";
+
+for ($i = 0; $i < 3; $i++) {
+    $target = $actors[0]->fresh();
+    $issued = $recovery->issue($target);
+    $emailToken = Password::createToken($target);
+    $results = parallel([['recover', $target->id, $issued['code']], ['email-recovery', $target->id, $emailToken]]);
+    sort($results);
+    check($results === ['ok', 'validation'], 'Both recovery methods succeeded with superseded credentials.');
+}
+echo "PASS: mutually exclusive email and offline password recovery\n";

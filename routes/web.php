@@ -86,6 +86,9 @@ Route::middleware(['auth', 'verified', 'active'])->group(function () {
             ->where('fileName', '[A-Za-z0-9._\-]+\.zip')
             ->name('backups.download');
         Route::resource('users', AdminUserController::class)->except(['show']);
+        Route::get('users/{user}/recovery', [\App\Http\Controllers\Admin\AccountRecoveryController::class, 'show'])->name('users.recovery');
+        Route::post('users/{user}/recovery', [\App\Http\Controllers\Admin\AccountRecoveryController::class, 'store'])
+            ->middleware('throttle:6,1')->name('users.recovery.issue');
         Route::patch('users/{user}/toggle-active', [AdminUserController::class, 'toggleActive'])
             ->name('users.toggle-active');
         Route::resource('bureaux', AdminBureauController::class)

@@ -71,6 +71,7 @@ class UiHarmonizationTest extends TestCase
             '/messages/'.$conversation->id,
             '/admin', '/admin/settings', '/admin/backups', '/admin/users',
             '/admin/users/create', '/admin/users/'.$this->user->id.'/edit',
+            '/admin/users/'.$this->user->id.'/recovery',
             '/admin/bureaux', '/admin/bureaux/create', '/admin/bureaux/'.$bureau->id.'/edit',
         ];
 

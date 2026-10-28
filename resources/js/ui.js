@@ -1,4 +1,8 @@
 // Progressive enhancement: native forms and confirmations remain usable without JS.
+// Clear one-time secrets before a browser can preserve the page in its back/forward cache.
+window.addEventListener('pagehide', () => {
+    document.querySelectorAll('[data-recovery-secret]').forEach((element) => { element.textContent = '•••• •••• •••• ••••'; });
+});
 document.querySelectorAll('[data-ui-dialog-open]').forEach((button) => {
     button.addEventListener('click', () => document.getElementById(button.dataset.uiDialogOpen)?.showModal());
 });

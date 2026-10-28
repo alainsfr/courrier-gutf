@@ -23,5 +23,9 @@
             </x-primary-button>
         </div>
     </form>
+    <div class="mt-6 border-t border-slate-200 pt-5">
+        <p class="mb-3 text-sm text-slate-600">{{ __('recovery.option_help') }}</p>
+        <x-buttons.secondary :href="route('password.code')" class="w-full">{{ __('recovery.option') }}</x-buttons.secondary>
+    </div>
     <a href="{{ route('login') }}" class="mt-5 inline-block text-sm font-medium underline">{{ __('auth_mail.back_login') }}</a>
 </x-guest-layout>

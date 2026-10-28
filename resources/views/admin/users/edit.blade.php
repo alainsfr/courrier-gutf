@@ -7,6 +7,7 @@
     <x-slot name="header">
         <x-admin-page-header :title="__('users.edit_title')" :subtitle="$user->name">
             <x-slot:actions>
+                <x-buttons.secondary :href="route('admin.users.recovery', $user)">{{ __('recovery.admin_title') }}</x-buttons.secondary>
                 <x-buttons.secondary :href="route('admin.users.index')">
                     {{ __('users.back') }}
                 </x-buttons.secondary>

@@ -111,6 +111,7 @@
                                        class="text-sm font-semibold text-brand no-underline hover:underline">
                                         {{ __('users.edit') }}
                                     </a>
+                                    <a href="{{ route('admin.users.recovery', $u) }}" class="text-sm font-semibold text-brand no-underline hover:underline">{{ __('recovery.admin_title') }}</a>
                                 </div>
                             </td>
                         </tr>
