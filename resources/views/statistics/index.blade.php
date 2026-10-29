@@ -132,7 +132,7 @@
     </div>
 
     @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        @vite('resources/js/charts.js')
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const bureauLabels = @json($chartBureauLabels);

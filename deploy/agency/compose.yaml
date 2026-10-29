@@ -1,0 +1,76 @@
+name: ${COMPOSE_PROJECT_NAME:?Identifiant manquant}
+x-application: &application
+  image: ${GUTF_IMAGE:?Image manquante}
+  pull_policy: never
+  env_file:
+    - path: ./app.env
+      format: raw
+  read_only: true
+  init: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 160
+  mem_limit: 512m
+  cpus: 1.0
+  tmpfs:
+    - /tmp:rw,noexec,nosuid,size=128m,uid=33,gid=33,mode=1770
+    - /var/www/html/bootstrap/cache:rw,noexec,nosuid,size=32m,uid=33,gid=33
+  volumes:
+    - storage:/var/www/html/storage
+    - type: bind
+      source: /etc/machine-id
+      target: /etc/machine-id
+      read_only: true
+      bind:
+        create_host_path: false
+  networks: [application]
+  depends_on:
+    database:
+      condition: service_healthy
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: '3'}
+services:
+  database:
+    image: ${GUTF_DATABASE_IMAGE:?Image base manquante}
+    pull_policy: never
+    restart: unless-stopped
+    env_file: db.env
+    volumes: [database:/var/lib/mysql]
+    networks: [application]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 180
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  app:
+    <<: *application
+    restart: unless-stopped
+    ports:
+      - '${GUTF_BIND_IP:-127.0.0.1}:${GUTF_PORT:-8088}:8080'
+    healthcheck:
+      test: [CMD, php, -r, 'exit(@file_get_contents("http://127.0.0.1:8080/up") === false ? 1 : 0);']
+      interval: 15s
+      timeout: 5s
+      retries: 12
+  queue:
+    <<: *application
+    restart: unless-stopped
+    command: [bash, -c, 'while true; do bash deploy/run-operations.sh queue /usr/local/bin/php; sleep 5; done']
+  scheduler:
+    <<: *application
+    restart: unless-stopped
+    command: [bash, -c, 'while true; do bash deploy/run-operations.sh scheduler /usr/local/bin/php; sleep 60; done']
+networks:
+  application: {}
+volumes:
+  database: {}
+  storage: {}

@@ -5,6 +5,10 @@ Version du 29 octobre 2026. Ce document et les outils de ce dossier sont exclus
 des copies préparées pour les agences et du déploiement PlanetHoster.
 Il ne fait pas partie du manuel utilisateur ni du manuel de l’administrateur d’agence.
 
+Le paquet autonome Linux/Windows et la maintenance gratuite décrits en sections
+11 à 13 complètent cette procédure. Le manuel technique livré à l’agence décrit
+l’installation et l’exploitation sans exposer les détails de licence ci-dessous.
+
 ## 1. Politique retenue
 
 - Chaque licence autorise une installation identifiée sur un serveur déterminé.
@@ -253,3 +257,183 @@ renouvellement exigera une nouvelle identité et une mise à jour côté agence.
 Références de conception : [signature OpenSSL PHP](https://www.php.net/manual/en/function.openssl-sign.php),
 [vérification OpenSSL PHP](https://www.php.net/manual/en/function.openssl-verify.php),
 [identité système Linux](https://www.freedesktop.org/software/systemd/man/latest/machine-id.html).
+
+## 11. Construire le paquet autonome Linux / Windows
+
+Le paquet unique contient des images Linux `amd64` déjà construites, la base MariaDB,
+les bibliothèques graphiques locales et deux points d’entrée : `install-linux.sh`
+et `Installer-Windows.ps1`. Windows utilise une VM Linux, pas Docker Desktop ni une
+installation PHP native. La démonstration PlanetHoster reste une livraison distincte,
+sans contrôle de durée ; aucune commande ci-dessous ne doit l’activer sur ce site.
+
+La construction exige Docker Engine, Python 3, Git et OpenSSL sur le poste de
+construction. La clé **publique** est fournie au constructeur de paquet ; aucune
+clé privée n’entre dans les images, GitHub ou les archives agence.
+
+```bash
+python3 tools/constructor/build-agency.py --public-key=/coffre/issuer-public.pem --output=/livraisons/courrier-2026-10-29
+```
+
+Le workflow GitHub Actions `Build agency installer` réalise également cette tâche :
+son unique paramètre est le contenu de `issuer-public.pem` encodé en base64. Il vérifie
+les scripts, construit les images, installe deux agences vierges simultanément,
+contrôle les tâches et la sauvegarde, puis publie l’archive et sa somme SHA-256.
+Le passage de ce paramètre public ne compromet pas la clé privée.
+
+La préparation écrit `managed=true` uniquement **dans l’image agence** et y installe
+la clé publique. Les outils et ce manuel ne sont pas copiés. L’image contient aussi
+les bibliothèques Chart.js, Sortable et Lucide : le navigateur ne dépend pas de CDN.
+Conserver une copie pérenne des archives vérifiées hors des artefacts GitHub temporaires.
+
+L’installation d’agence génère ses propres secrets, une base sans données métier et
+son premier administrateur. Avant d’ouvrir les écritures, recueillir la demande,
+signer la durée convenue puis importer le fichier comme ci-dessous.
+
+```bash
+sudo python3 /opt/courrier-gutf/agence-centre/control.py request > demande-agence.json
+sudo python3 /opt/courrier-gutf/agence-centre/control.py import --file /chemin-prive/configuration.json
+sudo python3 /opt/courrier-gutf/agence-centre/control.py diagnostic
+```
+
+Le stockage privé reste dans le volume de l’instance. Les conteneurs lisent en
+lecture seule le `/etc/machine-id` de l’hôte Linux/VM ; changer de conteneur ne crée
+donc pas une nouvelle identité système. Ne pas cloner les volumes ni la VM activée
+pour une deuxième agence. La migration vers une autre machine suit la section 8.
+
+## 12. Préparer le point de maintenance constructeur, sans abonnement
+
+Logiciels : **WireGuard + OpenSSH**, hébergés sur une machine Linux sous ton contrôle.
+Aucun compte Tailscale, service cloud VPN ou abonnement logiciel n’est requis.
+Il faut néanmoins disposer d’un endpoint Internet joignable. Un hébergement partagé
+PlanetHoster ne doit pas être considéré comme un serveur VPN sans prise en charge
+explicite du fournisseur. Utiliser une machine existante capable de recevoir UDP,
+ou prévoir cette infrastructure séparément.
+
+1. Installer `wireguard` et `openssh-server` depuis les paquets officiels du serveur.
+2. Réserver un plan d’adressage VPN distinct des réseaux des agences, par exemple
+   `10.203.0.1` pour le point constructeur et une adresse /32 unique par agence.
+3. Créer une paire de clés WireGuard sur cette machine et protéger les fichiers :
+
+   ```bash
+   umask 077
+   wg genkey | tee constructeur-wg-private.key | wg pubkey > constructeur-wg-public.key
+   ```
+
+4. Préparer `/etc/wireguard/wg-gutf.conf`, propriétaire root, mode 600 :
+
+   ```ini
+   [Interface]
+   PrivateKey = CLE_PRIVEE_WIREGUARD_CONSTRUCTEUR
+   Address = 10.203.0.1/32
+   ListenPort = 51820
+   ```
+
+   Remplacer la valeur de clé dans un éditeur local protégé. Autoriser uniquement
+   le port UDP retenu dans la politique existante ; si nécessaire, configurer sa
+   redirection sur le routeur du constructeur. Ne pas changer les autres règles.
+5. Activer l’interface avec `sudo systemctl enable --now wg-quick@wg-gutf`.
+6. Conserver l’accès SSH du constructeur séparé, par clé. Depuis Windows, un saut
+   SSH vers ce serveur permet d’atteindre une agence : la clé privée de support
+   reste sur le poste constructeur, grâce à `ssh -J`.
+
+Ce point de maintenance termine le tunnel ; il n’a pas besoin de router Internet
+ou les LAN des agences. Ne pas ajouter de NAT ni de route par défaut. Si la machine
+fait déjà du routage pour un autre service, son pare-feu doit interdire les transferts
+entre pairs de l’interface `wg-gutf`, sans désactiver le routage des autres services.
+L’hébergement, l’électricité et la connectivité ne deviennent pas gratuits parce
+que les logiciels utilisés sont gratuits.
+
+## 13. Associer une agence et intervenir
+
+Préparer une clé **SSH** dédiée au support, distincte de la clé de signature RSA et
+de la clé WireGuard. Exemple sur le poste constructeur :
+
+```powershell
+ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\courrier-support"
+```
+
+Protéger la clé privée avec une phrase secrète ; transférer seulement le fichier
+`.pub` dans un chemin privé du serveur d’agence. Sur l’agence, depuis le dossier
+du paquet extrait, exécuter avec les valeurs convenues :
+
+```bash
+sudo python3 maintenance/configure-maintenance.py \
+  --directory /opt/courrier-gutf/agence-centre \
+  --ssh-public-key /chemin-prive/courrier-support.pub \
+  --peer-public-key CLE_PUBLIQUE_WIREGUARD_CONSTRUCTEUR \
+  --endpoint support.exemple:51820 \
+  --address 10.203.0.2/32 \
+  --peer-address 10.203.0.1/32
+```
+
+Le script vérifie les prérequis, prépare un compte `gutf-<identifiant>`, ses
+restrictions SSH et une interface `wg-g<identifiant>`, puis affiche la clé publique
+de l’agence et le nom du compte. Il refuse d’écraser une configuration existante.
+Conserver ce résultat dans le dossier de support de l’agence, sans sa clé privée.
+
+Ajouter au fichier WireGuard du point constructeur :
+
+```ini
+[Peer]
+PublicKey = CLE_PUBLIQUE_WIREGUARD_AGENCE
+AllowedIPs = 10.203.0.2/32
+```
+
+Appliquer cette configuration dans une fenêtre de maintenance. Utiliser une adresse
+/32 distincte pour chaque agence. Vérifier `sudo wg show` et le dernier échange.
+La sortie à Internet de l’agence doit permettre UDP vers l’endpoint ; une liaison
+qui bloque UDP exige une adaptation autorisée de l’infrastructure réseau.
+
+Depuis le poste constructeur, utiliser les clés SSH configurées pour le relais et
+pour l’agence, par exemple via des entrées `Host` dans `~/.ssh/config`. `ProxyJump`
+utilise le relais, sans transférer la clé privée ni activer l’agent forwarding.
+Exemple avec un compte de support réellement affiché lors de l’installation :
+
+```powershell
+ssh -J exploitation@support.exemple gutf-IDENTIFIANT@10.203.0.2 status
+ssh -J exploitation@support.exemple gutf-IDENTIFIANT@10.203.0.2 diagnostic
+ssh -J exploitation@support.exemple gutf-IDENTIFIANT@10.203.0.2 request > demande-agence.json
+ssh -J exploitation@support.exemple gutf-IDENTIFIANT@10.203.0.2 backup
+ssh -J exploitation@support.exemple gutf-IDENTIFIANT@10.203.0.2 restart
+```
+
+Sous Windows PowerShell 5, sa redirection de sortie peut écrire de l’UTF-16 :
+convertir la demande reçue en UTF-8 avant `issue-license.php`, ou utiliser
+PowerShell 7 / un transfert depuis un terminal UTF-8. Après signature locale,
+transmettre le JSON signé sur l’entrée standard de la commande `import` ; sa
+signature doit toujours rester valide et le fichier ne dépasse pas 16 Ko :
+
+```bash
+ssh -J exploitation@support.exemple gutf-IDENTIFIANT@10.203.0.2 import < configuration.json
+```
+
+Dans PowerShell, utiliser un transfert binaire par flux ou un terminal bash ; éviter
+de réencoder arbitrairement le contenu du fichier signé. Seules les commandes
+exactes `status`, `diagnostic`, `request`, `import`, `backup`, `restart` sont acceptées.
+Les ajouts d’arguments, commandes shell, transferts SCP/SFTP et tunnels SSH sont
+refusés pour le compte de support. Les actions sont tracées avec
+`journalctl -t gutf-IDENTIFIANT` sur le serveur agence.
+
+La clé SSH de support est limitée à l’adresse VPN du constructeur. Le compte ne fait
+pas partie du groupe Docker et ne peut pas modifier ses restrictions. Les opérations
+système complètes et les mises à jour se font avec le compte d’exploitation du site,
+dans une intervention distincte. L’application fonctionne lorsque le VPN est arrêté.
+Pour révoquer le support, retirer le pair côté constructeur et désactiver l’interface
+de l’agence ; retirer aussi la clé publique SSH si l’accès doit être supprimé durablement.
+
+### Lanceur de maintenance Windows sans conversion de fichiers
+
+Le script constructeur `Invoke-Maintenance.ps1` fonctionne sous PowerShell 5 et 7.
+Il transmet les fichiers par flux binaires, sans la redirection UTF-16 de PowerShell 5.
+Il reste sur ton poste et n’est pas livré aux agences. Exemple :
+
+```powershell
+.\tools\constructor\Invoke-Maintenance.ps1 -Agence gutf-IDENTIFIANT@10.203.0.2 -Relais exploitation@support.exemple -Action request -Sortie C:\Dossiers-clients\agence\demande.json
+.\tools\constructor\Invoke-Maintenance.ps1 -Agence gutf-IDENTIFIANT@10.203.0.2 -Relais exploitation@support.exemple -Action import -Fichier C:\Dossiers-clients\agence\configuration.json
+.\tools\constructor\Invoke-Maintenance.ps1 -Agence gutf-IDENTIFIANT@10.203.0.2 -Relais exploitation@support.exemple -Action diagnostic
+```
+
+Remplacer `IDENTIFIANT` par les douze caractères hexadécimaux réellement affichés
+par la configuration de maintenance. `-CleSsh` sélectionne une clé de support
+existante ; les paramètres du relais peuvent aussi être fixés dans `~/.ssh/config`.
+La commande refuse d’écraser une demande déjà enregistrée.

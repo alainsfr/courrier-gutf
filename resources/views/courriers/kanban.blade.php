@@ -162,10 +162,9 @@
     </div>
 
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    @vite('resources/js/kanban-vendor.js')
     <script>
-        (function () {
+        document.addEventListener('DOMContentLoaded', function () {
             if (window.lucide) window.lucide.createIcons();
 
             const board = document.getElementById('kanban-board');
@@ -352,7 +351,7 @@
                     },
                 });
             });
-        })();
+        });
     </script>
     @endpush
 </x-app-layout>

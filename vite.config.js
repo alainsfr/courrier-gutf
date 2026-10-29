@@ -9,6 +9,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/chat.js',
                 'resources/js/pdf-viewer.js',
+                'resources/js/charts.js',
+                'resources/js/kanban-vendor.js',
             ],
             refresh: true,
         }),

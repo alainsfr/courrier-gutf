@@ -1,0 +1,57 @@
+name: Build agency installer
+
+on:
+  workflow_dispatch:
+    inputs:
+      public_key_base64:
+        description: Public RSA signing key encoded as base64 (never the private key)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate constructor public key
+        env:
+          PUBLIC_KEY_BASE64: ${{ inputs.public_key_base64 }}
+        run: |
+          python3 - <<'PY'
+          import os, base64
+          from pathlib import Path
+          data = base64.b64decode(os.environ['PUBLIC_KEY_BASE64'], validate=True)
+          if len(data)>8192 or b'PRIVATE KEY' in data or not data.startswith(b'-----BEGIN PUBLIC KEY-----'):
+              raise SystemExit('Public key only required')
+          Path('/tmp/constructor-public.pem').write_bytes(data)
+          PY
+      - name: Verify installer logic
+        run: python3 -m unittest discover -s tests/Packaging -p 'test_*.py' -v
+      - name: Build offline Linux and Windows package
+        run: python3 tools/constructor/build-agency.py --public-key=/tmp/constructor-public.pem --output=dist
+      - name: Exercise two independent agency installations
+        run: sudo python3 tests/Packaging/smoke.py --directory=dist
+      - name: Upload verified package
+        uses: actions/upload-artifact@v4
+        with:
+          name: courrier-gutf-agence-linux-windows-amd64
+          path: dist/*
+          retention-days: 14
+          compression-level: 0
+  windows-launcher:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify PowerShell syntax and argument restrictions
+        shell: pwsh
+        run: |
+          $errors=$null; $tokens=$null
+          [Management.Automation.Language.Parser]::ParseFile("$pwd/deploy/agency/Installer-Windows.ps1",[ref]$tokens,[ref]$errors) | Out-Null
+          if($errors.Count){ throw ($errors | Out-String) }
+          [Management.Automation.Language.Parser]::ParseFile("$pwd/tools/constructor/Invoke-Maintenance.ps1",[ref]$tokens,[ref]$errors) | Out-Null
+          if($errors.Count){ throw ($errors | Out-String) }
+          Write-Output 'Windows launcher syntax verified'

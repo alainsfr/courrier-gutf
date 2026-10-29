@@ -43,6 +43,7 @@ jobs:
         run: |
           bash -n deploy/install-cron.sh deploy/run-operations.sh
           bash tests/Operations/cron.sh
+          python3 -m unittest discover -s tests/Packaging -p 'test_*.py' -v
 
       - name: Verify application before deployment
         env:

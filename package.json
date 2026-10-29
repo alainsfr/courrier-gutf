@@ -21,6 +21,9 @@
     },
     "dependencies": {
         "bootstrap": "^5.3.8",
-        "pdfjs-dist": "^4.10.38"
+        "chart.js": "4.4.1",
+        "lucide": "0.468.0",
+        "pdfjs-dist": "^4.10.38",
+        "sortablejs": "1.15.6"
     }
 }

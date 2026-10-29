@@ -23,3 +23,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/dist/
+/deploy/agency/issuer-public.pem
+__pycache__/
