@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'operation_unavailable_title' => 'Action unavailable',
+    'operation_unavailable' => 'This action is currently unavailable. Please contact your administrator to resolve this issue.',
     'register_title' => 'Create an account', 'register_intro' => 'Enter your details to create your account.',
     'password_confirm' => 'Confirm password', 'already_registered' => 'Already registered? Sign in',
     'language' => 'Language', 'per_page' => 'Results per page',

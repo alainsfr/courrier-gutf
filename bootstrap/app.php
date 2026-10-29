@@ -42,6 +42,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->appendToGroup('web', SetLocale::class);
         $middleware->appendToGroup('web', EnforceIdleTimeout::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnforceRuntimePolicy::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontFlash(['signature_pin', 'signature_pin_confirmation', 'pin_password', 'recovery_code', 'admin_password']);
@@ -52,7 +53,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
  * EN PRODUCTION : Redirige précocement le chemin public vers le dossier parent (/home/ydykrmdy/courrier/)
  * de façon à ce que le manifeste Vite soit résolu à la racine du sous-domaine.
  */
-if (env('APP_ENV') === 'production') {
+if (env('APP_ENV') === 'production' && ! (require __DIR__.'/../config/distribution.php')['managed']) {
     $app->usePublicPath(dirname(__DIR__));
 }
 

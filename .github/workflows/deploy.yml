@@ -120,7 +120,7 @@ jobs:
             --exclude '/deploy_artifact.tar.gz' --exclude '/public' \
             --exclude '/storage' --exclude '/bootstrap/cache/*.php' \
             --exclude '/database/*.sqlite*' \
-            --exclude '/tests' --exclude '/repopack-output.txt' \
+            --exclude '/tests' --exclude '/tools/constructor' --exclude '/repopack-output.txt' \
             ./ deploy_artifact/app/
           mkdir -p deploy_artifact/app/bootstrap/cache
 

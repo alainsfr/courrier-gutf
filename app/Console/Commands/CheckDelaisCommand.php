@@ -20,6 +20,11 @@ class CheckDelaisCommand extends Command
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
+        if (! $dryRun && ! app(\App\Services\ManagedRuntime::class)->canWrite()) {
+            $this->line(__('ui.operation_unavailable'));
+
+            return self::SUCCESS;
+        }
 
         $query = $this->overdue()->with(['workflowEtape:id,libelle', 'bureauActuel:id,nom']);
 
