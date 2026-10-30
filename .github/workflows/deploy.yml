@@ -39,6 +39,17 @@ jobs:
       - name: Install dependencies for verification
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Setup Node for verification
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Build current assets for verification
+        run: |
+          npm ci
+          npm run build
+
       - name: Verify operational scripts
         run: |
           bash -n deploy/install-cron.sh deploy/run-operations.sh

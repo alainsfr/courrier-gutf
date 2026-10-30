@@ -68,7 +68,7 @@ services:
   scheduler:
     <<: *application
     restart: unless-stopped
-    command: [bash, -c, 'while true; do bash deploy/run-operations.sh scheduler /usr/local/bin/php; sleep 60; done']
+    command: [bash, /usr/local/bin/agency-scheduler]
 networks:
   application: {}
 volumes:

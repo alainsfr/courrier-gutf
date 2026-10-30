@@ -33,8 +33,10 @@ COPY --from=assets /build/public/build ./public/build
 COPY deploy/agency/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY deploy/agency/php.ini /usr/local/etc/php/conf.d/agency.ini
 COPY deploy/agency/entrypoint.sh /usr/local/bin/agency-entrypoint
+COPY deploy/agency/scheduler.sh /usr/local/bin/agency-scheduler
 RUN printf "<?php\nreturn ['managed' => true];\n" > config/distribution.php \
     && mkdir -p storage/app/private storage/app/public storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs \
+    && touch .env \
     && rm -f bootstrap/cache/*.php public/hot \
     && composer dump-autoload --no-dev --no-scripts --optimize \
     && php artisan package:discover --ansi \

@@ -38,8 +38,24 @@ $identity=@()
 if($CleSsh){ $identity=@('-i',(Resolve-Path -LiteralPath $CleSsh).Path) }
 $remote='/tmp/courrier-gutf-'+[Guid]::NewGuid().ToString('N')
 & ssh @identity $ServeurLinux ('umask 077 && mkdir '+(Quote-Shell $remote)); Check-Exit
-$transferPaths=@(Get-ChildItem -LiteralPath $PSScriptRoot -Force | ForEach-Object FullName)
-& scp @identity -r @transferPaths ($ServeurLinux+':'+$remote+'/'); Check-Exit
+$stagingRoot=[IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+$stagingPath=Join-Path $stagingRoot ('courrier-gutf-transfer-'+[Guid]::NewGuid().ToString('N'))
+try{
+    New-Item -ItemType Directory -Path $stagingPath | Out-Null
+    foreach($entry in $checksums.PSObject.Properties){
+        $destination=Join-Path $stagingPath $entry.Name
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot $entry.Name) -Destination $destination
+    }
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'checksums.json') -Destination $stagingPath
+    $transferPaths=@(Get-ChildItem -LiteralPath $stagingPath -Force | ForEach-Object FullName)
+    & scp @identity -r @transferPaths ($ServeurLinux+':'+$remote+'/'); Check-Exit
+}finally{
+    $resolvedStaging=[IO.Path]::GetFullPath($stagingPath)
+    if($resolvedStaging.StartsWith($stagingRoot,[StringComparison]::OrdinalIgnoreCase) -and (Split-Path -Leaf $resolvedStaging) -match '^courrier-gutf-transfer-[a-f0-9]{32}$'){
+        Remove-Item -LiteralPath $resolvedStaging -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
 $command='sudo bash '+(Quote-Shell ($remote+'/install-linux.sh'))+' --instance '+(Quote-Shell $Instance)+' --url '+(Quote-Shell $Url)+' --port '+$Port+' --bind '+(Quote-Shell $AdresseEcoute)+' --admin-email '+(Quote-Shell $EmailAdministrateur)
 & ssh @identity -t $ServeurLinux $command; Check-Exit
 Write-Output "Installation terminée dans la VM. Les fichiers transférés restent dans $remote ; ils peuvent être retirés après validation."

@@ -230,6 +230,10 @@ la procédure déjà utilisée pour les autres applications du serveur.
 
 Les fichiers privés sont détenus par root, accessibles uniquement avec `sudo` :
 
+Lorsqu’une procédure utilise `cd` vers ce dossier protégé, ouvrir d’abord une
+session avec `sudo -i`, puis la quitter avec `exit` après intervention. Ne pas
+élargir les permissions du dossier pour permettre une navigation ordinaire.
+
 | Fichier | Rôle |
 |---|---|
 | `.env` | Identifiant Compose, images, interface et port publiés |

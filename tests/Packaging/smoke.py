@@ -2,6 +2,7 @@
 """Recette réelle, sur Docker éphémère de CI uniquement."""
 import argparse
 import json
+import importlib.util
 from pathlib import Path
 import secrets
 import socket
@@ -64,6 +65,11 @@ def main():
                 assert json.loads(request.stdout)['product'] == 'courrier-gutf'
                 run(sys.executable, str(root / 'control.py'), 'backup')
                 run(*compose, 'exec', '-T', 'app', 'php', '-r', boot + '$files=Illuminate\\Support\\Facades\\Storage::disk("backups")->allFiles(); if(!count(array_filter($files,fn($f)=>str_ends_with($f,".zip")))){exit(1);}', capture_output=True, text=True)
+                if index == 1:
+                    spec = importlib.util.spec_from_file_location('maintenance_smoke', Path(__file__).with_name('maintenance_smoke.py'))
+                    support = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(support)
+                    support.verify(root, bundle, workspace)
                 print('PASS: independent installation, verified owner, persistence refusal, login, workers, backup, offline dependencies', flush=True)
             roots = [root for _, root in projects]
             assert (roots[0] / 'app.env').read_text() != (roots[1] / 'app.env').read_text()

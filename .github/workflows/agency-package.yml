@@ -34,7 +34,11 @@ jobs:
       - name: Build offline Linux and Windows package
         run: python3 tools/constructor/build-agency.py --public-key=/tmp/constructor-public.pem --output=dist
       - name: Exercise two independent agency installations
-        run: sudo python3 tests/Packaging/smoke.py --directory=dist
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends openssh-server wireguard-tools
+          sudo systemctl start ssh
+          sudo python3 tests/Packaging/smoke.py --directory=dist
       - name: Upload verified package
         uses: actions/upload-artifact@v4
         with:
